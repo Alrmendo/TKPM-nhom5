@@ -1,13 +1,13 @@
 import '../styles/PDP.css';
 import { Link } from 'react-router-dom';
 import { Heart, Search, User, ChevronRight, Instagram, Send, Mail, Facebook } from 'lucide-react';
-import ProductGallery from '../components/product-gallery';
-import DateSelector from '../components/date-selector';
-import ColorSelector from '../components/color-selector';
-import SizeSelector from '../components/size-selector';
-import ProductAccordion from '../components/product-accordion';
-import RecommendedProducts from '../components/recommended-products';
-import Footer from '../components/footer';
+import ProductGallery from '../../components/product-gallery';
+import DateSelector from '../../components/date-selector';
+import ColorSelector from '../../components/color-selector';
+import SizeSelector from '../../components/size-selector';
+import ProductAccordion from '../../components/product-accordion';
+import RecommendedProducts from '../../components/recommended-products';
+import Footer from '../../components/footer';
 
 const PDP = () => {
   return (
