@@ -1,6 +1,6 @@
-import '../styles/PDP.css';
 import { Link } from 'react-router-dom';
-import { Heart, Search, User, ChevronRight, Instagram, Send, Mail, Facebook } from 'lucide-react';
+import logo from '../../assets/LOGO.svg';
+import { Heart, Search, User, ChevronRight, Instagram, Send, Mail, Facebook, ShoppingCart } from 'lucide-react';
 import ProductGallery from '../../components/product-gallery';
 import DateSelector from '../../components/date-selector';
 import ColorSelector from '../../components/color-selector';
@@ -17,7 +17,7 @@ const PDP = () => {
         <div className="container mx-auto px-4 flex items-center justify-between">
           <div className="flex-1">
             <Link to="/">
-              <img src="/placeholder.svg?height=60&width=200" alt="Enchanted Weddings" width={200} height={60} className="h-[60px] w-auto" />
+              <img src={logo} alt="Enchanted Weddings" className="h-16 w-auto" />
             </Link>
           </div>
 
@@ -52,11 +52,15 @@ const PDP = () => {
           </nav>
 
           <div className="flex items-center space-x-4 flex-1 justify-end">
-            <button aria-label="User account">
-              <User className="h-5 w-5 text-[#292d32]" />
+            <button className="text-[#606060] hover:text-[#c3937c] relative">
+              <User className="h-5 w-5" />
             </button>
-            <button aria-label="Search">
-              <Search className="h-5 w-5 text-[#292d32]" />
+            <button className="text-[#606060] hover:text-[#c3937c] relative">
+              <Search className="h-5 w-5" />
+            </button>
+            <button className="text-[#606060] hover:text-[#c3937c] relative">
+              <ShoppingCart className="h-5 w-5" />
+              <span className="absolute -top-1 -right-1 bg-[#c3937c] text-white text-xs rounded-full h-4 w-4 flex items-center justify-center">2</span>
             </button>
           </div>
         </div>
