@@ -1,4 +1,4 @@
-import '../styles/PDP.css';
+import '../../styles/PDP.css';
 import { Link } from 'react-router-dom';
 import { Heart, Search, User, ChevronRight, Instagram, Send, Mail, Facebook } from 'lucide-react';
 import ProductGallery from '../../components/product-gallery';

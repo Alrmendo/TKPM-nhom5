@@ -6,12 +6,12 @@ TKPM-NHOM5/
 ├── src/
 │   ├── assets/                  # Ảnh, icons, fonts, CSS global... phải import
 │   ├── components/              # Các component tái sử dụng
-│   ├── layouts/                  # Layouts (Header, Footer, Sidebar...)
 │   ├── pages/                    # Các page chính (Home, Login, Dashboard...)
 │   ├── routes/                   # Định nghĩa route (tuỳ chọn)
 │   ├── services/                 # Các hàm gọi API
 │   ├── hooks/                    # Custom hooks
 │   ├── utils/                    # Hàm tiện ích chung
+│   ├── styles/                   # Các file css cho từng trang trong pages
 │   ├── App.jsx                    # Component gốc của App
 │   ├── main.jsx                   # Điểm khởi chạy của ứng dụng
 │   └── index.css                  # File CSS gốc
