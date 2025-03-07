@@ -1,66 +1,20 @@
 import '../../styles/PDP.css';
 import { Link } from 'react-router-dom';
-import { Heart, Search, User, ChevronRight, Instagram, Send, Mail, Facebook } from 'lucide-react';
+import { Heart, ChevronRight, Instagram, Send, Mail, Facebook } from 'lucide-react';
 import ProductGallery from '../../components/product-gallery';
 import DateSelector from '../../components/date-selector';
 import ColorSelector from '../../components/color-selector';
 import SizeSelector from '../../components/size-selector';
 import ProductAccordion from '../../components/product-accordion';
 import RecommendedProducts from '../../components/recommended-products';
+import Header from '../../components/header';
 import Footer from '../../components/footer';
 
 const PDP = () => {
   return (
     <div className="min-h-screen bg-white">
       {/* Header */}
-      <header className="border-b border-[#eaeaea] py-4">
-        <div className="container mx-auto px-4 flex items-center justify-between">
-          <div className="flex-1">
-            <Link to="/">
-              <img src="/placeholder.svg?height=60&width=200" alt="Enchanted Weddings" width={200} height={60} className="h-[60px] w-auto" />
-            </Link>
-          </div>
-
-          <nav className="hidden md:flex items-center justify-center flex-1">
-            <ul className="flex space-x-8">
-              <li>
-                <Link to="/" className="text-[#b19e8d] hover:text-[#c3937c]">
-                  Home
-                </Link>
-              </li>
-              <li>
-                <Link to="/about" className="text-[#b19e8d] hover:text-[#c3937c]">
-                  About
-                </Link>
-              </li>
-              <li>
-                <Link to="/services" className="text-[#b19e8d] hover:text-[#c3937c]">
-                  Services
-                </Link>
-              </li>
-              <li>
-                <Link to="/blog" className="text-[#b19e8d] hover:text-[#c3937c]">
-                  Blog
-                </Link>
-              </li>
-              <li>
-                <Link to="/contact" className="text-[#b19e8d] hover:text-[#c3937c]">
-                  Contact
-                </Link>
-              </li>
-            </ul>
-          </nav>
-
-          <div className="flex items-center space-x-4 flex-1 justify-end">
-            <button aria-label="User account">
-              <User className="h-5 w-5 text-[#292d32]" />
-            </button>
-            <button aria-label="Search">
-              <Search className="h-5 w-5 text-[#292d32]" />
-            </button>
-          </div>
-        </div>
-      </header>
+      <Header />
 
       {/* Main Content */}
       <main className="container mx-auto px-4 py-8 md:py-12">
