@@ -1,5 +1,5 @@
-import React from 'react';
 import { Instagram, Facebook, Youtube } from 'lucide-react';
+import logo from '../assets/LOGO.svg';
 
 export default function Footer() {
   return (
@@ -141,7 +141,7 @@ export default function Footer() {
 
         <div className="flex justify-center mt-8 pt-8 border-t border-[#eaeaea]">
           <div className="mb-6">
-            <img src="/placeholder.svg?height=60&width=200" alt="Enchanted Weddings" width={200} height={60} className="h-[60px] w-auto mx-auto" />
+            <img src={logo} alt="Enchanted Weddings" className="h-16 w-auto mx-auto" />
           </div>
         </div>
 
