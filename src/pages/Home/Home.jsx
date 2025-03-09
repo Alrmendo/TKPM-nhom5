@@ -1,8 +1,5 @@
-import React, { useState, useEffect  }  from 'react';
-import DressCard from './components/DressCard';
-import { Swiper, SwiperSlide } from 'swiper/react';
+import React from 'react';
 import 'swiper/css';
-import { ArrowRightIcon } from '@heroicons/react/24/solid';
 import FAQSection from './sections/FAQSection';
 import Footer from '../../components/footer';
 import Navigation from '../../components/navigation';
@@ -16,255 +13,30 @@ import LastChanceSection from './sections/LastChanceSection';
 import TestimonialsSection from './sections/TestimonialsSection';
 
 const Home = () => {
-
-  const cards = [
-    {
-      imageUrl: "pic1.jpg",
-      alt: "Wedding Dress",
-      rating: 4.8,
-      status: "Available",
-      statusColor:"#6DE588",
-      title: "French Lace",
-      subtitle: "Modern",
-      price: 300,
-    },
-    {
-      imageUrl: "pic2.jpg",
-      alt: "Wedding Dress",
-      rating: 4.6,
-      status: "Unavailable",
-      statusColor:"#e81535",
-      title: "Sparkling Flowers",
-      subtitle: "Romance",
-      price: 550,
-    },
-    {
-      imageUrl: "pic3.jpg",
-      alt: "Wedding Dress",
-      rating: 4.7,
-      status: "The Most Rented",
-      statusColor:"#7715e8",
-      title: "Elegant",
-      subtitle: "Paris",
-      price: 400,
-    },
-    {
-      imageUrl: "pic4.jpg",
-      alt: "Wedding Dress",
-      rating: 4.9,
-      status: "The Most Rented",
-      statusColor:"#7715e8",
-      title: "The Most Rented",
-      subtitle: "Premium",
-      price: 600,
-    },
-    {
-      imageUrl: "pic13.jpg",
-      alt: "Wedding Dress",
-      rating: 4.8,
-      status: "Unavailable",
-      statusColor:"#e81535",
-      title: "Luxury Lace",
-      subtitle: "Classic",
-      price: 450,
-    },
-  ];
-
-  const cardsLastChance = [
-    {
-      imageUrl: "pic14.jpg",
-      alt: "Wedding Dress",
-      rating: 4.8,
-      status: "Available",
-      statusColor:"#6DE588",
-      title: "French Lace",
-      subtitle: "Modern",
-      price: 300,
-    },
-    {
-      imageUrl: "pic15.jpg",
-      alt: "Wedding Dress",
-      rating: 4.6,
-      status: "Unavailable",
-      statusColor:"#e81535",
-      title: "Sparkling Flowers",
-      subtitle: "Romance",
-      price: 550,
-    },
-    {
-      imageUrl: "pic16.jpg",
-      alt: "Wedding Dress",
-      rating: 4.7,
-      status: "The Most Rented",
-      statusColor:"#7715e8",
-      title: "Elegant",
-      subtitle: "Paris",
-      price: 400,
-    },
-    {
-      imageUrl: "pic4.jpg",
-      alt: "Wedding Dress",
-      rating: 4.9,
-      status: "The Most Rented",
-      statusColor:"#7715e8",
-      title: "The Most Rented",
-      subtitle: "Premium",
-      price: 600,
-    },
-    {
-      imageUrl: "pic3.jpg",
-      alt: "Wedding Dress",
-      rating: 4.8,
-      status: "Unavailable",
-      statusColor:"#e81535",
-      title: "Luxury Lace",
-      subtitle: "Classic",
-      price: 450,
-    },
-  ];
-
-  const testimonials = [
-    {
-      id: 1,
-      name: "Roselina Stepheny",
-      feedback:
-        "I just wanted to share a quick note and let you know that your company did a really good job. I'm glad I decided to choose or bride as my wedding day, it's really great how easy your website is to update and manage. I never have any problem at all during choosing my dress, receive it and then returned it to you back, in addition whatever you said in your website as a consultation, online ... comes true, I really recommended you to everyone. I never have any problem at all during choosing my dress, receive it and then returned it to you back, in addition whatever you said in your website as a consultation, online ... comes true, I really recommended you to everyone.I never have any problem at all during choosing my dress, receive it and then returned it to you back, in addition whatever you said in your website as a consultation, online ... comes true, I really recommended you to everyone.",
-      // Tạm để link ảnh placeholder, bạn thay link ảnh thật sau:
-      avatar: "avt1.jpg",
-    },
-    {
-      id: 2,
-      name: "John Doe",
-      feedback:
-        "Working with this company has been an absolute pleasure. Their attention to detail and commitment to customer satisfaction is top-notch. Highly recommended!",
-      avatar: "avt2.jpg",
-    },
-    {
-      id: 3,
-      name: "Jane Smith",
-      feedback:
-        "The process was super easy and straightforward. The team was very supportive, and the result exceeded my expectations. Will definitely come back again!",
-      avatar: "avt3.jpg",
-    },
-    {
-      id: 4,
-      name: "Citadel",
-      feedback:
-        "The process was super easy and straightforward. The team was very supportive, and the result exceeded my expectations. Will definitely come back again!",
-      avatar: "avt3.jpg",
-    },
-    {
-      id: 5,
-      name: "Citadel5",
-      feedback:
-        "The process was super easy and straightforward. The team was very supportive, and the result exceeded my expectations. Will definitely come back again!",
-      avatar: "avt3.jpg",
-    },
-    {
-      id: 6,
-      name: "Citadel6",
-      feedback:
-        "The process was super easy and straightforward. The team was very supportive, and the result exceeded my expectations. Will definitely come back again!",
-      avatar: "avt3.jpg",
-    },
-    {
-      id: 7,
-      name: "John Doe7",
-      feedback:
-        "Working with this company has been an absolute pleasure. Their attention to detail and commitment to customer satisfaction is top-notch. Highly recommended!",
-      avatar: "avt2.jpg",
-    },
-    {
-      id: 8,
-      name: "Jane Smith8",
-      feedback:
-        "The process was super easy and straightforward. The team was very supportive, and the result exceeded my expectations. Will definitely come back again!",
-      avatar: "avt3.jpg",
-    },
-    {
-      id: 9,
-      name: "Citadel9",
-      feedback:
-        "The process was super easy and straightforward. The team was very supportive, and the result exceeded my expectations. Will definitely come back again!",
-      avatar: "avt3.jpg",
-    },
-    {
-      id: 10,
-      name: "Citadel10",
-      feedback:
-        "The process was super easy and straightforward. The team was very supportive, and the result exceeded my expectations. Will definitely come back again!",
-      avatar: "avt3.jpg",
-    },
-    {
-      id: 11,
-      name: "Citadel11",
-      feedback:
-        "The process was super easy and straightforward. The team was very supportive, and the result exceeded my expectations. Will definitely come back again!",
-      avatar: "avt3.jpg",
-    },
-  ];
-
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [readMore, setReadMore] = useState(false);
-
-  // Reset lại trạng thái readMore mỗi khi chuyển testimonial mới
-  useEffect(() => {
-    setReadMore(false);
-  }, [currentIndex]);
-
-  const nextTestimonial = () => {
-    setCurrentIndex((prevIndex) =>
-      prevIndex === testimonials.length - 1 ? 0 : prevIndex + 1
-    );
-  };
-
-  const prevTestimonial = () => {
-    setCurrentIndex((prevIndex) =>
-      prevIndex === 0 ? testimonials.length - 1 : prevIndex - 1
-    );
-  };
-
-  const { name, feedback, avatar } = testimonials[currentIndex];
-
-  const TRUNCATE_LENGTH = 200;
-  const isLongFeedback = feedback.length > TRUNCATE_LENGTH;
-  const displayedFeedback =
-    !readMore && isLongFeedback
-      ? feedback.slice(0, TRUNCATE_LENGTH) + "..."
-      : feedback;
-
-  
-
   return (
     <div className="relative flex flex-col min-h-screen">
       
       <Navigation />
-      {/* HERO SECTION */}
+
       <HeroSection/>
 
-      {/* LATEST BRIDAL DRESS SECTION */}
       <BridalDressSection/>
 
-      {/* Category */}
       <CategorySection/>
 
-      {/* Services */}
       <ServicesSection/>
       
-      {/*Most Popular*/}
       <MostPopularSection/>
 
-      {/*How to rent a dress*/}
       <RentDressSection/>
 
-    {/*Last chance*/}
-    <LastChanceSection/>
+      <LastChanceSection/>
 
-    <TestimonialsSection/>
-    
-    <FAQSection/>
+      <TestimonialsSection/>
+      
+      <FAQSection/>
 
-    <Footer/>
+      <Footer/>
     </div>
   );
 };
