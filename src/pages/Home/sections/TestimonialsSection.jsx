@@ -1,128 +1,7 @@
-import React, { useState, useEffect  }  from 'react';
-import DressCard from './components/DressCard';
-import { Swiper, SwiperSlide } from 'swiper/react';
-import 'swiper/css';
-import { ArrowRightIcon } from '@heroicons/react/24/solid';
-import FAQSection from './sections/FAQSection';
-import Footer from '../../components/footer';
-import Navigation from '../../components/navigation';
-import HeroSection from './sections/HeroSection';
-import BridalDressSection from './sections/BridalDressSection';
-import CategorySection from './sections/CategorySection';
-import ServicesSection from './sections/ServicesSection';
-import MostPopularSection from './sections/MostPopularSection';
-import RentDressSection from './sections/RentDressSection';
-import LastChanceSection from './sections/LastChanceSection';
-import TestimonialsSection from './sections/TestimonialsSection';
+// pages/Home/sections/TestimonialsSection.jsx
+import React, { useState, useEffect } from 'react';
 
-const Home = () => {
-
-  const cards = [
-    {
-      imageUrl: "pic1.jpg",
-      alt: "Wedding Dress",
-      rating: 4.8,
-      status: "Available",
-      statusColor:"#6DE588",
-      title: "French Lace",
-      subtitle: "Modern",
-      price: 300,
-    },
-    {
-      imageUrl: "pic2.jpg",
-      alt: "Wedding Dress",
-      rating: 4.6,
-      status: "Unavailable",
-      statusColor:"#e81535",
-      title: "Sparkling Flowers",
-      subtitle: "Romance",
-      price: 550,
-    },
-    {
-      imageUrl: "pic3.jpg",
-      alt: "Wedding Dress",
-      rating: 4.7,
-      status: "The Most Rented",
-      statusColor:"#7715e8",
-      title: "Elegant",
-      subtitle: "Paris",
-      price: 400,
-    },
-    {
-      imageUrl: "pic4.jpg",
-      alt: "Wedding Dress",
-      rating: 4.9,
-      status: "The Most Rented",
-      statusColor:"#7715e8",
-      title: "The Most Rented",
-      subtitle: "Premium",
-      price: 600,
-    },
-    {
-      imageUrl: "pic13.jpg",
-      alt: "Wedding Dress",
-      rating: 4.8,
-      status: "Unavailable",
-      statusColor:"#e81535",
-      title: "Luxury Lace",
-      subtitle: "Classic",
-      price: 450,
-    },
-  ];
-
-  const cardsLastChance = [
-    {
-      imageUrl: "pic14.jpg",
-      alt: "Wedding Dress",
-      rating: 4.8,
-      status: "Available",
-      statusColor:"#6DE588",
-      title: "French Lace",
-      subtitle: "Modern",
-      price: 300,
-    },
-    {
-      imageUrl: "pic15.jpg",
-      alt: "Wedding Dress",
-      rating: 4.6,
-      status: "Unavailable",
-      statusColor:"#e81535",
-      title: "Sparkling Flowers",
-      subtitle: "Romance",
-      price: 550,
-    },
-    {
-      imageUrl: "pic16.jpg",
-      alt: "Wedding Dress",
-      rating: 4.7,
-      status: "The Most Rented",
-      statusColor:"#7715e8",
-      title: "Elegant",
-      subtitle: "Paris",
-      price: 400,
-    },
-    {
-      imageUrl: "pic4.jpg",
-      alt: "Wedding Dress",
-      rating: 4.9,
-      status: "The Most Rented",
-      statusColor:"#7715e8",
-      title: "The Most Rented",
-      subtitle: "Premium",
-      price: 600,
-    },
-    {
-      imageUrl: "pic3.jpg",
-      alt: "Wedding Dress",
-      rating: 4.8,
-      status: "Unavailable",
-      statusColor:"#e81535",
-      title: "Luxury Lace",
-      subtitle: "Classic",
-      price: 450,
-    },
-  ];
-
+const TestimonialsSection = () => {
   const testimonials = [
     {
       id: 1,
@@ -207,7 +86,6 @@ const Home = () => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [readMore, setReadMore] = useState(false);
 
-  // Reset lại trạng thái readMore mỗi khi chuyển testimonial mới
   useEffect(() => {
     setReadMore(false);
   }, [currentIndex]);
@@ -225,48 +103,59 @@ const Home = () => {
   };
 
   const { name, feedback, avatar } = testimonials[currentIndex];
-
   const TRUNCATE_LENGTH = 200;
   const isLongFeedback = feedback.length > TRUNCATE_LENGTH;
   const displayedFeedback =
-    !readMore && isLongFeedback
-      ? feedback.slice(0, TRUNCATE_LENGTH) + "..."
-      : feedback;
-
-  
+    !readMore && isLongFeedback ? feedback.slice(0, TRUNCATE_LENGTH) + "..." : feedback;
 
   return (
-    <div className="relative flex flex-col min-h-screen">
-      
-      <Navigation />
-      {/* HERO SECTION */}
-      <HeroSection/>
-
-      {/* LATEST BRIDAL DRESS SECTION */}
-      <BridalDressSection/>
-
-      {/* Category */}
-      <CategorySection/>
-
-      {/* Services */}
-      <ServicesSection/>
-      
-      {/*Most Popular*/}
-      <MostPopularSection/>
-
-      {/*How to rent a dress*/}
-      <RentDressSection/>
-
-    {/*Last chance*/}
-    <LastChanceSection/>
-
-    <TestimonialsSection/>
-    
-    <FAQSection/>
-
-    <Footer/>
-    </div>
+    <section className="py-12 bg-white">
+      <div className="container mx-auto px-4">
+        <h2 className="text-2xl sm:text-3xl font-semibold text-center mb-8">
+          What Our Customers Are Saying
+        </h2>
+        <div className="max-w-4xl mx-auto">
+          <div className="flex items-center justify-center gap-4">
+            <button
+              onClick={prevTestimonial}
+              className="px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-full cursor-pointer"
+            >
+              &larr;
+            </button>
+            <div className="flex-1 text-center">
+              <div className="max-w-2xl mx-auto">
+                <p className="text-gray-600 text-lg mb-2 min-h-[160px] flex flex-col items-center justify-center">
+                  {displayedFeedback}
+                  {isLongFeedback && (
+                    <span
+                      onClick={() => setReadMore(prev => !prev)}
+                      className="text-blue-500 cursor-pointer mt-2"
+                    >
+                      {readMore ? "Read less" : "Read more"}
+                    </span>
+                  )}
+                </p>
+              </div>
+              <div className="flex flex-col items-center">
+                <img
+                  src={avatar}
+                  alt={name}
+                  className="w-20 h-20 object-cover rounded-full mb-2"
+                />
+                <p className="font-semibold text-gray-800">{name}</p>
+              </div>
+            </div>
+            <button
+              onClick={nextTestimonial}
+              className="px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-full cursor-pointer"
+            >
+              &rarr;
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
   );
 };
 
-export default Home;
+export default TestimonialsSection;

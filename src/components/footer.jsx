@@ -57,7 +57,7 @@ export default function Footer() {
               <div className=" flex flex-col items-start gap-8 md:flex-row md:items-center lg:flex-col lg:items-start justify-center">
                 <div className="text-left">
                   <h4 className="font-semibold mb-4 text-[#000000]">Mobile app</h4>
-                  <button className="bg-[#C3937C] px-4 py-2 rounded-full shadow-md hover:bg-gray-100 transition-colors duration-200 flex items-center gap-2">
+                  <button className="bg-[#C3937C] px-4 py-2 rounded-full shadow-md hover:bg-gray-100 transition-colors duration-200 flex items-center gap-2 cursor-pointer">
                     <img src="icon9.png" alt="AppleIcon"/>
                     <span className='text-[#FFFFFF] text-[16px]'>Download on the</span>
                     <span className='text-[#FFFFFF] text-[16px] font-[600]'>App Store</span>
@@ -66,7 +66,7 @@ export default function Footer() {
     
                 <div className="text-left">
                   <h4 className="font-semibold mb-4 text-gray-800">Get 5% off</h4>
-                  <button className="bg-[#C3937C] text-white px-4 py-2 rounded-full shadow-md hover:bg-gray-100 transition-colors duration-200 text-sm">
+                  <button className="bg-[#C3937C] text-white px-4 py-2 rounded-full shadow-md hover:bg-gray-100 transition-colors duration-200 text-sm cursor-pointer">
                     Subscribe Now
                   </button>
                 </div>
@@ -76,9 +76,9 @@ export default function Footer() {
                     Stay connected with
                   </h4>
                   <div className="flex items-center gap-3">
-                    <img src="icon10.png" alt="AppleIcon"/>
-                    <img src="icon11.png" alt="AppleIcon"/>
-                    <img src="icon12.png" alt="AppleIcon"/>
+                    <img className="cursor-pointer" src="icon10.png" alt="AppleIcon"/>
+                    <img className="cursor-pointer" src="icon11.png" alt="AppleIcon"/>
+                    <img className="cursor-pointer" src="icon12.png" alt="AppleIcon"/>
                   </div>
                 </div>
               </div>
