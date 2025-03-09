@@ -14,7 +14,7 @@ import TestimonialsSection from './sections/TestimonialsSection';
 
 const Home = () => {
   return (
-    <div className="relative flex flex-col min-h-screen overflow-x-hidden">
+    <div className="relative flex flex-col min-h-screen"> {/* Đã bỏ overflow-x-hidden, cái này lúc ban đầu dùng để fix lỗi responsive cho các thiết bị mobile, nhưng lúc sau vì muốn navigation có thể trượt theo lúc lướt xuống thì bắt buộc phải bỏ thuộc tính này, nhưng hiện tại sau khi bỏ ra thì thấy hết lỗi responsive rồi ?? Tạm thời cứ để như vậy */}
       
       <Navigation />
 
