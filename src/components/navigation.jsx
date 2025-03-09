@@ -5,10 +5,12 @@ import searchIcon from '../assets/search.svg';
 import cartIcon from '../assets/cart.svg';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import DropdownPanel from './dropdownPanel';
+import SearchOverlay from '../pages/Search/SearchOverlay';
 
 const Navigation = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [activeDropdown, setActiveDropdown] = useState(null);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
   const navRef = useRef(null);
 
   const toggleMenu = () => {
@@ -23,6 +25,14 @@ const Navigation = () => {
     } else {
       setActiveDropdown(dropdown);
     }
+  };
+
+  const openSearch = () => {
+    setIsSearchOpen(true);
+  };
+
+  const closeSearch = () => {
+    setIsSearchOpen(false);
   };
 
   // Close dropdown when clicking outside
@@ -60,163 +70,181 @@ const Navigation = () => {
   ];
 
   return (
-    <nav className="flex flex-col z-50 px-4 sticky top-0 md:px-8 py-4" ref={navRef}>
-      <div className="flex items-center justify-between w-full">
-        <img className="w-32 md:w-1/5 h-auto bg-[#e0c1bf]" src={logo} alt="Enchanted Weddings Logo" />
-        
-        {/* Desktop Navigation */}
-        <div className="hidden md:flex flex-1 flex-wrap items-center justify-between bg-[#fdfcf9] border border-[#EAEAEA] rounded-lg ml-8 px-4 py-2 relative">
-          <div></div>
-          {/* Điều chỉnh gap khi ở kích thước màn hình khác nhau */}
-          <ul className="flex flex-wrap items-center gap-3 xl:gap-20 lg:gap-10 md:gap-6">
-            <li className="text-[#C3937C] hover:text-[#6164bc] cursor-pointer text-sm lg:text-base">Home</li>
-            <li 
-              className="flex items-center text-[#C3937C] hover:text-[#6164bc] cursor-pointer text-sm lg:text-base relative"
-              onClick={() => toggleDropdown('category')}
-            >
-              <span>Category</span>
-              {activeDropdown === 'category' ? 
-                <ChevronUp className="ml-1 w-4 h-4" /> : 
-                <ChevronDown className="ml-1 w-4 h-4" />
-              }
+    <>
+      <nav className="flex flex-col z-10 sticky top-0 px-4 md:px-8 py-4" ref={navRef}>
+        <div className="flex items-center justify-between w-full">
+          <img className="w-32 md:w-1/5 h-auto bg-[#e0c1bf]" src={logo} alt="Enchanted Weddings Logo" />
+          
+          {/* Desktop Navigation */}
+          <div className="hidden md:flex flex-1 flex-wrap items-center justify-between bg-[#fdfcf9] border border-[#EAEAEA] rounded-lg ml-8 px-4 py-2 relative">
+            <div></div>
+            {/* Điều chỉnh gap khi ở kích thước màn hình khác nhau */}
+            <ul className="flex flex-wrap items-center gap-3 xl:gap-20 lg:gap-10 md:gap-6">
+              <li className="text-[#C3937C] hover:text-[#6164bc] cursor-pointer text-sm lg:text-base">Home</li>
+              <li 
+                className="flex items-center text-[#C3937C] hover:text-[#6164bc] cursor-pointer text-sm lg:text-base relative"
+                onClick={() => toggleDropdown('category')}
+              >
+                <span>Category</span>
+                {activeDropdown === 'category' ? 
+                  <ChevronUp className="ml-1 w-4 h-4" /> : 
+                  <ChevronDown className="ml-1 w-4 h-4" />
+                }
+                
+                {/* Category dropdown panel for desktop */}
+                {activeDropdown === 'category' && (
+                  <div className="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 z-50">
+                    <DropdownPanel 
+                      items={categoryItems} 
+                      imageUrl="./pic16.jpg" 
+                      altText="Category image"
+                    />
+                  </div>
+                )}
+              </li>
+              <li 
+                className="flex items-center text-[#C3937C] hover:text-[#6164bc] cursor-pointer text-sm lg:text-base relative"
+                onClick={() => toggleDropdown('services')}
+              >
+                <span>Services</span>
+                {activeDropdown === 'services' ? 
+                  <ChevronUp className="ml-1 w-4 h-4" /> : 
+                  <ChevronDown className="ml-1 w-4 h-4" />
+                }
+                
+                {/* Services dropdown panel for desktop */}
+                {activeDropdown === 'services' && (
+                  <div className="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 z-50">
+                    <DropdownPanel 
+                      items={servicesItems} 
+                      imageUrl="./pic16.jpg" 
+                      altText="Services image"
+                    />
+                  </div>
+                )}
+              </li>
+              <li className="text-[#C3937C] hover:text-[#6164bc] cursor-pointer text-sm lg:text-base">About</li>
+              <li className="text-[#C3937C] hover:text-[#6164bc] cursor-pointer text-sm lg:text-base">Blog</li>
+              <li className="text-[#C3937C] hover:text-[#6164bc] cursor-pointer text-sm lg:text-base">Contact</li>
+            </ul>
+            
+            <div className="flex items-center gap-2 lg:gap-4">
+              <img 
+                className="w-5 h-8 cursor-pointer" 
+                src={searchIcon} 
+                alt="Search Icon" 
+                onClick={openSearch}
+              />
+              <img className="w-4 h-8 cursor-pointer lg:w-5" src={profileIcon} alt="Profile Icon" />
+              <img className="w-5 h-8 cursor-pointer" src={cartIcon} alt="Cart Icon" />
+            </div>
+          </div>
+
+          {/* Mobile Hamburger Button */}
+          <button 
+            className="md:hidden flex flex-col justify-center items-center gap-1.5 p-2"
+            onClick={toggleMenu}
+            aria-label="Toggle menu"
+          >
+            <span className={`block w-6 h-0.5 bg-[#C3937C] transition-transform duration-300 ${isMenuOpen ? 'rotate-45 translate-y-2' : ''}`}></span>
+            <span className={`block w-6 h-0.5 bg-[#C3937C] transition-opacity duration-300 ${isMenuOpen ? 'opacity-0' : 'opacity-100'}`}></span>
+            <span className={`block w-6 h-0.5 bg-[#C3937C] transition-transform duration-300 ${isMenuOpen ? '-rotate-45 -translate-y-2' : ''}`}></span>
+          </button>
+        </div>
+
+        {/* Mobile Menu Dropdown - Positioned Absolutely */}
+        <div 
+          className={`md:hidden absolute top-full left-0 right-0 bg-[#fdfcf9] border border-[#EAEAEA] rounded-lg mt-2 shadow-lg transition-all duration-300 overflow-hidden z-50 ${
+            isMenuOpen ? 'max-h-screen opacity-100' : 'max-h-0 opacity-0 pointer-events-none'
+          } mx-4`}
+        >
+          {/* Icons at the top */}
+          <div className="flex items-center justify-center gap-8 py-4 border-b border-[#EAEAEA]">
+            <img 
+              className="w-6 h-8 cursor-pointer" 
+              src={searchIcon} 
+              alt="Search Icon" 
+              onClick={() => {
+                openSearch();
+                setIsMenuOpen(false);
+              }}
+            />
+            <img className="w-5 h-8 cursor-pointer" src={profileIcon} alt="Profile Icon" />
+            <img className="w-6 h-8 cursor-pointer" src={cartIcon} alt="Cart Icon" />
+          </div>
+          
+          {/* Navigation links for mobile */}
+          <ul className="flex flex-col items-center py-4">
+            <li className="text-[#C3937C] hover:text-[#6164bc] cursor-pointer py-3 w-full text-center 
+                          active:bg-[#f8f1e8] transition-colors duration-200">Home</li>
+            
+            {/* Category dropdown for mobile */}
+            <li className="w-full">
+              <div 
+                className="flex items-center justify-center text-[#C3937C] hover:text-[#6164bc] cursor-pointer py-3
+                          active:bg-[#f8f1e8] transition-colors duration-200"
+                onClick={() => toggleDropdown('category-mobile')}
+              >
+                <span>Category</span>
+                {activeDropdown === 'category-mobile' ? 
+                  <ChevronUp className="ml-1 w-4 h-4" /> : 
+                  <ChevronDown className="ml-1 w-4 h-4" />
+                }
+              </div>
               
-              {/* Category dropdown panel for desktop */}
-              {activeDropdown === 'category' && (
-                <div className="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 z-50">
+              {/* Mobile Category dropdown content */}
+              {activeDropdown === 'category-mobile' && (
+                <div className="px-4 py-2 bg-white rounded-lg mt-1 mb-2 shadow-inner mx-4">
                   <DropdownPanel 
                     items={categoryItems} 
-                    imageUrl="./pic16.jpg" 
+                    imageUrl="./pic14.jpg" 
                     altText="Category image"
+                    isMobile={true}
                   />
                 </div>
               )}
             </li>
-            <li 
-              className="flex items-center text-[#C3937C] hover:text-[#6164bc] cursor-pointer text-sm lg:text-base relative"
-              onClick={() => toggleDropdown('services')}
-            >
-              <span>Services</span>
-              {activeDropdown === 'services' ? 
-                <ChevronUp className="ml-1 w-4 h-4" /> : 
-                <ChevronDown className="ml-1 w-4 h-4" />
-              }
+            
+            {/* Services dropdown for mobile */}
+            <li className="w-full">
+              <div 
+                className="flex items-center justify-center text-[#C3937C] hover:text-[#6164bc] cursor-pointer py-3
+                          active:bg-[#f8f1e8] transition-colors duration-200"
+                onClick={() => toggleDropdown('services-mobile')}
+              >
+                <span>Services</span>
+                {activeDropdown === 'services-mobile' ? 
+                  <ChevronUp className="ml-1 w-4 h-4" /> : 
+                  <ChevronDown className="ml-1 w-4 h-4" />
+                }
+              </div>
               
-              {/* Services dropdown panel for desktop */}
-              {activeDropdown === 'services' && (
-                <div className="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 z-50">
+              {/* Mobile Services dropdown content */}
+              {activeDropdown === 'services-mobile' && (
+                <div className="px-4 py-2 bg-white rounded-lg mt-1 mb-2 shadow-inner mx-4">
                   <DropdownPanel 
                     items={servicesItems} 
-                    imageUrl="./pic16.jpg" 
+                    imageUrl="./pic14.jpg" 
                     altText="Services image"
+                    isMobile={true}
                   />
                 </div>
               )}
             </li>
-            <li className="text-[#C3937C] hover:text-[#6164bc] cursor-pointer text-sm lg:text-base">About</li>
-            <li className="text-[#C3937C] hover:text-[#6164bc] cursor-pointer text-sm lg:text-base">Blog</li>
-            <li className="text-[#C3937C] hover:text-[#6164bc] cursor-pointer text-sm lg:text-base">Contact</li>
+            
+            <li className="text-[#C3937C] hover:text-[#6164bc] cursor-pointer py-3 w-full text-center
+                          active:bg-[#f8f1e8] transition-colors duration-200">About</li>
+            <li className="text-[#C3937C] hover:text-[#6164bc] cursor-pointer py-3 w-full text-center
+                          active:bg-[#f8f1e8] transition-colors duration-200">Blog</li>
+            <li className="text-[#C3937C] hover:text-[#6164bc] cursor-pointer py-3 w-full text-center
+                          active:bg-[#f8f1e8] transition-colors duration-200">Contact</li>
           </ul>
-          
-          <div className="flex items-center gap-2 lg:gap-4">
-            <img className="w-5 h-8 cursor-pointer" src={searchIcon} alt="Search Icon" />
-            <img className="w-4 h-8 cursor-pointer lg:w-5" src={profileIcon} alt="Profile Icon" />
-            <img className="w-5 h-8 cursor-pointer" src={cartIcon} alt="Cart Icon" />
-          </div>
         </div>
+      </nav>
 
-        {/* Mobile Hamburger Button */}
-        <button 
-          className="md:hidden flex flex-col justify-center items-center gap-1.5 p-2"
-          onClick={toggleMenu}
-          aria-label="Toggle menu"
-        >
-          <span className={`block w-6 h-0.5 bg-[#C3937C] transition-transform duration-300 ${isMenuOpen ? 'rotate-45 translate-y-2' : ''}`}></span>
-          <span className={`block w-6 h-0.5 bg-[#C3937C] transition-opacity duration-300 ${isMenuOpen ? 'opacity-0' : 'opacity-100'}`}></span>
-          <span className={`block w-6 h-0.5 bg-[#C3937C] transition-transform duration-300 ${isMenuOpen ? '-rotate-45 -translate-y-2' : ''}`}></span>
-        </button>
-      </div>
-
-      {/* Mobile Menu Dropdown - Positioned Absolutely */}
-      <div 
-        className={`md:hidden absolute top-full left-0 right-0 bg-[#fdfcf9] border border-[#EAEAEA] rounded-lg mt-2 shadow-lg transition-all duration-300 overflow-hidden z-50 ${
-          isMenuOpen ? 'max-h-screen opacity-100' : 'max-h-0 opacity-0 pointer-events-none'
-        } mx-4`}
-      >
-        {/* Icons at the top */}
-        <div className="flex items-center justify-center gap-8 py-4 border-b border-[#EAEAEA]">
-          <img className="w-6 h-8 cursor-pointer" src={searchIcon} alt="Search Icon" />
-          <img className="w-5 h-8 cursor-pointer" src={profileIcon} alt="Profile Icon" />
-          <img className="w-6 h-8 cursor-pointer" src={cartIcon} alt="Cart Icon" />
-        </div>
-        
-        {/* Navigation links for mobile */}
-        <ul className="flex flex-col items-center py-4">
-          <li className="text-[#C3937C] hover:text-[#6164bc] cursor-pointer py-3 w-full text-center 
-                        active:bg-[#f8f1e8] transition-colors duration-200">Home</li>
-          
-          {/* Category dropdown for mobile */}
-          <li className="w-full">
-            <div 
-              className="flex items-center justify-center text-[#C3937C] hover:text-[#6164bc] cursor-pointer py-3
-                        active:bg-[#f8f1e8] transition-colors duration-200"
-              onClick={() => toggleDropdown('category-mobile')}
-            >
-              <span>Category</span>
-              {activeDropdown === 'category-mobile' ? 
-                <ChevronUp className="ml-1 w-4 h-4" /> : 
-                <ChevronDown className="ml-1 w-4 h-4" />
-              }
-            </div>
-            
-            {/* Mobile Category dropdown content */}
-            {activeDropdown === 'category-mobile' && (
-              <div className="px-4 py-2 bg-white rounded-lg mt-1 mb-2 shadow-inner mx-4">
-                <DropdownPanel 
-                  items={categoryItems} 
-                  imageUrl="./pic14.jpg" 
-                  altText="Category image"
-                  isMobile={true}
-                />
-              </div>
-            )}
-          </li>
-          
-          {/* Services dropdown for mobile */}
-          <li className="w-full">
-            <div 
-              className="flex items-center justify-center text-[#C3937C] hover:text-[#6164bc] cursor-pointer py-3
-                        active:bg-[#f8f1e8] transition-colors duration-200"
-              onClick={() => toggleDropdown('services-mobile')}
-            >
-              <span>Services</span>
-              {activeDropdown === 'services-mobile' ? 
-                <ChevronUp className="ml-1 w-4 h-4" /> : 
-                <ChevronDown className="ml-1 w-4 h-4" />
-              }
-            </div>
-            
-            {/* Mobile Services dropdown content */}
-            {activeDropdown === 'services-mobile' && (
-              <div className="px-4 py-2 bg-white rounded-lg mt-1 mb-2 shadow-inner mx-4">
-                <DropdownPanel 
-                  items={servicesItems} 
-                  imageUrl="./pic14.jpg" 
-                  altText="Services image"
-                  isMobile={true}
-                />
-              </div>
-            )}
-          </li>
-          
-          <li className="text-[#C3937C] hover:text-[#6164bc] cursor-pointer py-3 w-full text-center
-                        active:bg-[#f8f1e8] transition-colors duration-200">About</li>
-          <li className="text-[#C3937C] hover:text-[#6164bc] cursor-pointer py-3 w-full text-center
-                        active:bg-[#f8f1e8] transition-colors duration-200">Blog</li>
-          <li className="text-[#C3937C] hover:text-[#6164bc] cursor-pointer py-3 w-full text-center
-                        active:bg-[#f8f1e8] transition-colors duration-200">Contact</li>
-        </ul>
-      </div>
-    </nav>
+      {/* Search Overlay */}
+      <SearchOverlay isOpen={isSearchOpen} onClose={closeSearch} />
+    </>
   );
 };
 

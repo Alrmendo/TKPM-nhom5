@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { X, Search as SearchIcon } from 'lucide-react';
-import logo from '../assets/LOGO.svg';
 
 // Dummy data for demonstration
 const dummyDresses = [
