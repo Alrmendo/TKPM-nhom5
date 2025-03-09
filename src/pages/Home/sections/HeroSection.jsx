@@ -8,7 +8,7 @@ const HeroSection = () => {
       {/* Desktop Layout - Hidden on mobile screens */}
       <div className="hidden xl:block w-full h-full">
          {/* Text content */}
-         <div className="md:w-1/2">
+         <div className="md:w-1/2 mt-30">
           <h1 className="text-4xl font-bold text-[#C3937C] mb-4">
             Here. Begins The <br/> Journey
           </h1>
@@ -22,10 +22,10 @@ const HeroSection = () => {
         {/* Image placeholder (Hero Dress) */}
         <div className="flex flex-col justify-center md:w-1/2 mt-8 md:mt-0 ">
           
-          <div className="absolute top-0 right-125">
+          <div className="absolute top-0 right-[470px]">
             <SatisfiedCounterBox end={2564} />
           </div>
-          <div className='absolute top-0 right-35'>
+          <div className='absolute top-0 right-[130px]'>
           <img
               src="./pic3.jpg"
               alt="Wedding Dress"
@@ -36,7 +36,7 @@ const HeroSection = () => {
             />
           </div>
           
-          <div className="pt-[120px]">
+          <div className="absolute top-[350px] right-[470px]">
             <img
               src="./pic4.jpg"
               alt="Wedding Dress"
@@ -50,7 +50,7 @@ const HeroSection = () => {
             />
           </div>                     
         </div>
-        <div className='absolute top-60 right-35'>
+        <div className='absolute top-60 right-[130px]'>
             <img
               src="./pic1.jpg"
               alt="Wedding Dress"
@@ -62,7 +62,7 @@ const HeroSection = () => {
             /> 
         </div>
            
-        <div className="absolute top-150 right-35">
+        <div className="absolute top-150 right-[130px]">
             <RentedCounterBox end={1884} />
         </div>
       </div>

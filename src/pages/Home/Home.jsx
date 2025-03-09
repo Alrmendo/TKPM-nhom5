@@ -14,7 +14,7 @@ import TestimonialsSection from './sections/TestimonialsSection';
 
 const Home = () => {
   return (
-    <div className="relative flex flex-col min-h-screen">
+    <div className="relative flex flex-col min-h-screen overflow-x-hidden">
       
       <Navigation />
 
