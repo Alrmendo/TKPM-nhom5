@@ -1,4 +1,3 @@
-import React from 'react';
 import logo from '../assets/LOGO.svg';
 
 export default function Footer() {
@@ -89,6 +88,16 @@ export default function Footer() {
               <p>Copyright © 2025. All rights reserved.</p>
             </div>
           </div>
+        </div>
+
+        <div className="flex justify-center mt-8 pt-8 border-t border-[#eaeaea]">
+          <div className="mb-6">
+            <img src={logo} alt="Enchanted Weddings" className="h-16 w-auto mx-auto" />
+          </div>
+        </div>
+
+        <div className="text-center text-sm text-[#868686]">Copyright © 2024. All rights reserved.</div>
+      </div>
     </footer>
   );
 }
