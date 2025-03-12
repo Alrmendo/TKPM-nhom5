@@ -71,9 +71,9 @@ const Navigation = () => {
 
   return (
     <>
-      <nav className="flex flex-col z-10 sticky top-0 px-4 md:px-8 py-4" ref={navRef}>
+      <nav className="flex flex-col z-10 sticky top-0 px-4 md:px-8 py-4 " ref={navRef}>
         <div className="flex items-center justify-between w-full">
-          <img className="w-32 md:w-1/5 h-auto bg-[#e0c1bf]" src={logo} alt="Enchanted Weddings Logo" />
+          <img className="w-[80px] md:w-1/5 h-[80px]" src={logo} alt="Enchanted Weddings Logo" />
           
           {/* Desktop Navigation */}
           <div className="hidden md:flex flex-1 flex-wrap items-center justify-between bg-[#fdfcf9] border border-[#EAEAEA] rounded-lg ml-8 px-4 py-2 relative">

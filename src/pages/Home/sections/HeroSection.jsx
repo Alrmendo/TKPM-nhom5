@@ -4,7 +4,7 @@ import RentedCounterBox from '../components/RentedCounterBox';
 
 const HeroSection = () => {
   return (
-    <section className="flex flex-col items-center px-4 md:px-8 py-8 md:py-16 bg-gray-50 overflow-hidden min-h-screen">
+    <section className="flex flex-col items-center px-4 md:px-8 py-8 md:py-16 overflow-hidden min-h-screen">
       {/* Desktop Layout - Hidden on mobile screens */}
       <div className="hidden xl:block w-full h-full">
          {/* Text content */}
