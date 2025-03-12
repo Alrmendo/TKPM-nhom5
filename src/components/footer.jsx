@@ -1,140 +1,91 @@
-import { Instagram, Facebook, Youtube } from 'lucide-react';
 import logo from '../assets/LOGO.svg';
 
 export default function Footer() {
   return (
-    <footer className="bg-[#fbf8f1] mt-20 pt-12 pb-6">
-      <div className="container mx-auto px-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8 mb-12">
-          <div className="lg:col-span-1">
-            <h3 className="font-medium mb-4">The Services</h3>
-            <ul className="space-y-3 text-sm">
-              <li>
-                <a href="#" className="text-[#868686] hover:text-[#292d32]">
-                  How it works
-                </a>
-              </li>
-              <li>
-                <a href="#" className="text-[#868686] hover:text-[#292d32]">
-                  FAQ's
-                </a>
-              </li>
-              <li>
-                <a href="#" className="text-[#868686] hover:text-[#292d32]">
-                  Our cleaning process
-                </a>
-              </li>
-              <li>
-                <a href="#" className="text-[#868686] hover:text-[#292d32]">
-                  Professional consultation
-                </a>
-              </li>
-              <li>
-                <a href="#" className="text-[#868686] hover:text-[#292d32]">
-                  Personalized dress for you
-                </a>
-              </li>
-              <li>
-                <a href="#" className="text-[#868686] hover:text-[#292d32]">
-                  Return policy
-                </a>
-              </li>
-              <li>
-                <a href="#" className="text-[#868686] hover:text-[#292d32]">
-                  Customize your dress size
-                </a>
-              </li>
-            </ul>
-          </div>
-
-          <div className="lg:col-span-1">
-            <h3 className="font-medium mb-4">The Company</h3>
-            <ul className="space-y-3 text-sm">
-              <li>
-                <a href="#" className="text-[#868686] hover:text-[#292d32]">
-                  Privacy policy
-                </a>
-              </li>
-              <li>
-                <a href="#" className="text-[#868686] hover:text-[#292d32]">
-                  Personal information
-                </a>
-              </li>
-              <li>
-                <a href="#" className="text-[#868686] hover:text-[#292d32]">
-                  Terms of service
-                </a>
-              </li>
-              <li>
-                <a href="#" className="text-[#868686] hover:text-[#292d32]">
-                  Contact us
-                </a>
-              </li>
-              <li>
-                <a href="#" className="text-[#868686] hover:text-[#292d32]">
-                  Community
-                </a>
-              </li>
-            </ul>
-          </div>
-
-          <div className="lg:col-span-1">
-            <h3 className="font-medium mb-4">About us</h3>
-            <ul className="space-y-3 text-sm">
-              <li>
-                <a href="#" className="text-[#868686] hover:text-[#292d32]">
-                  Our story
-                </a>
-              </li>
-              <li>
-                <a href="#" className="text-[#868686] hover:text-[#292d32]">
-                  Sustainability
-                </a>
-              </li>
-              <li>
-                <a href="#" className="text-[#868686] hover:text-[#292d32]">
-                  Careers
-                </a>
-              </li>
-            </ul>
-          </div>
-
-          <div className="lg:col-span-1">
-            <h3 className="font-medium mb-4">Supports</h3>
-            <ul className="space-y-3 text-sm">
-              <li>
-                <a href="#" className="text-[#868686] hover:text-[#292d32]">
-                  Email us
-                </a>
-              </li>
-              <li>
-                <a href="#" className="text-[#868686] hover:text-[#292d32]">
-                  Help and contact
-                </a>
-              </li>
-            </ul>
-          </div>
-
-          <div className="lg:col-span-1">
-            <h3 className="font-medium mb-4">Mobile app</h3>
-            <a href="#" className="inline-block mb-6">
-              <img src="/placeholder.svg?height=40&width=140" alt="Download on the App Store" width={140} height={40} className="h-10 w-auto" />
-            </a>
-
-            <h3 className="font-medium mb-2">Get 5% off</h3>
-            <button className="bg-[#c3937c] text-white rounded-full px-4 py-2 text-sm mb-6">Subscribe Now</button>
-
-            <h3 className="font-medium mb-2">Stay connected with</h3>
-            <div className="flex space-x-4">
-              <a href="#" aria-label="Instagram">
-                <Instagram className="h-5 w-5 text-[#292d32]" />
-              </a>
-              <a href="#" aria-label="Facebook">
-                <Facebook className="h-5 w-5 text-[#292d32]" />
-              </a>
-              <a href="#" aria-label="YouTube">
-                <Youtube className="h-5 w-5 text-[#292d32]" />
-              </a>
+    <footer className="bg-[#EAD9C9]">
+          <div className="container mx-auto px-4 py-8">
+            {/* Logo */}
+            <div className="flex items-center justify-center mb-8">
+              <img className="w-1/5 h-auto" src={logo} alt="Enchanted Weddings Logo" />
+            </div>
+    
+            {/* Nội dung chính */}
+            <div className="grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-8">
+              {/* 4 cột (text-left) */}
+              <div className="grid grid-cols-2 md:grid-cols-4 ml-20 gap-4">
+                <div className="text-left">
+                  <h3 className="font-semibold mb-4 text-gray-800">The Services</h3>
+                  <ul className="space-y-2 text-sm text-gray-600">
+                    <li className='cursor-pointer hover:text-[#6164bc]'>How it works</li>
+                    <li className='cursor-pointer hover:text-[#6164bc]'>FAQ</li>
+                    <li className='cursor-pointer hover:text-[#6164bc]'>Our cleansing process</li>
+                    <li className='cursor-pointer hover:text-[#6164bc]'>Professional consultation</li>
+                    <li className='cursor-pointer hover:text-[#6164bc]'>Personalized dress for you</li>
+                    <li className='cursor-pointer hover:text-[#6164bc]'>Return policy</li>
+                    <li className='cursor-pointer hover:text-[#6164bc]'>Customize your dress size</li>
+                  </ul>
+                </div>
+                <div className="text-left">
+                  <h3 className="font-semibold mb-4 text-gray-800">The Company</h3>
+                  <ul className="space-y-2 text-sm text-gray-600">
+                    <li className='cursor-pointer hover:text-[#6164bc]'>Privacy policy</li>
+                    <li className='cursor-pointer hover:text-[#6164bc]'>Personal information</li>
+                    <li className='cursor-pointer hover:text-[#6164bc]'>Terms of service</li>
+                    <li className='cursor-pointer hover:text-[#6164bc]'>Contact us</li>
+                    <li className='cursor-pointer hover:text-[#6164bc]'>Community</li>
+                  </ul>
+                </div>
+                <div className="text-left">
+                  <h3 className="font-semibold mb-4 text-gray-800">About us</h3>
+                  <ul className="space-y-2 text-sm text-gray-600">
+                    <li className='cursor-pointer hover:text-[#6164bc]'>Our story</li>
+                    <li className='cursor-pointer hover:text-[#6164bc]'>Sustainability</li>
+                    <li className='cursor-pointer hover:text-[#6164bc]'>Careers</li>
+                  </ul>
+                </div>
+                <div className="text-left">
+                  <h3 className="font-semibold mb-4 text-gray-800">Supports</h3>
+                  <ul className="space-y-2 text-sm text-gray-600">
+                    <li className='cursor-pointer hover:text-[#6164bc]'>Email us</li>
+                    <li className='cursor-pointer hover:text-[#6164bc]'>Help and contact</li>
+                  </ul>
+                </div>
+              </div>
+    
+              {/* 3 khối bên phải (ta có thể để text-left hoặc text-center) */}
+              <div className=" flex flex-col items-start gap-8 md:flex-row md:items-center lg:flex-col lg:items-start justify-center">
+                <div className="text-left">
+                  <h4 className="font-semibold mb-4 text-[#000000]">Mobile app</h4>
+                  <button className="bg-[#C3937C] px-4 py-2 rounded-full shadow-md hover:bg-gray-100 transition-colors duration-200 flex items-center gap-2 cursor-pointer">
+                    <img src="icon9.png" alt="AppleIcon"/>
+                    <span className='text-[#FFFFFF] text-[16px]'>Download on the</span>
+                    <span className='text-[#FFFFFF] text-[16px] font-[600]'>App Store</span>
+                  </button>
+                </div>
+    
+                <div className="text-left">
+                  <h4 className="font-semibold mb-4 text-gray-800">Get 5% off</h4>
+                  <button className="bg-[#C3937C] text-white px-4 py-2 rounded-full shadow-md hover:bg-gray-100 transition-colors duration-200 text-sm cursor-pointer">
+                    Subscribe Now
+                  </button>
+                </div>
+    
+                <div className="text-left">
+                  <h4 className="font-semibold mb-4 text-gray-800">
+                    Stay connected with
+                  </h4>
+                  <div className="flex items-center gap-3">
+                    <img className="cursor-pointer" src="icon10.png" alt="AppleIcon"/>
+                    <img className="cursor-pointer" src="icon11.png" alt="AppleIcon"/>
+                    <img className="cursor-pointer" src="icon12.png" alt="AppleIcon"/>
+                  </div>
+                </div>
+              </div>
+    
+            </div>
+    
+            <div className="mt-8 text-center text-sm text-gray-500">
+              <p>Copyright © 2025. All rights reserved.</p>
             </div>
           </div>
         </div>
