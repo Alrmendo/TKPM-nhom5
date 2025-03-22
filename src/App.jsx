@@ -10,6 +10,7 @@ const Information = lazy(() => import('./pages/Payment/Information'));
 const Shipping = lazy(() => import('./pages/Payment/Shipping'));
 const Checkout = lazy(() => import('./pages/Payment/Checkout'));
 const Successful = lazy(() => import('./pages/Payment/Successful'));
+const SearchOverlay = lazy(() => import('./pages/Search/SearchOverlay'))
 
 // Cấu hình route trong một mảng
 const routes = [
@@ -21,6 +22,7 @@ const routes = [
   { path: '/payment-shipping', element: <Shipping /> },
   { path: '/payment-checkout', element: <Checkout /> },
   { path: '/payment-successful', element: <Successful /> },
+  { path: '/search', element: <SearchOverlay/>},
 ];
 
 function App() {

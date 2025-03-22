@@ -4,14 +4,14 @@ import profileIcon from '../assets/profile.svg';
 import searchIcon from '../assets/search.svg';
 import cartIcon from '../assets/cart.svg';
 import { ChevronDown, ChevronUp } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import DropdownPanel from './dropdownPanel';
-import SearchOverlay from '../pages/Search/SearchOverlay';
 
 const Navigation = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [activeDropdown, setActiveDropdown] = useState(null);
-  const [isSearchOpen, setIsSearchOpen] = useState(false);
   const navRef = useRef(null);
+  const navigate = useNavigate();
 
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen);
@@ -27,13 +27,9 @@ const Navigation = () => {
     }
   };
 
-  const openSearch = () => {
-    setIsSearchOpen(true);
-  };
-
-  const closeSearch = () => {
-    setIsSearchOpen(false);
-  };
+  const goToSearchPage = () => {
+    navigate('/search');
+  }
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -133,7 +129,7 @@ const Navigation = () => {
                 className="w-5 h-8 cursor-pointer" 
                 src={searchIcon} 
                 alt="Search Icon" 
-                onClick={openSearch}
+                onClick={goToSearchPage}
               />
               <img className="w-4 h-8 cursor-pointer lg:w-5" src={profileIcon} alt="Profile Icon" />
               <img className="w-5 h-8 cursor-pointer" src={cartIcon} alt="Cart Icon" />
@@ -165,7 +161,7 @@ const Navigation = () => {
               src={searchIcon} 
               alt="Search Icon" 
               onClick={() => {
-                openSearch();
+                goToSearchPage();
                 setIsMenuOpen(false);
               }}
             />
@@ -241,9 +237,6 @@ const Navigation = () => {
           </ul>
         </div>
       </nav>
-
-      {/* Search Overlay */}
-      <SearchOverlay isOpen={isSearchOpen} onClose={closeSearch} />
     </>
   );
 };

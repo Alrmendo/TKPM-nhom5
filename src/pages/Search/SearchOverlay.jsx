@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { X, Search as SearchIcon } from 'lucide-react';
+import { useNavigate } from 'react-router-dom'
 
 // Dummy data for demonstration
 const dummyDresses = [
@@ -131,12 +132,22 @@ const LoadingPanel = () => {
   );
 };
 
-const SearchOverlay = ({ isOpen, onClose }) => {
+const SearchOverlay = ({ onClose }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [isSearching, setIsSearching] = useState(false);
   const [searchResults, setSearchResults] = useState([]);
   const [hasSearched, setHasSearched] = useState(false);
   const searchInputRef = useRef(null);
+
+  const navigate = useNavigate();
+  const handleClose = () => {
+    if (onClose) {
+      onClose();
+    }
+    else {
+      navigate(-1);
+    } 
+  }
 
   // Handle search submission
   const handleSearch = (e) => {
@@ -158,33 +169,26 @@ const SearchOverlay = ({ isOpen, onClose }) => {
 
   // Focus the search input when the overlay opens
   useEffect(() => {
-    if (isOpen && searchInputRef.current) {
+    if (searchInputRef.current) {
       setTimeout(() => {
         searchInputRef.current.focus();
       }, 100);
     }
-  }, [isOpen]);
+  }, []);
 
   // Prevent scrolling when overlay is open
   useEffect(() => {
-    if (isOpen) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = 'auto';
-    }
-    
+    document.body.style.overflow = 'hidden';
     return () => {
       document.body.style.overflow = 'auto';
     };
-  }, [isOpen]);
-
-  if (!isOpen) return null;
+  }, []);
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-70 z-50 overflow-y-auto flex flex-col items-center pt-20">
       {/* Close button */}
       <button 
-        onClick={onClose}
+        onClick={handleClose}
         className="absolute top-10 right-10 text-white hover:text-gray-300 transition"
         aria-label="Close search"
       >
@@ -204,7 +208,7 @@ const SearchOverlay = ({ isOpen, onClose }) => {
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="block w-full pl-10 pr-3 py-3 border-b-2 border-white bg-transparent text-white placeholder-gray-300 focus:outline-none focus:border-[#C3937C] text-lg"
-              placeholder="Search"
+              placeholder="Press enter to search"
             />
           </div>
         </form>
