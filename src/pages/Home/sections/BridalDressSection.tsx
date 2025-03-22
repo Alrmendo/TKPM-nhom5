@@ -1,6 +1,7 @@
 import React from 'react';
 
-const BridalDressSection = () => {
+// Định nghĩa component BridalDressSection với kiểu React.FC
+const BridalDressSection: React.FC = () => {
   return (
     <section className="flex flex-col md:flex-row justify-between bg-[#FBF8F1] py-16 px-4 md:px-8">
       {/* Dress Card 1 */}

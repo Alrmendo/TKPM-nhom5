@@ -4,22 +4,22 @@ import profileIcon from '../assets/profile.svg';
 import searchIcon from '../assets/search.svg';
 import cartIcon from '../assets/cart.svg';
 import { ChevronDown, ChevronUp } from 'lucide-react';
-import DropdownPanel from './dropdownPanel';
-import SearchOverlay from '../pages/Search/SearchOverlay';
+import { useNavigate } from 'react-router-dom';
+import DropdownPanel from './dropDownPanel';
 
-const Navigation = () => {
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [activeDropdown, setActiveDropdown] = useState(null);
-  const [isSearchOpen, setIsSearchOpen] = useState(false);
-  const navRef = useRef(null);
+const Navigation: React.FC = () => {
+  const [isMenuOpen, setIsMenuOpen] = useState<boolean>(false);
+  const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
+  const navRef = useRef<HTMLDivElement | null>(null);
+  const navigate = useNavigate();
 
-  const toggleMenu = () => {
+  const toggleMenu = (): void => {
     setIsMenuOpen(!isMenuOpen);
     // Close any active dropdowns when toggling mobile menu
     setActiveDropdown(null);
   };
 
-  const toggleDropdown = (dropdown) => {
+  const toggleDropdown = (dropdown: string): void => {
     if (activeDropdown === dropdown) {
       setActiveDropdown(null);
     } else {
@@ -27,18 +27,14 @@ const Navigation = () => {
     }
   };
 
-  const openSearch = () => {
-    setIsSearchOpen(true);
-  };
-
-  const closeSearch = () => {
-    setIsSearchOpen(false);
-  };
+  const goToSearchPage = (): void => {
+    navigate('/search');
+  }
 
   // Close dropdown when clicking outside
   useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (navRef.current && !navRef.current.contains(event.target)) {
+    const handleClickOutside = (event: MouseEvent): void => {
+      if (navRef.current && !navRef.current.contains(event.target as Node)) {
         setActiveDropdown(null);
       }
     };
@@ -50,7 +46,7 @@ const Navigation = () => {
   }, []);
 
   // Category dropdown content
-  const categoryItems = [
+  const categoryItems: string[] = [
     "Wedding dress",
     "Wedding guest",
     "Formal & evening",
@@ -60,7 +56,7 @@ const Navigation = () => {
   ];
 
   // Services dropdown content (example)
-  const servicesItems = [
+  const servicesItems: string[] = [
     "Wedding Planning",
     "Photography",
     "Venue Booking",
@@ -71,9 +67,9 @@ const Navigation = () => {
 
   return (
     <>
-      <nav className="flex flex-col z-10 sticky top-0 px-4 md:px-8 py-4" ref={navRef}>
+      <nav className="flex flex-col z-10 sticky top-0 px-4 md:px-8 py-4 " ref={navRef}>
         <div className="flex items-center justify-between w-full">
-          <img className="w-32 md:w-1/5 h-auto bg-[#e0c1bf]" src={logo} alt="Enchanted Weddings Logo" />
+          <img className="w-[80px] md:w-1/5 h-[80px]" src={logo} alt="Enchanted Weddings Logo" />
           
           {/* Desktop Navigation */}
           <div className="hidden md:flex flex-1 flex-wrap items-center justify-between bg-[#fdfcf9] border border-[#EAEAEA] rounded-lg ml-8 px-4 py-2 relative">
@@ -133,7 +129,7 @@ const Navigation = () => {
                 className="w-5 h-8 cursor-pointer" 
                 src={searchIcon} 
                 alt="Search Icon" 
-                onClick={openSearch}
+                onClick={goToSearchPage}
               />
               <img className="w-4 h-8 cursor-pointer lg:w-5" src={profileIcon} alt="Profile Icon" />
               <img className="w-5 h-8 cursor-pointer" src={cartIcon} alt="Cart Icon" />
@@ -165,7 +161,7 @@ const Navigation = () => {
               src={searchIcon} 
               alt="Search Icon" 
               onClick={() => {
-                openSearch();
+                goToSearchPage();
                 setIsMenuOpen(false);
               }}
             />
@@ -241,9 +237,6 @@ const Navigation = () => {
           </ul>
         </div>
       </nav>
-
-      {/* Search Overlay */}
-      <SearchOverlay isOpen={isSearchOpen} onClose={closeSearch} />
     </>
   );
 };

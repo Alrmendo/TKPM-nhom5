@@ -1,14 +1,21 @@
-// pages/Home/sections/TestimonialsSection.jsx
 import React, { useState, useEffect } from 'react';
 
-const TestimonialsSection = () => {
-  const testimonials = [
+// Định nghĩa interface cho testimonial
+interface Testimonial {
+  id: number;
+  name: string;
+  feedback: string;
+  avatar: string;
+}
+
+// Component với kiểu React.FC
+const TestimonialsSection: React.FC = () => {
+  const testimonials: Testimonial[] = [
     {
       id: 1,
       name: "Roselina Stepheny",
       feedback:
         "I just wanted to share a quick note and let you know that your company did a really good job. I'm glad I decided to choose or bride as my wedding day, it's really great how easy your website is to update and manage. I never have any problem at all during choosing my dress, receive it and then returned it to you back, in addition whatever you said in your website as a consultation, online ... comes true, I really recommended you to everyone. I never have any problem at all during choosing my dress, receive it and then returned it to you back, in addition whatever you said in your website as a consultation, online ... comes true, I really recommended you to everyone.I never have any problem at all during choosing my dress, receive it and then returned it to you back, in addition whatever you said in your website as a consultation, online ... comes true, I really recommended you to everyone.",
-      // Tạm để link ảnh placeholder, bạn thay link ảnh thật sau:
       avatar: "avt1.jpg",
     },
     {
@@ -83,8 +90,8 @@ const TestimonialsSection = () => {
     },
   ];
 
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [readMore, setReadMore] = useState(false);
+  const [currentIndex, setCurrentIndex] = useState<number>(0);
+  const [readMore, setReadMore] = useState<boolean>(false);
 
   useEffect(() => {
     setReadMore(false);
@@ -120,7 +127,7 @@ const TestimonialsSection = () => {
               onClick={prevTestimonial}
               className="px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-full cursor-pointer"
             >
-              &larr;
+              ←
             </button>
             <div className="flex-1 text-center">
               <div className="max-w-2xl mx-auto">
@@ -149,7 +156,7 @@ const TestimonialsSection = () => {
               onClick={nextTestimonial}
               className="px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-full cursor-pointer"
             >
-              &rarr;
+              →
             </button>
           </div>
         </div>

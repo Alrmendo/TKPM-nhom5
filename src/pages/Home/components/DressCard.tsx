@@ -1,6 +1,20 @@
 import React from 'react';
 
-const DressCard = ({
+// Định nghĩa interface cho props
+interface DressCardProps {
+  imageUrl: string;
+  alt?: string;
+  rating?: number;
+  status?: string;
+  statusColor?: string;
+  title?: string;
+  subtitle?: string;
+  price?: number;
+  priceUnit?: string;
+}
+
+// Component với kiểu dữ liệu
+const DressCard: React.FC<DressCardProps> = ({
   imageUrl, 
   alt = "Wedding Dress", 
   rating = 4.8, 

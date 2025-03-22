@@ -1,11 +1,21 @@
 import React, { useState } from 'react';
 
-const DropdownPanel = ({ items, imageUrl, altText, isMobile = false }) => {
-  const [activeItem, setActiveItem] = useState(null);
+// Định nghĩa interface cho props
+interface DropdownPanelProps {
+  items: string[];          // Mảng các chuỗi
+  imageUrl: string;         // Chuỗi cho URL hình ảnh
+  altText: string;          // Chuỗi cho văn bản thay thế
+  isMobile?: boolean;       // Boolean, optional với giá trị mặc định là false
+}
 
-  const handleItemClick = (index) => {
+// Component với kiểu dữ liệu props đã định nghĩa
+const DropdownPanel: React.FC<DropdownPanelProps> = ({ items, imageUrl, altText, isMobile = false }) => {
+  // State với kiểu number | null
+  const [activeItem, setActiveItem] = useState<number | null>(null);
+
+  // Hàm xử lý click với tham số index kiểu number
+  const handleItemClick = (index: number) => {
     setActiveItem(index);
-    // Thêm code xử lý khi click vào item tại đây
     console.log(`Clicked on: ${items[index]}`);
   };
 
@@ -40,8 +50,9 @@ const DropdownPanel = ({ items, imageUrl, altText, isMobile = false }) => {
             alt={altText}
             className="w-full h-full object-cover"
             onError={(e) => {
-              e.target.src = "/api/placeholder/400/400"; // Fallback to placeholder
-              e.target.alt = "Placeholder image";
+              const target = e.target as HTMLImageElement;
+              target.src = "/api/placeholder/400/400";   // Gán ảnh placeholder khi lỗi
+              target.alt = "Placeholder image";          // Cập nhật alt text
             }}
           />
         </div>

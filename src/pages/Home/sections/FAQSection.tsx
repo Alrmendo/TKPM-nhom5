@@ -1,9 +1,14 @@
 import React, { useState } from "react";
 import { ChevronUpIcon, ChevronDownIcon } from '@heroicons/react/24/solid';
 
+// Định nghĩa kiểu cho mỗi item trong faqData
+interface FAQItem {
+  question: string;
+  answer: string;
+}
 
-// Dữ liệu FAQ mẫu
-const faqData = [
+// Dữ liệu FAQ mẫu với kiểu đã định nghĩa
+const faqData: FAQItem[] = [
   {
     question: "How long does shipping take?",
     answer:
@@ -46,11 +51,12 @@ const faqData = [
   },
 ];
 
-const FAQSection = () => {
-  const [activeIndex, setActiveIndex] = useState(null);
+// Component với kiểu React.FC
+const FAQSection: React.FC = () => {
+  const [activeIndex, setActiveIndex] = useState<number | null>(null);
 
-  // Toggle mở/đóng câu trả lời
-  const toggleFAQ = (index) => {
+  // Hàm toggleFAQ với tham số index kiểu number
+  const toggleFAQ = (index: number) => {
     setActiveIndex((prev) => (prev === index ? null : index));
   };
 
@@ -59,7 +65,7 @@ const FAQSection = () => {
       <div className="container mx-auto px-4">
         {/* Tiêu đề FAQ */}
         <h2 className="text-center text-[#C3937C] text-[32px] sm:text-3xl font-semibold mb-8">
-          FAQ&apos;s
+          FAQ's
         </h2>
 
         {/* Grid 2 cột trên màn hình lớn */}
@@ -102,7 +108,7 @@ const FAQSection = () => {
         <div className="text-center mt-12">
           <h3 className="text-[24px] text-[#000000] font-semibold mb-2">Still Have Question?</h3>
           <p className="text-[#505050] text-[18px] mb-4">
-            Contact us using the information below. We&apos;ll respond promptly
+            Contact us using the information below. We'll respond promptly
             to your inquiries and feedback.
           </p>
 
@@ -110,7 +116,6 @@ const FAQSection = () => {
             Shoot a Direct Message
             <img src="icon8.png" alt="Direct Message Icon" className="w-5 h-5" />
           </button>
-
         </div>
       </div>
     </section>

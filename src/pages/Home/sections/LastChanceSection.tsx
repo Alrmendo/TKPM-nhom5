@@ -1,17 +1,29 @@
-// pages/Home/sections/LastChanceSection.jsx
 import React from 'react';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import 'swiper/css';
 import DressCard from '../components/DressCard';
 
-const LastChanceSection = () => {
-  const cardsLastChance = [
+// Định nghĩa interface cho dữ liệu card
+interface CardData {
+  imageUrl: string;
+  alt: string;
+  rating: number;
+  status: string;
+  statusColor: string;
+  title: string;
+  subtitle: string;
+  price: number;
+}
+
+// Component với kiểu React.FC
+const LastChanceSection: React.FC = () => {
+  const cardsLastChance: CardData[] = [
     {
       imageUrl: "pic14.jpg",
       alt: "Wedding Dress",
       rating: 4.8,
       status: "Available",
-      statusColor:"#6DE588",
+      statusColor: "#6DE588",
       title: "French Lace",
       subtitle: "Modern",
       price: 300,
@@ -21,7 +33,7 @@ const LastChanceSection = () => {
       alt: "Wedding Dress",
       rating: 4.6,
       status: "Unavailable",
-      statusColor:"#e81535",
+      statusColor: "#e81535",
       title: "Sparkling Flowers",
       subtitle: "Romance",
       price: 550,
@@ -31,7 +43,7 @@ const LastChanceSection = () => {
       alt: "Wedding Dress",
       rating: 4.7,
       status: "The Most Rented",
-      statusColor:"#7715e8",
+      statusColor: "#7715e8",
       title: "Elegant",
       subtitle: "Paris",
       price: 400,
@@ -41,7 +53,7 @@ const LastChanceSection = () => {
       alt: "Wedding Dress",
       rating: 4.9,
       status: "The Most Rented",
-      statusColor:"#7715e8",
+      statusColor: "#7715e8",
       title: "The Most Rented",
       subtitle: "Premium",
       price: 600,
@@ -51,7 +63,7 @@ const LastChanceSection = () => {
       alt: "Wedding Dress",
       rating: 4.8,
       status: "Unavailable",
-      statusColor:"#e81535",
+      statusColor: "#e81535",
       title: "Luxury Lace",
       subtitle: "Classic",
       price: 450,

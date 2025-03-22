@@ -1,8 +1,40 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { X, Search as SearchIcon } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+
+// Định nghĩa kiểu dữ liệu cho dress
+interface Dress {
+  id: number;
+  imageUrl: string;
+  rating: number;
+  status: string;
+  statusColor: string;
+  title: string;
+  subtitle: string;
+  price: number;
+  priceUnit: string;
+}
+
+// Định nghĩa kiểu dữ liệu cho props của DressCard
+interface DressCardProps {
+  imageUrl: string;
+  alt?: string;
+  rating?: number;
+  status?: string;
+  statusColor?: string;
+  title?: string;
+  subtitle?: string;
+  price?: number;
+  priceUnit?: string;
+}
+
+// Định nghĩa kiểu dữ liệu cho props của SearchOverlay
+interface SearchOverlayProps {
+  onClose?: () => void;
+}
 
 // Dummy data for demonstration
-const dummyDresses = [
+const dummyDresses: Dress[] = [
   {
     id: 1,
     imageUrl: "./pic14.jpg",
@@ -72,7 +104,7 @@ const dummyDresses = [
 ];
 
 // DressCard component reused from the provided code
-const DressCard = ({
+const DressCard: React.FC<DressCardProps> = ({
   imageUrl, 
   alt = "Wedding Dress", 
   rating = 4.8, 
@@ -122,7 +154,7 @@ const DressCard = ({
 };
 
 // Loading component
-const LoadingPanel = () => {
+const LoadingPanel: React.FC = () => {
   return (
     <div className="bg-white rounded-lg p-8 shadow-lg flex flex-col items-center justify-center">
       <p className="text-lg text-gray-700 mb-4">This might take a few seconds</p>
@@ -131,15 +163,26 @@ const LoadingPanel = () => {
   );
 };
 
-const SearchOverlay = ({ isOpen, onClose }) => {
-  const [searchTerm, setSearchTerm] = useState('');
-  const [isSearching, setIsSearching] = useState(false);
-  const [searchResults, setSearchResults] = useState([]);
-  const [hasSearched, setHasSearched] = useState(false);
-  const searchInputRef = useRef(null);
+const SearchOverlay: React.FC<SearchOverlayProps> = ({ onClose }) => {
+  const [searchTerm, setSearchTerm] = useState<string>('');
+  const [isSearching, setIsSearching] = useState<boolean>(false);
+  const [searchResults, setSearchResults] = useState<Dress[]>([]);
+  const [hasSearched, setHasSearched] = useState<boolean>(false);
+  const searchInputRef = useRef<HTMLInputElement>(null);
+
+  const navigate = useNavigate();
+  
+  const handleClose = (): void => {
+    if (onClose) {
+      onClose();
+    }
+    else {
+      navigate(-1);
+    } 
+  }
 
   // Handle search submission
-  const handleSearch = (e) => {
+  const handleSearch = (e: React.FormEvent): void => {
     e.preventDefault();
     if (!searchTerm.trim()) return;
     
@@ -158,33 +201,26 @@ const SearchOverlay = ({ isOpen, onClose }) => {
 
   // Focus the search input when the overlay opens
   useEffect(() => {
-    if (isOpen && searchInputRef.current) {
+    if (searchInputRef.current) {
       setTimeout(() => {
-        searchInputRef.current.focus();
+        searchInputRef.current?.focus();
       }, 100);
     }
-  }, [isOpen]);
+  }, []);
 
   // Prevent scrolling when overlay is open
   useEffect(() => {
-    if (isOpen) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = 'auto';
-    }
-    
+    document.body.style.overflow = 'hidden';
     return () => {
       document.body.style.overflow = 'auto';
     };
-  }, [isOpen]);
-
-  if (!isOpen) return null;
+  }, []);
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-70 z-50 overflow-y-auto flex flex-col items-center pt-20">
       {/* Close button */}
       <button 
-        onClick={onClose}
+        onClick={handleClose}
         className="absolute top-10 right-10 text-white hover:text-gray-300 transition"
         aria-label="Close search"
       >
@@ -204,7 +240,7 @@ const SearchOverlay = ({ isOpen, onClose }) => {
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="block w-full pl-10 pr-3 py-3 border-b-2 border-white bg-transparent text-white placeholder-gray-300 focus:outline-none focus:border-[#C3937C] text-lg"
-              placeholder="Search"
+              placeholder="Press enter to search"
             />
           </div>
         </form>
