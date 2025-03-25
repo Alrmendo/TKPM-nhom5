@@ -19,6 +19,9 @@ const Successful = lazy(() => import('./pages/Payment/Successful'));
 const SearchOverlay = lazy(() => import('./pages/Search/SearchOverlay'));
 const Measurement = lazy(() => import('./pages/Admin/measurement'));
 const Style = lazy(() => import('./pages/Admin/style'));
+const Photography = lazy(() => import('./pages/Admin/photography'));
+const Deliver = lazy(() => import('./pages/Admin/deliver'));
+const ContactAdmin = lazy(() => import('./pages/Admin/contact_admin'));
 
 // Cấu hình route trong một mảng
 const routes: RouteConfig[] = [
@@ -33,6 +36,9 @@ const routes: RouteConfig[] = [
   { path: '/search', element: <SearchOverlay /> },
   { path: '/admin/measurement', element: <Measurement /> },
   { path: '/admin/style', element: <Style /> },
+  { path: '/admin/photography', element: <Photography /> },
+  { path: '/admin/deliver', element: <Deliver /> },
+  { path: '/admin/contact', element: <ContactAdmin /> },
 ];
 
 const App: React.FC = () => {
