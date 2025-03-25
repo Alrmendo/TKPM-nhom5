@@ -232,9 +232,6 @@ export default function WeddingDressRental() {
   // Secondary tabs data
   const secondaryTabs = ["Photography", "Wedding Dress"]
 
-  // Years array (current year and next 5 years)
-  const years = Array.from({ length: 6 }, (_, i) => (new Date().getFullYear() + i).toString())
-
   // Generate calendar data for a specific month and year
   const generateCalendarData = (month: string, year: string) => {
     const monthIndex = months.indexOf(month)
