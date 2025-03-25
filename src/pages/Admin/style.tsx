@@ -231,6 +231,12 @@ export default function WeddingDressRental() {
       navigate("/admin/style")
     } else if (tab === "Basic measurements") {
       navigate("/admin/measurement")
+    } else if (tab === "Photography") {
+      navigate("/admin/photography")
+    } else if (tab === "Deliver") {
+      navigate("/admin/deliver")
+    } else if (tab === "Contact") {
+      navigate("/admin/contact")
     }
   }
 
