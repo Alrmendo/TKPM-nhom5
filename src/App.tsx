@@ -9,6 +9,7 @@ interface RouteConfig {
 
 // Lazy load các trang
 const Home = lazy(() => import('./pages/Home/Home'));
+const NotFoundPage = lazy(() => import('./pages/404/404'));
 // const PDP = lazy(() => import('./pages/PDP/PDP'));
 // const PCP = lazy(() => import('./pages/PCP/PCP'));
 const Review = lazy(() => import('./pages/Payment/Review'));
@@ -34,6 +35,7 @@ const routes: RouteConfig[] = [
   { path: '/payment-checkout', element: <Checkout /> },
   { path: '/payment-successful', element: <Successful /> },
   { path: '/search', element: <SearchOverlay /> },
+  { path: '*', element: <NotFoundPage /> }, // Route cho trang 404
   { path: '/admin/measurement', element: <Measurement /> },
   { path: '/admin/style', element: <Style /> },
   { path: '/admin/photography', element: <Photography /> },
