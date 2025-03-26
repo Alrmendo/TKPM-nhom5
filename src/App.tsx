@@ -9,6 +9,7 @@ interface RouteConfig {
 
 // Lazy load các trang
 const Home = lazy(() => import('./pages/Home/Home'));
+const Contact = lazy(() => import('./pages/Contact/contact_us'));
 const NotFoundPage = lazy(() => import('./pages/404/404'));
 // const PDP = lazy(() => import('./pages/PDP/PDP'));
 // const PCP = lazy(() => import('./pages/PCP/PCP'));
@@ -27,6 +28,7 @@ const ContactAdmin = lazy(() => import('./pages/Admin/contact_admin'));
 // Cấu hình route trong một mảng
 const routes: RouteConfig[] = [
   { path: '/', element: <Home /> },
+  { path: '/contact', element: <Contact /> },
   // { path: '/pdp', element: <PDP /> },
   // { path: '/pcp', element: <PCP /> },
   { path: '/payment-review', element: <Review /> },
