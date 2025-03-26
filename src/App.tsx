@@ -1,5 +1,6 @@
 import React, { Suspense, lazy } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import AuthenticatedRoute from './components/authenticatedRoute';
 
 // Định nghĩa interface cho route
 interface RouteConfig {
@@ -17,6 +18,12 @@ const Home = lazy(() => import('./pages/Home/Home'));
 // const Checkout = lazy(() => import('./pages/Payment/Checkout'));
 // const Successful = lazy(() => import('./pages/Payment/Successful'));
 const SearchOverlay = lazy(() => import('./pages/Search/SearchOverlay'));
+const SignIn = lazy(() => import('./pages/Auth/SignIn'));
+const SignUp = lazy(() => import('./pages/Auth/SignUp'));
+const ForgotPassword = lazy(() => import('./pages/Auth/ForgotPassword'));
+
+
+const isAuthenticated = false;  // // Thay bằng logic lấy từ context, Redux, hoặc state
 
 // Cấu hình route trong một mảng
 const routes: RouteConfig[] = [
@@ -28,7 +35,17 @@ const routes: RouteConfig[] = [
   // { path: '/payment-shipping', element: <Shipping /> },
   // { path: '/payment-checkout', element: <Checkout /> },
   // { path: '/payment-successful', element: <Successful /> },
-  { path: '/search', element: <SearchOverlay /> },
+  { path: '/signin', element: <SignIn />},
+  { path: '/signup', element: <SignUp />},
+  { path: '/forgotpassw', element: <ForgotPassword />},
+  { 
+    path: '/search', 
+    element: (
+      <AuthenticatedRoute isAuthenticated={isAuthenticated}>
+        <SearchOverlay />
+      </AuthenticatedRoute>
+    )
+  },
 ];
 
 const App: React.FC = () => {
