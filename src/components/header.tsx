@@ -1,63 +1,249 @@
-import { Search, User, ShoppingCart } from 'lucide-react';
+import React, { useState, useRef, useEffect } from 'react';
 import logo from '../assets/LOGO.svg';
-import { Link } from 'react-router-dom';
+import profileIcon from '../assets/profile.svg';
+import searchIcon from '../assets/search.svg';
+import cartIcon from '../assets/cart.svg';
+import { ChevronDown, ChevronUp } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import DropdownPanel from './dropDownPanel';
 
-const Header: React.FC = () => {
+
+interface NavigationProps {
+  isSticky?: boolean, 
+}
+
+
+const Header: React.FC<NavigationProps> = ({ isSticky = false }) => {
+  const [isMenuOpen, setIsMenuOpen] = useState<boolean>(false);
+  const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
+  const navRef = useRef<HTMLDivElement | null>(null);
+  const navigate = useNavigate();
+
+  const toggleMenu = (): void => {
+    setIsMenuOpen(!isMenuOpen);
+    // Close any active dropdowns when toggling mobile menu
+    setActiveDropdown(null);
+  };
+
+  const toggleDropdown = (dropdown: string): void => {
+    if (activeDropdown === dropdown) {
+      setActiveDropdown(null);
+    } else {
+      setActiveDropdown(dropdown);
+    }
+  };
+
+  const goToSearchPage = (): void => {
+    navigate('/search');
+  }
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent): void => {
+      if (navRef.current && !navRef.current.contains(event.target as Node)) {
+        setActiveDropdown(null);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
+  // Category dropdown content
+  const categoryItems: string[] = [
+    "Wedding dress",
+    "Wedding guest",
+    "Formal & evening",
+    "Groom Dresses",
+    "BridesMaid Dresses",
+    "Cocktail Dress"
+  ];
+
+  // Services dropdown content (example)
+  const servicesItems: string[] = [
+    "Wedding Planning",
+    "Photography",
+    "Venue Booking",
+    "Catering Services",
+    "Decoration",
+    "Wedding Cars"
+  ];
+
   return (
-    <header className="border-b border-[#eaeaea] py-4">
-      <div className="container mx-auto px-4 flex items-center justify-between">
-        <div className="flex-1">
-          <Link to="/">
-            <img src={logo} alt="Enchanted Weddings" className="h-16 w-auto" />
-          </Link>
+    <>
+      <nav className={`flex flex-col z-10 ${isSticky ? 'sticky top-0' : ''} px-4 md:px-8 py-4`} ref={navRef}>
+        <div className="flex items-center justify-between w-full">
+          <img className="w-[80px] md:w-1/5 h-[80px]" src={logo} alt="Enchanted Weddings Logo" />
+          
+          {/* Desktop Navigation */}
+          <div className="hidden md:flex flex-1 flex-wrap items-center justify-between bg-[#fdfcf9] border border-[#EAEAEA] rounded-lg ml-8 px-4 py-2 relative">
+            <div></div>
+            {/* Điều chỉnh gap khi ở kích thước màn hình khác nhau */}
+            <ul className="flex flex-wrap items-center gap-3 xl:gap-20 lg:gap-10 md:gap-6">
+              <li className="text-[#C3937C] hover:text-[#6164bc] cursor-pointer text-sm lg:text-base">Home</li>
+              <li 
+                className="flex items-center text-[#C3937C] hover:text-[#6164bc] cursor-pointer text-sm lg:text-base relative"
+                onClick={() => toggleDropdown('category')}
+              >
+                <span>Category</span>
+                {activeDropdown === 'category' ? 
+                  <ChevronUp className="ml-1 w-4 h-4" /> : 
+                  <ChevronDown className="ml-1 w-4 h-4" />
+                }
+                
+                {/* Category dropdown panel for desktop */}
+                {activeDropdown === 'category' && (
+                  <div className="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 z-50">
+                    <DropdownPanel 
+                      items={categoryItems} 
+                      imageUrl="./pic16.jpg" 
+                      altText="Category image"
+                    />
+                  </div>
+                )}
+              </li>
+              <li 
+                className="flex items-center text-[#C3937C] hover:text-[#6164bc] cursor-pointer text-sm lg:text-base relative"
+                onClick={() => toggleDropdown('services')}
+              >
+                <span>Services</span>
+                {activeDropdown === 'services' ? 
+                  <ChevronUp className="ml-1 w-4 h-4" /> : 
+                  <ChevronDown className="ml-1 w-4 h-4" />
+                }
+                
+                {/* Services dropdown panel for desktop */}
+                {activeDropdown === 'services' && (
+                  <div className="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 z-50">
+                    <DropdownPanel 
+                      items={servicesItems} 
+                      imageUrl="./pic16.jpg" 
+                      altText="Services image"
+                    />
+                  </div>
+                )}
+              </li>
+              <li className="text-[#C3937C] hover:text-[#6164bc] cursor-pointer text-sm lg:text-base">About</li>
+              <li className="text-[#C3937C] hover:text-[#6164bc] cursor-pointer text-sm lg:text-base">Blog</li>
+              <li className="text-[#C3937C] hover:text-[#6164bc] cursor-pointer text-sm lg:text-base">Contact</li>
+            </ul>
+            
+            <div className="flex items-center gap-2 lg:gap-4">
+              <img 
+                className="w-5 h-8 cursor-pointer" 
+                src={searchIcon} 
+                alt="Search Icon" 
+                onClick={goToSearchPage}
+              />
+              <img className="w-4 h-8 cursor-pointer lg:w-5" src={profileIcon} alt="Profile Icon" />
+              <img className="w-5 h-8 cursor-pointer" src={cartIcon} alt="Cart Icon" />
+            </div>
+          </div>
+
+          {/* Mobile Hamburger Button */}
+          <button 
+            className="md:hidden flex flex-col justify-center items-center gap-1.5 p-2"
+            onClick={toggleMenu}
+            aria-label="Toggle menu"
+          >
+            <span className={`block w-6 h-0.5 bg-[#C3937C] transition-transform duration-300 ${isMenuOpen ? 'rotate-45 translate-y-2' : ''}`}></span>
+            <span className={`block w-6 h-0.5 bg-[#C3937C] transition-opacity duration-300 ${isMenuOpen ? 'opacity-0' : 'opacity-100'}`}></span>
+            <span className={`block w-6 h-0.5 bg-[#C3937C] transition-transform duration-300 ${isMenuOpen ? '-rotate-45 -translate-y-2' : ''}`}></span>
+          </button>
         </div>
 
-        <nav className="hidden md:flex items-center justify-center flex-1">
-          <ul className="flex space-x-8">
-            <li>
-              <Link to="/" className="text-[#b19e8d] hover:text-[#c3937c]">
-                Home
-              </Link>
+        {/* Mobile Menu Dropdown - Positioned Absolutely */}
+        <div 
+          className={`md:hidden absolute top-full left-0 right-0 bg-[#fdfcf9] border border-[#EAEAEA] rounded-lg mt-2 shadow-lg transition-all duration-300 overflow-hidden z-50 ${
+            isMenuOpen ? 'max-h-screen opacity-100' : 'max-h-0 opacity-0 pointer-events-none'
+          } mx-4`}
+        >
+          {/* Icons at the top */}
+          <div className="flex items-center justify-center gap-8 py-4 border-b border-[#EAEAEA]">
+            <img 
+              className="w-6 h-8 cursor-pointer" 
+              src={searchIcon} 
+              alt="Search Icon" 
+              onClick={() => {
+                goToSearchPage();
+                setIsMenuOpen(false);
+              }}
+            />
+            <img className="w-5 h-8 cursor-pointer" src={profileIcon} alt="Profile Icon" />
+            <img className="w-6 h-8 cursor-pointer" src={cartIcon} alt="Cart Icon" />
+          </div>
+          
+          {/* Navigation links for mobile */}
+          <ul className="flex flex-col items-center py-4">
+            <li className="text-[#C3937C] hover:text-[#6164bc] cursor-pointer py-3 w-full text-center 
+                          active:bg-[#f8f1e8] transition-colors duration-200">Home</li>
+            
+            {/* Category dropdown for mobile */}
+            <li className="w-full">
+              <div 
+                className="flex items-center justify-center text-[#C3937C] hover:text-[#6164bc] cursor-pointer py-3
+                          active:bg-[#f8f1e8] transition-colors duration-200"
+                onClick={() => toggleDropdown('category-mobile')}
+              >
+                <span>Category</span>
+                {activeDropdown === 'category-mobile' ? 
+                  <ChevronUp className="ml-1 w-4 h-4" /> : 
+                  <ChevronDown className="ml-1 w-4 h-4" />
+                }
+              </div>
+              
+              {/* Mobile Category dropdown content */}
+              {activeDropdown === 'category-mobile' && (
+                <div className="px-4 py-2 bg-white rounded-lg mt-1 mb-2 shadow-inner mx-4">
+                  <DropdownPanel 
+                    items={categoryItems} 
+                    imageUrl="./pic14.jpg" 
+                    altText="Category image"
+                    isMobile={true}
+                  />
+                </div>
+              )}
             </li>
-            <li>
-              <Link to="/about" className="text-[#b19e8d] hover:text-[#c3937c]">
-                About
-              </Link>
+            
+            {/* Services dropdown for mobile */}
+            <li className="w-full">
+              <div 
+                className="flex items-center justify-center text-[#C3937C] hover:text-[#6164bc] cursor-pointer py-3
+                          active:bg-[#f8f1e8] transition-colors duration-200"
+                onClick={() => toggleDropdown('services-mobile')}
+              >
+                <span>Services</span>
+                {activeDropdown === 'services-mobile' ? 
+                  <ChevronUp className="ml-1 w-4 h-4" /> : 
+                  <ChevronDown className="ml-1 w-4 h-4" />
+                }
+              </div>
+              
+              {/* Mobile Services dropdown content */}
+              {activeDropdown === 'services-mobile' && (
+                <div className="px-4 py-2 bg-white rounded-lg mt-1 mb-2 shadow-inner mx-4">
+                  <DropdownPanel 
+                    items={servicesItems} 
+                    imageUrl="./pic14.jpg" 
+                    altText="Services image"
+                    isMobile={true}
+                  />
+                </div>
+              )}
             </li>
-            <li>
-              <Link to="/services" className="text-[#b19e8d] hover:text-[#c3937c]">
-                Services
-              </Link>
-            </li>
-            <li>
-              <Link to="/blog" className="text-[#b19e8d] hover:text-[#c3937c]">
-                Blog
-              </Link>
-            </li>
-            <li>
-              <Link to="/contact" className="text-[#b19e8d] hover:text-[#c3937c]">
-                Contact
-              </Link>
-            </li>
+            
+            <li className="text-[#C3937C] hover:text-[#6164bc] cursor-pointer py-3 w-full text-center
+                          active:bg-[#f8f1e8] transition-colors duration-200">About</li>
+            <li className="text-[#C3937C] hover:text-[#6164bc] cursor-pointer py-3 w-full text-center
+                          active:bg-[#f8f1e8] transition-colors duration-200">Blog</li>
+            <li className="text-[#C3937C] hover:text-[#6164bc] cursor-pointer py-3 w-full text-center
+                          active:bg-[#f8f1e8] transition-colors duration-200">Contact</li>
           </ul>
-        </nav>
-
-        <div className="flex items-center space-x-4 flex-1 justify-end">
-          <button className="text-[#606060] hover:text-[#c3937c] relative">
-            <User className="h-5 w-5" />
-          </button>
-          <button className="text-[#606060] hover:text-[#c3937c] relative">
-            <Search className="h-5 w-5" />
-          </button>
-          <button className="text-[#606060] hover:text-[#c3937c] relative">
-            <ShoppingCart className="h-5 w-5" />
-            <span className="absolute -top-1 -right-1 bg-[#c3937c] text-white text-xs rounded-full h-4 w-4 flex items-center justify-center">
-              2
-            </span>
-          </button>
         </div>
-      </div>
-    </header>
+      </nav>
+    </>
   );
 };
 

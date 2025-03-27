@@ -1,5 +1,3 @@
-"use client"
-
 import { useState } from "react"
 import { Clock, ChevronRight } from "lucide-react"
 import { useNavigate } from "react-router-dom"
