@@ -73,7 +73,7 @@ const Header: React.FC<NavigationProps> = ({ isSticky = false }) => {
 
   return (
     <>
-      <nav className={`flex flex-col z-10 ${isSticky ? 'sticky top-0' : ''} px-4 md:px-8 py-4`} ref={navRef}>
+      <nav className={`flex flex-col z-50 ${isSticky ? 'sticky top-0' : ''} px-4 md:px-8 py-4`} ref={navRef}>
         <div className="flex items-center justify-between w-full">
           <img className="w-[80px] md:w-1/5 h-[80px]" src={logo} alt="Enchanted Weddings Logo" />
           
@@ -156,7 +156,7 @@ const Header: React.FC<NavigationProps> = ({ isSticky = false }) => {
 
         {/* Mobile Menu Dropdown - Positioned Absolutely */}
         <div 
-          className={`md:hidden absolute top-full left-0 right-0 bg-[#fdfcf9] border border-[#EAEAEA] rounded-lg mt-2 shadow-lg transition-all duration-300 overflow-hidden z-50 ${
+          className={`md:hidden absolute top-25 left-0 right-0 bg-[#fdfcf9] border border-[#EAEAEA] rounded-lg mt-2 shadow-lg transition-all duration-300 overflow-hidden z-50 ${
             isMenuOpen ? 'max-h-screen opacity-100' : 'max-h-0 opacity-0 pointer-events-none'
           } mx-4`}
         >

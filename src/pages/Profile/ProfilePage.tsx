@@ -1,6 +1,6 @@
 import Header from '../../components/header';
-import ProfileSidebar from '../../components/profile/sidebar';
-import ProfileForm from '../../components/profile/form';
+import ProfileSidebar from './profile/sidebar';
+import ProfileForm from './profile/form';
 import Footer from '../../components/footer';
 import { JSX } from 'react';
 

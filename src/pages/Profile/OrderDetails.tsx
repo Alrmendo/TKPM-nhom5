@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import Header from '../../components/header';
-import ProfileSidebar from '../../components/profile/sidebar';
+import ProfileSidebar from './profile/sidebar';
 import { ChevronLeft, CheckCircle, Clock, Hourglass, XCircle } from 'lucide-react';
-import type { OrderItem } from '../../components/profile/order-card';
+import type { OrderItem } from './profile/order-card';
 import Footer from '../../components/footer';
 
 // Mock data cho orders
