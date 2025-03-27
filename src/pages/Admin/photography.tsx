@@ -1,5 +1,3 @@
-"use client"
-
 import { useState, useRef, useEffect } from "react"
 import { Star, Plus, Minus } from "lucide-react"
 import { useNavigate } from "react-router-dom"
