@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import Header from '../../components/header';
-import ProfileSidebar from '../../components/profile/sidebar';
-import { OrderFilterTabs } from '../../components/profile/order-filter-tabs';
-import { OrderCard, type OrderItem } from '../../components/profile/order-card';
+import ProfileSidebar from './profile/sidebar';
+import { OrderFilterTabs } from './profile/order-filter-tabs';
+import { OrderCard, type OrderItem } from './profile/order-card';
 import Footer from '../../components/footer';
 // Mock data for orders
 const mockOrders: OrderItem[] = [

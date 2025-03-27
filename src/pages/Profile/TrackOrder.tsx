@@ -1,10 +1,10 @@
-import { OrderProgress } from '../../components/profile/progress';
-import { Button } from '../../components/ui/button';
-import { Input } from '../../components/ui/input';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../components/ui/table';
+import { OrderProgress } from './profile/progress';
+import { Button } from '../../components/button';
+import { Input } from '../../components/input';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../components/table';
 import { useState } from 'react';
 import Header from '../../components/header';
-import ProfileSidebar from '../../components/profile/sidebar';
+import ProfileSidebar from './profile/sidebar';
 import Footer from '../../components/footer';
 
 // Mock data for user

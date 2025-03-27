@@ -1,11 +1,11 @@
 import { useState, useCallback } from 'react';
 import Header from '../../components/header';
-import ProfileSidebar from '../../components/profile/sidebar';
+import ProfileSidebar from './profile/sidebar';
 import Footer from '../../components/footer';
-import { Button } from '../../components/ui/button';
+import { Button } from '../../components/button';
 import { PlusCircle } from 'lucide-react';
-import { AddressCard, type AddressData } from '../../components/profile/address-card';
-import { AddressFormDialog } from '../../components/profile/address-form-dialog';
+import { AddressCard, type AddressData } from './profile/address-card';
+import { AddressFormDialog } from './profile/address-form-dialog';
 import { useToast } from '../../hooks/use-toast'; // Đảm bảo có hook này
 
 const mockUserData = {

@@ -1,4 +1,4 @@
-import React, { JSX, useRef } from 'react';
+import { JSX, useRef } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import ProductCard from './product-card';
 

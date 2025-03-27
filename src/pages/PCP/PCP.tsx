@@ -1,11 +1,11 @@
 import { useState } from 'react';
 import Header from '../../components/header';
 import Footer from '../../components/footer';
-import ProductCard from '../../components/pcp/product-card';
-import FilterSection from '../../components/pcp/filter-section';
-import SortDropdown from '../../components/pcp/sort-dropdown';
+import ProductCard from './pcp/product-card';
+import FilterSection from './pcp/filter-section';
+import SortDropdown from './pcp/sort-dropdown';
 import { Link } from 'react-router-dom';
-import SearchBar from '../../components/pcp/search-bar';
+import SearchBar from './pcp/search-bar';
 
 // Sample data for wedding dresses
 const weddingDresses = [

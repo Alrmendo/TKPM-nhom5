@@ -1,11 +1,11 @@
 import { Heart, ChevronRight, Plus, Minus, Instagram, Send, Mail } from 'lucide-react';
-import ProductGallery from '../../components/pdp/product-gallery';
-import ColorSelector from '../../components/pdp/color-selector';
-import SizeSelector from '../../components/pdp/size-selector';
-import DatePicker from '../../components/pdp/date-picker';
-import AccordionSection from '../../components/pdp/accordion-section';
-import ReviewItem from '../../components/pdp/review-item';
-import ProductCarousel from '../../components/pdp/product-carousel';
+import ProductGallery from './pdp/product-gallery';
+import ColorSelector from './pdp/color-selector';
+import SizeSelector from './pdp/size-selector';
+import DatePicker from './pdp/date-picker';
+import AccordionSection from './pdp/accordion-section';
+import ReviewItem from './pdp/review-item';
+import ProductCarousel from './pdp/product-carousel';
 import { JSX } from 'react';
 import Header from '../../components/header';
 import Footer from '../../components/footer';
