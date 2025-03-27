@@ -1,6 +1,6 @@
-import { Input } from "../../components/admin/input"
-import { Button } from "../../components/admin/button"
-import { Textarea } from "../../components/admin/textarea"
+import { Input } from "./components/input"
+import { Button } from "./components/button"
+import { Textarea } from "./components/textarea"
 import { useState } from "react"
 import { useNavigate } from "react-router-dom"
 
