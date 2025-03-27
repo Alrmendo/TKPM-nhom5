@@ -18,7 +18,7 @@
     "noImplicitAny": true,
     "strictNullChecks": true,
     "esModuleInterop": true,
-    
+
     /* Linting */
     "strict": true,
     "noUnusedLocals": true,

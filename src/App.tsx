@@ -13,6 +13,7 @@ const Contact = lazy(() => import('./pages/Contact/contact_us'));
 const NotFoundPage = lazy(() => import('./pages/404/404'));
 // const PDP = lazy(() => import('./pages/PDP/PDP'));
 // const PCP = lazy(() => import('./pages/PCP/PCP'));
+const ProfilePage = lazy(() => import('./pages/Profile/ProfilePage'));
 const Review = lazy(() => import('./pages/Payment/Review'));
 const Information = lazy(() => import('./pages/Payment/Information'));
 const Shipping = lazy(() => import('./pages/Payment/Shipping'));
@@ -31,6 +32,7 @@ const routes: RouteConfig[] = [
   { path: '/contact', element: <Contact /> },
   // { path: '/pdp', element: <PDP /> },
   // { path: '/pcp', element: <PCP /> },
+  { path: '/profile', element: <ProfilePage /> },
   { path: '/payment-review', element: <Review /> },
   { path: '/payment-information', element: <Information /> },
   { path: '/payment-shipping', element: <Shipping /> },
