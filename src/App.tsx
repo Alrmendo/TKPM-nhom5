@@ -12,7 +12,7 @@ interface RouteConfig {
 const Home = lazy(() => import('./pages/Home/Home'));
 const Contact = lazy(() => import('./pages/Contact/contact_us'));
 const NotFoundPage = lazy(() => import('./pages/404/404'));
-// const PDP = lazy(() => import('./pages/PDP/PDP'));
+const PDP = lazy(() => import('./pages/PDP/PDP'));
 // const PCP = lazy(() => import('./pages/PCP/PCP'));
 
 const ProfilePage = lazy(() => import('./pages/Profile/ProfilePage'));
@@ -38,14 +38,13 @@ const SignIn = lazy(() => import('./pages/Auth/SignIn'));
 const SignUp = lazy(() => import('./pages/Auth/SignUp'));
 const ForgotPassword = lazy(() => import('./pages/Auth/ForgotPassword'));
 
-
-const isAuthenticated = false;  // // Thay bằng logic lấy từ context, Redux, hoặc state
+const isAuthenticated = false; // // Thay bằng logic lấy từ context, Redux, hoặc state
 
 // Cấu hình route trong một mảng
 const routes: RouteConfig[] = [
   { path: '/', element: <Home /> },
   { path: '/contact', element: <Contact /> },
-  // { path: '/pdp', element: <PDP /> },
+  { path: '/pdp', element: <PDP /> },
   // { path: '/pcp', element: <PCP /> },
   { path: '/profile', element: <ProfilePage /> },
   { path: '/order-history', element: <OrderHistory /> },
@@ -65,16 +64,16 @@ const routes: RouteConfig[] = [
   { path: '/admin/photography', element: <Photography /> },
   { path: '/admin/deliver', element: <Deliver /> },
   { path: '/admin/contact', element: <ContactAdmin /> },
-  { path: '/signin', element: <SignIn />},
-  { path: '/signup', element: <SignUp />},
-  { path: '/forgotpassw', element: <ForgotPassword />},
-  { 
-    path: '/search', 
+  { path: '/signin', element: <SignIn /> },
+  { path: '/signup', element: <SignUp /> },
+  { path: '/forgotpassw', element: <ForgotPassword /> },
+  {
+    path: '/search',
     element: (
       <AuthenticatedRoute isAuthenticated={isAuthenticated}>
         <SearchOverlay />
       </AuthenticatedRoute>
-    )
+    ),
   },
 ];
 
