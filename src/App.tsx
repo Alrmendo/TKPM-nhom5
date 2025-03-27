@@ -1,5 +1,6 @@
 import React, { Suspense, lazy } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import AuthenticatedRoute from './components/authenticatedRoute';
 
 // Định nghĩa interface cho route
 interface RouteConfig {
@@ -24,6 +25,12 @@ const Style = lazy(() => import('./pages/Admin/style'));
 const Photography = lazy(() => import('./pages/Admin/photography'));
 const Deliver = lazy(() => import('./pages/Admin/deliver'));
 const ContactAdmin = lazy(() => import('./pages/Admin/contact_admin'));
+const SignIn = lazy(() => import('./pages/Auth/SignIn'));
+const SignUp = lazy(() => import('./pages/Auth/SignUp'));
+const ForgotPassword = lazy(() => import('./pages/Auth/ForgotPassword'));
+
+
+const isAuthenticated = false;  // // Thay bằng logic lấy từ context, Redux, hoặc state
 
 // Cấu hình route trong một mảng
 const routes: RouteConfig[] = [
@@ -36,13 +43,23 @@ const routes: RouteConfig[] = [
   { path: '/payment-shipping', element: <Shipping /> },
   { path: '/payment-checkout', element: <Checkout /> },
   { path: '/payment-successful', element: <Successful /> },
-  { path: '/search', element: <SearchOverlay /> },
   { path: '*', element: <NotFoundPage /> }, // Route cho trang 404
   { path: '/admin/measurement', element: <Measurement /> },
   { path: '/admin/style', element: <Style /> },
   { path: '/admin/photography', element: <Photography /> },
   { path: '/admin/deliver', element: <Deliver /> },
   { path: '/admin/contact', element: <ContactAdmin /> },
+  { path: '/signin', element: <SignIn />},
+  { path: '/signup', element: <SignUp />},
+  { path: '/forgotpassw', element: <ForgotPassword />},
+  { 
+    path: '/search', 
+    element: (
+      <AuthenticatedRoute isAuthenticated={isAuthenticated}>
+        <SearchOverlay />
+      </AuthenticatedRoute>
+    )
+  },
 ];
 
 const App: React.FC = () => {
