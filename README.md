@@ -1,5 +1,5 @@
 # TKPM-nhom5
-# Cấu trúc thư mục đồ án đề xuất
+# Cấu trúc thư mục đồ án hiện tại
 ```
 TKPM-NHOM5/
 ├── public/                     # Tệp tĩnh (favicon, hình ảnh...)
@@ -10,7 +10,7 @@ TKPM-NHOM5/
 │   ├── routes/                   # Định nghĩa route (tuỳ chọn)
 │   ├── services/                 # Các hàm gọi API
 │   ├── hooks/                    # Custom hooks
-│   ├── utils/                    # Hàm tiện ích chung
+│   ├── libs/                    # Hàm tiện ích chung
 │   ├── styles/                   # Các file css cho từng trang trong pages
 │   ├── App.jsx                    # Component gốc của App
 │   ├── main.jsx                   # Điểm khởi chạy của ứng dụng
