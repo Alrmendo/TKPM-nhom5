@@ -14,9 +14,22 @@ import cloudinaryConfig from './config/cloudinary.config';
       load: [databaseConfig, cloudinaryConfig],
     }),
     MongooseModule.forRootAsync({
-      useFactory: async () => ({
-        uri: process.env.MONGODB_URI || 'mongodb+srv://enchanted:2zlpDUeMpcTvv4X7@enchanted.ss8ztcz.mongodb.net/',
-      }),
+      useFactory: async () => {
+        const uri = process.env.MONGODB_URI || process.env.DATABASE_URL;
+        console.log('Connecting to MongoDB...');
+        return {
+          uri,
+          connectionFactory: (connection) => {
+            connection.on('connected', () => {
+              console.log('MongoDB connection established successfully!');
+            });
+            connection.on('error', (error) => {
+              console.error('MongoDB connection error:', error);
+            });
+            return connection;
+          },
+        };
+      },
     }),
     CloudinaryModule,
   ],
