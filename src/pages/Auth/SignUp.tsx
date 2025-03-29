@@ -1,6 +1,7 @@
 import type React from "react"
 import { useState } from "react"
 import { Eye, EyeOff } from "lucide-react"
+import { Link } from "react-router-dom"
 
 interface InputFieldProps {
   id: string
@@ -136,9 +137,9 @@ const SignUp: React.FC = () => {
           <h1 className="text-[#c3937c] text-4xl font-medium mb-2">Sign up</h1>
           <p className="mb-8 text-[#404040]">
             Already have an account?{" "}
-            <a href="#" className="text-[#c3937c] hover:underline">
+            <Link to="/signin" className="text-[#c3937c] hover:underline">
               Log in
-            </a>
+            </Link>
           </p>
 
           <form className="space-y-6" onSubmit={handleSubmit}>
@@ -242,9 +243,9 @@ const SignUp: React.FC = () => {
           <div className="mt-8 text-center text-sm">
             <p className="text-[#868686]">
               New to ENCOUNTED WEDDING?{" "}
-              <a href="#" className="text-[#c3937c] hover:underline">
-                Sign Up
-              </a>
+              <Link to="/signin" className="text-[#c3937c] hover:underline">
+                Sign In
+              </Link>
             </p>
             <p className="mt-2 text-[#868686]">
               Signing up means you agree to the{" "}

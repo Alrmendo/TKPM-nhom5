@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Mail, Lock, Eye, EyeOff } from "lucide-react";
+import { Link } from "react-router-dom";
 
 const SignIn: React.FC = () => {
   // Khai báo kiểu cho state là boolean
@@ -130,9 +131,9 @@ const SignIn: React.FC = () => {
 
             <p className="text-sm text-[#404040]">
               New to ENCOUNTERED WEDDING?{" "}
-              <a href="#" className="text-[#c3937c] font-medium">
+              <Link to="/signup" className="text-[#c3937c] font-medium">
                 Sign Up
-              </a>
+              </Link>
             </p>
           </div>
         </div>
