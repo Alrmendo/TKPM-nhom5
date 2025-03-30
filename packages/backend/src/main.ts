@@ -70,17 +70,17 @@ async function bootstrap() {
     
     // Log information about ports
     if (appPort !== initialAppPort) {
-      console.log(`⚠️  Port ${initialAppPort} was in use, switched to port ${appPort}`);
+      console.log(`Port ${initialAppPort} was in use, switched to port ${appPort}`);
     }
     if (debugPort !== initialDebugPort) {
-      console.log(`⚠️  Debug port ${initialDebugPort} was in use, switched to port ${debugPort}`);
+      console.log(`Debug port ${initialDebugPort} was in use, switched to port ${debugPort}`);
     }
     
-    console.log(`🚀 Application is running on: http://localhost:${appPort}`);
-    console.log(`📚 Swagger documentation is available at: http://localhost:${appPort}/api`);
-    console.log(`🔍 Debug port is running on: ${debugPort}`);
+    console.log(`Application is running on: http://localhost:${appPort}`);
+    console.log(`Swagger documentation is available at: http://localhost:${appPort}/api`);
+    console.log(`Debug port is running on: ${debugPort}`);
   } catch (error) {
-    console.error('❌ Failed to start server:', error);
+    console.error('Failed to start server:', error);
     process.exit(1);
   }
 }
