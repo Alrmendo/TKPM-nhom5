@@ -1,10 +1,43 @@
 import { useState } from "react";
 import { Mail, Lock, Eye, EyeOff } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { login } from "../../api/auth";
 
 const SignIn: React.FC = () => {
-  // Khai báo kiểu cho state là boolean
+  const navigate = useNavigate();
+  const [formData, setFormData] = useState({
+    username: "",
+    password: "",
+  });
   const [showPassword, setShowPassword] = useState<boolean>(false);
+  const [error, setError] = useState<string>("");
+  const [loading, setLoading] = useState<boolean>(false);
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setError("");
+    setLoading(true);
+
+    try {
+      const response = await login(formData);
+      // Save token to localStorage
+      localStorage.setItem("token", response.accessToken);
+      // Redirect to home page
+      navigate("/");
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="flex min-h-screen flex-col md:flex-row">
@@ -22,15 +55,24 @@ const SignIn: React.FC = () => {
         <div className="w-full max-w-md space-y-6 md:space-y-8">
           <h1 className="text-3xl font-medium text-[#c3937c] text-center">Login</h1>
 
-          <div className="space-y-4">
-            {/* Email Input */}
+          {error && (
+            <div className="p-3 bg-red-100 text-red-700 rounded-md">
+              {error}
+            </div>
+          )}
+
+          <form onSubmit={handleSubmit} className="space-y-4">
+            {/* Username Input */}
             <div className="relative">
               <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
                 <Mail className="h-5 w-5 text-[#999999]" />
               </div>
               <input
-                type="email"
-                placeholder="E-Mail"
+                type="text"
+                name="username"
+                value={formData.username}
+                onChange={handleInputChange}
+                placeholder="Username"
                 className="w-full pl-10 pr-3 py-3 border border-[#dfdfdf] rounded-full focus:outline-none focus:ring-1 focus:ring-[#c3937c]"
               />
             </div>
@@ -42,6 +84,9 @@ const SignIn: React.FC = () => {
               </div>
               <input
                 type={showPassword ? "text" : "password"}
+                name="password"
+                value={formData.password}
+                onChange={handleInputChange}
                 placeholder="Password"
                 className="w-full pl-10 pr-10 py-3 border border-[#dfdfdf] rounded-full focus:outline-none focus:ring-1 focus:ring-[#c3937c]"
               />
@@ -59,8 +104,12 @@ const SignIn: React.FC = () => {
             </div>
 
             {/* Login Button */}
-            <button className="w-full py-3 bg-[#ead9c9] text-[#c3937c] rounded-full font-medium hover:bg-[#c3937c] hover:text-white transition-colors">
-              Login
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full py-3 bg-[#ead9c9] text-[#c3937c] rounded-full font-medium hover:bg-[#c3937c] hover:text-white transition-colors disabled:opacity-50"
+            >
+              {loading ? "Logging in..." : "Login"}
             </button>
 
             {/* Divider */}
@@ -71,7 +120,7 @@ const SignIn: React.FC = () => {
             </div>
 
             {/* Social Login Buttons */}
-            <button className="w-full py-3 border border-[#dfdfdf] rounded-full flex items-center justify-center space-x-2 hover:bg-gray-50 transition-colors">
+            <button type="button" className="w-full py-3 border border-[#dfdfdf] rounded-full flex items-center justify-center space-x-2 hover:bg-gray-50 transition-colors">
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
                 <path
                   fill="#4285F4"
@@ -93,7 +142,7 @@ const SignIn: React.FC = () => {
               <span className="text-[#404040]">Login with Google</span>
             </button>
 
-            <button className="w-full py-3 border border-[#dfdfdf] rounded-full flex items-center justify-center space-x-2 hover:bg-gray-50 transition-colors">
+            <button type="button" className="w-full py-3 border border-[#dfdfdf] rounded-full flex items-center justify-center space-x-2 hover:bg-gray-50 transition-colors">
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
                 <path
                   fill="#1877F2"
@@ -103,13 +152,13 @@ const SignIn: React.FC = () => {
               <span className="text-[#404040]">Login with facebook</span>
             </button>
 
-            <button className="w-full py-3 border border-[#dfdfdf] rounded-full flex items-center justify-center space-x-2 hover:bg-gray-50 transition-colors">
+            <button type="button" className="w-full py-3 border border-[#dfdfdf] rounded-full flex items-center justify-center space-x-2 hover:bg-gray-50 transition-colors">
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
                 <path d="M12.152 6.896c-.948 0-2.415-1.078-3.96-1.04-2.04.027-3.91 1.183-4.961 3.014-2.117 3.675-.546 9.103 1.519 12.09 1.013 1.454 2.208 3.09 3.792 3.039 1.52-.065 2.09-.987 3.935-.987 1.831 0 2.35.987 3.96.948 1.637-.026 2.676-1.48 3.676-2.948 1.156-1.688 1.636-3.325 1.662-3.415-.039-.013-3.182-1.221-3.22-4.857-.026-3.04 2.48-4.494 2.597-4.559-1.429-2.09-3.623-2.324-4.39-2.376-2-.156-3.675 1.09-4.61 1.09zM15.53 3.83c.843-1.012 1.4-2.427 1.245-3.83-1.207.052-2.662.805-3.532 1.818-.78.896-1.454 2.338-1.273 3.714 1.338.104 2.715-.688 3.559-1.701z" />
               </svg>
               <span className="text-[#404040]">Login with Apple ID</span>
             </button>
-          </div>
+          </form>
 
           {/* Terms and Sign Up */}
           <div className="text-center space-y-4">

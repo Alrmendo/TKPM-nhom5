@@ -1,7 +1,8 @@
 import type React from "react"
 import { useState } from "react"
 import { Eye, EyeOff } from "lucide-react"
-import { Link } from "react-router-dom"
+import { Link, useNavigate } from "react-router-dom"
+import { register } from "../../api/auth"
 
 interface InputFieldProps {
   id: string
@@ -93,11 +94,14 @@ const SocialButton: React.FC<SocialButtonProps> = ({ icon, text, onClick }) => {
 }
 
 const SignUp: React.FC = () => {
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     username: "",
     email: "",
     password: "",
   });
+  const [error, setError] = useState<string>("");
+  const [loading, setLoading] = useState<boolean>(false);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { id, value } = e.target;
@@ -107,10 +111,20 @@ const SignUp: React.FC = () => {
     }));
   };
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    console.log("Form submitted:", formData);
-    // Add your form submission logic here
+    setError("");
+    setLoading(true);
+
+    try {
+      await register(formData);
+      // Redirect to login page after successful registration
+      navigate("/signin");
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleSocialLogin = (provider: string) => {
@@ -142,6 +156,12 @@ const SignUp: React.FC = () => {
             </Link>
           </p>
 
+          {error && (
+            <div className="mb-4 p-3 bg-red-100 text-red-700 rounded-md">
+              {error}
+            </div>
+          )}
+
           <form className="space-y-6" onSubmit={handleSubmit}>
             <InputField
               id="username"
@@ -168,9 +188,10 @@ const SignUp: React.FC = () => {
 
             <button
               type="submit"
-              className="w-full bg-[#ead9c9] text-[#404040] py-3 rounded-full hover:bg-[#c3937c] hover:text-white transition-colors"
+              disabled={loading}
+              className="w-full bg-[#ead9c9] text-[#404040] py-3 rounded-full hover:bg-[#c3937c] hover:text-white transition-colors disabled:opacity-50"
             >
-              Create an account
+              {loading ? "Creating account..." : "Create an account"}
             </button>
           </form>
 
@@ -203,7 +224,7 @@ const SignUp: React.FC = () => {
                   />
                 </svg>
               }
-              text="Login with Google"
+              text="Sign up with Google"
               onClick={() => handleSocialLogin("Google")}
             />
 
@@ -268,7 +289,6 @@ const SignUp: React.FC = () => {
     </div>
   );
 };
-
 
 export default SignUp
 
