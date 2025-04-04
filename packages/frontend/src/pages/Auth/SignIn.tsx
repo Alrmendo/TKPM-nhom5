@@ -1,16 +1,16 @@
-import { useState } from "react";
-import { Mail, Lock, Eye, EyeOff } from "lucide-react";
-import { Link, useNavigate } from "react-router-dom";
-import { login } from "../../api/auth";
+import { useState } from 'react';
+import { Mail, Lock, Eye, EyeOff } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
+import { login } from '../../api/auth';
 
 const SignIn: React.FC = () => {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
-    username: "",
-    password: "",
+    username: '',
+    password: '',
   });
   const [showPassword, setShowPassword] = useState<boolean>(false);
-  const [error, setError] = useState<string>("");
+  const [error, setError] = useState<string>('');
   const [loading, setLoading] = useState<boolean>(false);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -23,17 +23,21 @@ const SignIn: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setError("");
+    setError('');
     setLoading(true);
 
     try {
       const response = await login(formData);
-      // Save token to localStorage
-      localStorage.setItem("token", response.accessToken);
-      // Redirect to home page
-      navigate("/");
+      if (response.accessToken) {
+        // Save token to localStorage
+        localStorage.setItem('token', response.accessToken);
+        // Redirect to home page
+        navigate('/'); // Chuyển hướng sang trang chủ
+      } else {
+        throw new Error('Invalid login response');
+      }
     } catch (err: any) {
-      setError(err.message);
+      setError(err.message || 'Login failed');
     } finally {
       setLoading(false);
     }
@@ -53,7 +57,9 @@ const SignIn: React.FC = () => {
       {/* Right side - Login Form */}
       <div className="w-full md:w-1/2 flex items-center justify-center p-4 md:p-8 lg:p-12">
         <div className="w-full max-w-md space-y-6 md:space-y-8">
-          <h1 className="text-3xl font-medium text-[#c3937c] text-center">Login</h1>
+          <h1 className="text-3xl font-medium text-[#c3937c] text-center">
+            Login
+          </h1>
 
           {error && (
             <div className="p-3 bg-red-100 text-red-700 rounded-md">
@@ -83,7 +89,7 @@ const SignIn: React.FC = () => {
                 <Lock className="h-5 w-5 text-[#999999]" />
               </div>
               <input
-                type={showPassword ? "text" : "password"}
+                type={showPassword ? 'text' : 'password'}
                 name="password"
                 value={formData.password}
                 onChange={handleInputChange}
@@ -109,7 +115,7 @@ const SignIn: React.FC = () => {
               disabled={loading}
               className="w-full py-3 bg-[#ead9c9] text-[#c3937c] rounded-full font-medium hover:bg-[#c3937c] hover:text-white transition-colors disabled:opacity-50"
             >
-              {loading ? "Logging in..." : "Login"}
+              {loading ? 'Logging in...' : 'Login'}
             </button>
 
             {/* Divider */}
@@ -120,8 +126,16 @@ const SignIn: React.FC = () => {
             </div>
 
             {/* Social Login Buttons */}
-            <button type="button" className="w-full py-3 border border-[#dfdfdf] rounded-full flex items-center justify-center space-x-2 hover:bg-gray-50 transition-colors">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+            <button
+              type="button"
+              className="w-full py-3 border border-[#dfdfdf] rounded-full flex items-center justify-center space-x-2 hover:bg-gray-50 transition-colors"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                width="24"
+                height="24"
+              >
                 <path
                   fill="#4285F4"
                   d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
@@ -142,8 +156,16 @@ const SignIn: React.FC = () => {
               <span className="text-[#404040]">Login with Google</span>
             </button>
 
-            <button type="button" className="w-full py-3 border border-[#dfdfdf] rounded-full flex items-center justify-center space-x-2 hover:bg-gray-50 transition-colors">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+            <button
+              type="button"
+              className="w-full py-3 border border-[#dfdfdf] rounded-full flex items-center justify-center space-x-2 hover:bg-gray-50 transition-colors"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                width="24"
+                height="24"
+              >
                 <path
                   fill="#1877F2"
                   d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"
@@ -152,8 +174,16 @@ const SignIn: React.FC = () => {
               <span className="text-[#404040]">Login with facebook</span>
             </button>
 
-            <button type="button" className="w-full py-3 border border-[#dfdfdf] rounded-full flex items-center justify-center space-x-2 hover:bg-gray-50 transition-colors">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+            <button
+              type="button"
+              className="w-full py-3 border border-[#dfdfdf] rounded-full flex items-center justify-center space-x-2 hover:bg-gray-50 transition-colors"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                width="24"
+                height="24"
+              >
                 <path d="M12.152 6.896c-.948 0-2.415-1.078-3.96-1.04-2.04.027-3.91 1.183-4.961 3.014-2.117 3.675-.546 9.103 1.519 12.09 1.013 1.454 2.208 3.09 3.792 3.039 1.52-.065 2.09-.987 3.935-.987 1.831 0 2.35.987 3.96.948 1.637-.026 2.676-1.48 3.676-2.948 1.156-1.688 1.636-3.325 1.662-3.415-.039-.013-3.182-1.221-3.22-4.857-.026-3.04 2.48-4.494 2.597-4.559-1.429-2.09-3.623-2.324-4.39-2.376-2-.156-3.675 1.09-4.61 1.09zM15.53 3.83c.843-1.012 1.4-2.427 1.245-3.83-1.207.052-2.662.805-3.532 1.818-.78.896-1.454 2.338-1.273 3.714 1.338.104 2.715-.688 3.559-1.701z" />
               </svg>
               <span className="text-[#404040]">Login with Apple ID</span>
@@ -163,15 +193,15 @@ const SignIn: React.FC = () => {
           {/* Terms and Sign Up */}
           <div className="text-center space-y-4">
             <p className="text-xs text-[#999999]">
-              Signing up means you agree to the{" "}
+              Signing up means you agree to the{' '}
               <a href="#" className="text-[#404040]">
                 Privacy policy
               </a>
-              ,{" "}
+              ,{' '}
               <a href="#" className="text-[#404040]">
                 Terms of Services
-              </a>{" "}
-              and{" "}
+              </a>{' '}
+              and{' '}
               <a href="#" className="text-[#404040]">
                 Affiliate Terms
               </a>
@@ -179,7 +209,7 @@ const SignIn: React.FC = () => {
             </p>
 
             <p className="text-sm text-[#404040]">
-              New to ENCOUNTERED WEDDING?{" "}
+              New to ENCOUNTERED WEDDING?{' '}
               <Link to="/signup" className="text-[#c3937c] font-medium">
                 Sign Up
               </Link>

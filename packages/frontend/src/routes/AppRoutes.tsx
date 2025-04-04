@@ -5,11 +5,14 @@ import SignUp from '../pages/Auth/SignUp';
 import Home from '../pages/Home/Home';
 
 // Protected Route component
-const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({
+  children,
+}) => {
   const { isAuthenticated } = useAuth();
-  
+
+  // Kiểm tra trạng thái xác thực
   if (!isAuthenticated) {
-    return <Navigate to="/signin" />;
+    return <Navigate to="/signin" replace />;
   }
 
   return <>{children}</>;
@@ -33,9 +36,9 @@ const AppRoutes = () => {
       />
 
       {/* Catch all route */}
-      <Route path="*" element={<Navigate to="/" />} />
+      <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
 };
 
-export default AppRoutes; 
+export default AppRoutes;

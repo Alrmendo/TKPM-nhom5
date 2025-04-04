@@ -16,8 +16,12 @@ const AuthContext = createContext<AuthContextType>({
 
 export const useAuth = () => useContext(AuthContext);
 
-export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [token, setToken] = useState<string | null>(localStorage.getItem('token'));
+export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
+  children,
+}) => {
+  const [token, setToken] = useState<string | null>(
+    localStorage.getItem('token'),
+  );
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(!!token);
 
   useEffect(() => {
@@ -25,6 +29,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (storedToken) {
       setToken(storedToken);
       setIsAuthenticated(true);
+    } else {
+      setIsAuthenticated(false);
     }
   }, []);
 
@@ -45,4 +51,4 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       {children}
     </AuthContext.Provider>
   );
-}; 
+};
