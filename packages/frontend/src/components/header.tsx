@@ -36,7 +36,18 @@ const Header: React.FC<NavigationProps> = ({ isSticky = false }) => {
   const goToSearchPage = (): void => {
     navigate('/search');
   }
+  const goToProfilePage = (): void => {
+    navigate('/profile');
+  }
 
+  const goToHomePage = (): void => {
+    navigate('/');
+  }
+
+  const goToCartPage = (): void => {
+    navigate('/cart');
+  }
+  
   // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent): void => {
@@ -82,7 +93,12 @@ const Header: React.FC<NavigationProps> = ({ isSticky = false }) => {
             <div></div>
             {/* Điều chỉnh gap khi ở kích thước màn hình khác nhau */}
             <ul className="flex flex-wrap items-center gap-3 xl:gap-20 lg:gap-10 md:gap-6">
-              <li className="text-[#C3937C] hover:text-[#6164bc] cursor-pointer text-sm lg:text-base">Home</li>
+              <li 
+                className="text-[#C3937C] hover:text-[#6164bc] cursor-pointer text-sm lg:text-base"
+                onClick={goToHomePage}
+              >
+                Home
+              </li>
               <li 
                 className="flex items-center text-[#C3937C] hover:text-[#6164bc] cursor-pointer text-sm lg:text-base relative"
                 onClick={() => toggleDropdown('category')}
@@ -137,8 +153,18 @@ const Header: React.FC<NavigationProps> = ({ isSticky = false }) => {
                 alt="Search Icon" 
                 onClick={goToSearchPage}
               />
-              <img className="w-4 h-8 cursor-pointer lg:w-5" src={profileIcon} alt="Profile Icon" />
-              <img className="w-5 h-8 cursor-pointer" src={cartIcon} alt="Cart Icon" />
+              <img 
+                className="w-4 h-8 cursor-pointer lg:w-5" 
+                src={profileIcon} 
+                alt="Profile Icon" 
+                onClick={goToProfilePage}
+              />
+              <img 
+                className="w-5 h-8 cursor-pointer" 
+                src={cartIcon} 
+                alt="Cart Icon" 
+                onClick={goToCartPage}
+              />
             </div>
           </div>
 

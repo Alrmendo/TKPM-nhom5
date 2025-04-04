@@ -5,12 +5,11 @@ export const CloudinaryProvider = {
   provide: 'CLOUDINARY',
   inject: [ConfigService],
   useFactory: (configService: ConfigService) => {
-    const config = configService.get('cloudinary');
     return cloudinary.config({
-      cloud_name: config.cloud_name,
-      api_key: config.api_key,
-      api_secret: config.api_secret,
-      secure: config.secure,
+      cloud_name: configService.get('CLOUDINARY_CLOUD_NAME'),
+      api_key: configService.get('CLOUDINARY_API_KEY'),
+      api_secret: configService.get('CLOUDINARY_API_SECRET'),
+      secure: configService.get('CLOUDINARY_SECURE') === 'true', // đảm bảo boolean
     });
   },
 };

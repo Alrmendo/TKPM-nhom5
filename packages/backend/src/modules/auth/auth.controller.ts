@@ -1,0 +1,68 @@
+import { Controller, Post, Body, HttpCode, HttpStatus, Get, UseGuards, Res, Req } from '@nestjs/common';
+import { AuthService } from './auth.service';
+import { RegisterDto, LoginDto } from './dto/auth.dto';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard'; 
+import { Roles } from '../../decorators/role.decorators';
+import { RolesGuard } from '../../guards/roles.guard';
+import { Request, Response as ExpressResponse } from 'express';
+
+export interface RequestWithUser extends Request {
+  user: any; // Hoặc kiểu dữ liệu của bạn, ví dụ { userId: string, username: string }
+}
+
+@Controller('auth')
+export class AuthController {
+  constructor(private readonly authService: AuthService) {}
+
+  @Post('register')
+  async register(@Body() registerDto: RegisterDto) {
+    return this.authService.register(registerDto);
+  }
+
+  @Post('login')
+  @HttpCode(HttpStatus.OK)
+  async login(
+    @Body() loginDto: LoginDto,
+    @Res({ passthrough: true }) res: ExpressResponse,
+  ) {
+    const { accessToken } = await this.authService.login(loginDto);
+    // Set cookie "jwt" với các option bảo mật
+    res.cookie('jwt', accessToken, {
+      httpOnly: true, // Không cho phép truy cập từ JavaScript (giúp bảo vệ khỏi XSS)
+      secure: true, 
+      sameSite: 'none', 
+      maxAge: 7 * 24 * 60 * 60 * 1000, // Thời hạn cookie: 7 ngày
+    });
+    return { message: 'Login successful' };
+  }
+
+  @Post('logout')
+  @HttpCode(HttpStatus.OK)
+  async logout(@Res({ passthrough: true }) res: ExpressResponse) {
+    res.clearCookie('jwt', {
+      httpOnly: true,
+      secure: true,
+      sameSite: 'none',
+    });
+    return { message: 'Logged out successfully' };
+  }
+
+  @Get('me')
+  @UseGuards(JwtAuthGuard)
+  async getProfile(@Req() req: RequestWithUser) {
+    const { role } = req.user;
+    if (!role) throw new Error('Role not found in token');
+    return { role };
+  }
+} 
+
+@Controller('admin')
+@UseGuards(JwtAuthGuard, RolesGuard)
+export class AdminController {
+  @Get('style')
+  @Roles('admin')
+  getAdminPage() {
+    // Trả về dữ liệu cần thiết cho frontend admin
+    return { message: 'Welcome Admin! This is the admin page data.' };
+  }
+} 
