@@ -13,6 +13,7 @@ const SignIn: React.FC = () => {
   const [showPassword, setShowPassword] = useState<boolean>(false);
   const [error, setError] = useState<string>('');
   const [loading, setLoading] = useState<boolean>(false);
+  const [showForgotPassword, setShowForgotPassword] = useState<boolean>(false);
   const { getRoleFromCookie } = useAuth(); 
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -26,6 +27,7 @@ const SignIn: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError('');
+    setShowForgotPassword(false);
     setLoading(true);
 
     try {
@@ -50,12 +52,25 @@ const SignIn: React.FC = () => {
         navigate('/profile');
       }
     } catch (err: any) {
-      // Nếu dùng axios, bạn có thể lấy thêm thông tin lỗi từ err.response.data nếu cần
-      const errorMsg = err.response?.data?.message || err.message;
-      setError(errorMsg);
+      // Handle specific error codes
+      const errorResponse = err.response?.data;
+      
+      if (errorResponse?.errorCode === 'USER_NOT_FOUND') {
+        setError('Account not found. Please register to create an account.');
+        // Add a button/link to registration page
+      } else if (errorResponse?.errorCode === 'INVALID_PASSWORD') {
+        setError('Incorrect password. Did you forget your password?');
+        setShowForgotPassword(true);
+      } else {
+        setError(errorResponse?.message || err.message || 'Login failed');
+      }
     } finally {
       setLoading(false);
     }
+  };
+
+  const goToForgotPassword = () => {
+    navigate('/forgot-password');
   };
 
   return (
@@ -79,6 +94,16 @@ const SignIn: React.FC = () => {
           {error && (
             <div className="p-3 bg-red-100 text-red-700 rounded-md">
               {error}
+              {showForgotPassword && (
+                <div className="mt-2">
+                  <button 
+                    onClick={goToForgotPassword}
+                    className="text-rose-700 underline hover:text-rose-800"
+                  >
+                    Reset your password
+                  </button>
+                </div>
+              )}
             </div>
           )}
 
@@ -122,6 +147,12 @@ const SignIn: React.FC = () => {
                   <Eye className="h-5 w-5 text-[#999999]" />
                 )}
               </button>
+            </div>
+
+            <div className="flex justify-end">
+              <Link to="/forgot-password" className="text-sm text-[#c3937c] hover:underline">
+                Forgot Password?
+              </Link>
             </div>
 
             {/* Login Button */}

@@ -29,6 +29,17 @@ export interface VerifyEmailData {
   verificationCode: string;
 }
 
+export interface RequestPasswordResetData {
+  email: string;
+}
+
+export interface ResetPasswordData {
+  email: string;
+  resetCode: string;
+  newPassword: string;
+  confirmPassword: string;
+}
+
 export const register = async (data: RegisterData): Promise<{ userId: string; email: string; message: string }> => {
   try {
     const response = await API.post('/auth/register', data);
@@ -76,5 +87,23 @@ export const resendVerificationCode = async (email: string): Promise<{ message: 
     return response.data;
   } catch (error: any) {
     throw new Error(error.response?.data?.message || 'Failed to resend verification code');
+  }
+};
+
+export const requestPasswordReset = async (data: RequestPasswordResetData): Promise<{ message: string }> => {
+  try {
+    const response = await API.post('/auth/forgot-password', data);
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to request password reset');
+  }
+};
+
+export const resetPassword = async (data: ResetPasswordData): Promise<{ message: string }> => {
+  try {
+    const response = await API.post('/auth/reset-password', data);
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to reset password');
   }
 };

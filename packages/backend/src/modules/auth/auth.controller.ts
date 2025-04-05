@@ -7,6 +7,7 @@ import { RolesGuard } from '../../guards/roles.guard';
 import { Request, Response as ExpressResponse } from 'express';
 import { VerifyEmailDto } from '../email/dto/verify-email.dto';
 import { UserDocument } from '../../models/entities/user.entity';
+import { RequestPasswordResetDto, ResetPasswordDto } from './dto/password-reset.dto';
 
 export interface RequestWithUser extends Request {
   user: any; // Hoặc kiểu dữ liệu của bạn, ví dụ { userId: string, username: string }
@@ -38,7 +39,7 @@ export class AuthController {
     
     // Set cookie "jwt" với các option bảo mật
     res.cookie('jwt', accessToken, {
-      httpOnly: true, // Không cho phép truy cập từ JavaScript
+      httpOnly: true, // Không cho phép truy cập từ JavaScript (giúp bảo vệ khỏi XSS)
       secure: true, 
       sameSite: 'none', 
       maxAge: 7 * 24 * 60 * 60 * 1000, // Thời hạn cookie: 7 ngày
@@ -71,6 +72,27 @@ export class AuthController {
       throw new BadRequestException('Email is required');
     }
     return this.authService.resendVerificationCode(email);
+  }
+
+  @Post('forgot-password')
+  @HttpCode(HttpStatus.OK)
+  async forgotPassword(@Body() requestPasswordResetDto: RequestPasswordResetDto) {
+    return this.authService.requestPasswordReset(requestPasswordResetDto.email);
+  }
+
+  @Post('reset-password')
+  @HttpCode(HttpStatus.OK)
+  async resetPassword(@Body() resetPasswordDto: ResetPasswordDto) {
+    // Check if passwords match
+    if (resetPasswordDto.newPassword !== resetPasswordDto.confirmPassword) {
+      throw new BadRequestException('Passwords do not match');
+    }
+    
+    return this.authService.resetPassword(
+      resetPasswordDto.email,
+      resetPasswordDto.resetCode,
+      resetPasswordDto.newPassword
+    );
   }
 
   @Post('logout')

@@ -98,13 +98,19 @@ export class AuthService {
     // Find user by username
     const user = await this.userModel.findOne({ username });
     if (!user) {
-      throw new UnauthorizedException('Invalid credentials');
+      throw new UnauthorizedException({
+        message: 'Account not found. Please register to create an account.',
+        errorCode: 'USER_NOT_FOUND'
+      });
     }
 
     // Verify password
     const isPasswordValid = await bcrypt.compare(password, user.password);
     if (!isPasswordValid) {
-      throw new UnauthorizedException('Invalid credentials');
+      throw new UnauthorizedException({
+        message: 'Incorrect password. Did you forget your password?',
+        errorCode: 'INVALID_PASSWORD'
+      });
     }
 
     // Generate JWT token
@@ -201,5 +207,63 @@ export class AuthService {
     }
 
     return { message: 'Verification code sent successfully' };
+  }
+
+  async requestPasswordReset(email: string): Promise<{ message: string }> {
+    // Find user by email
+    const user = await this.userModel.findOne({ email });
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    // Generate reset code (same as verification code)
+    const resetCode = this.generateVerificationCode();
+    const resetExpiry = new Date();
+    resetExpiry.setMinutes(resetExpiry.getMinutes() + 30); // 30 minutes expiry
+
+    // Update user with reset code
+    user.verificationCode = resetCode;
+    user.verificationExpiry = resetExpiry;
+    await user.save();
+
+    // Send reset email
+    try {
+      // Using the same email service but with reset content
+      await this.emailService.sendPasswordResetEmail(email, resetCode);
+    } catch (error) {
+      console.error('Error sending password reset email:', error);
+      throw new Error('Failed to send password reset email');
+    }
+
+    return { message: 'Password reset code sent to your email' };
+  }
+
+  async resetPassword(email: string, resetCode: string, newPassword: string): Promise<{ message: string }> {
+    // Find user by email
+    const user = await this.userModel.findOne({ email });
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    // Verify reset code
+    if (user.verificationCode !== resetCode) {
+      throw new BadRequestException('Invalid reset code');
+    }
+
+    // Check if reset code is expired
+    if (user.verificationExpiry && new Date() > user.verificationExpiry) {
+      throw new BadRequestException('Reset code has expired');
+    }
+
+    // Hash new password
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    
+    // Update user with new password
+    user.password = hashedPassword;
+    user.verificationCode = null;
+    user.verificationExpiry = null;
+    await user.save();
+
+    return { message: 'Password has been reset successfully' };
   }
 } 

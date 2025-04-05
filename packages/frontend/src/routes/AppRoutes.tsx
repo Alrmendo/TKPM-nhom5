@@ -29,6 +29,7 @@ const SignIn = lazy(() => import('../pages/Auth/SignIn'));
 const SignUp = lazy(() => import('../pages/Auth/SignUp'));
 const VerifyEmail = lazy(() => import('../pages/Auth/VerifyEmail'));
 const ForgotPassword = lazy(() => import('../pages/Auth/ForgotPassword'));
+const ResetPassword = lazy(() => import('../pages/Auth/ResetPassword'));
 const Cart = lazy(() => import('../pages/Cart/Cart'));
 const AboutPage = lazy(() => import('../pages/About/About'));
 
@@ -127,7 +128,8 @@ const AppRoutes = () => {
     { path: '/signin', element: <SignIn /> },
     { path: '/signup', element: <SignUp /> },
     { path: '/verify-email', element: <VerifyEmail /> },
-    { path: '/forgotpassw', element: <ForgotPassword /> },
+    { path: '/forgot-password', element: <ForgotPassword /> },
+    { path: '/reset-password', element: <ResetPassword /> },
     { path: '/cart', element: <Cart /> },
     { path: '/about', element: <AboutPage /> },
     { path: '/search', element: <SearchOverlay />},
