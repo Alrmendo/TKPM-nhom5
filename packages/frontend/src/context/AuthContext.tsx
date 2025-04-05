@@ -27,12 +27,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const [isLoading, setIsLoading] = useState<boolean>(true); // Thêm trạng thái isLoading
 
   useEffect(() => {
+    console.log('useEffect run');
     const checkLogin = async () => {
       try {
         const response = await getRoleAPI(); // Gọi /auth/me
         setRole(response.role);
         setIsAuthenticated(true);
       } catch (error) {
+        // const err = error as Error; 
+        // console.log(err.message);
         setRole(null);
         setIsAuthenticated(false);
       } finally {

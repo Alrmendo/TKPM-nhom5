@@ -1,6 +1,5 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import AuthenticatedRoute from '../components/authenticatedRoute';
 import { lazy, Suspense } from 'react';
 
 // Lazy load pages
@@ -49,18 +48,17 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   }
 
   if (!isAuthenticated) {
-    return <Navigate to="/signin" replace={false} />;
+    return <Navigate to="/signin" replace={true} />;
   }
 
   if (requiredRole && role !== requiredRole) {
-    return <Navigate to="/notfound" replace={false} />;
+    return <Navigate to="/notfound" replace={true} />;
   }
 
   return <>{children}</>;
 };
 
 const AppRoutes = () => {
-  const { isAuthenticated } = useAuth();
 
   const routes = [
     { path: '/', element: <Home /> },

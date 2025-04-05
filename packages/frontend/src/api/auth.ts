@@ -50,6 +50,6 @@ export const logout = async (): Promise<void> => {
 }
 
 export const getRoleAPI = async () => {
-  const response = await API.get('/auth/me'); // API đã có withCredentials: true
+  const response = await API.get('/auth/me'); 
   return response.data;
 };

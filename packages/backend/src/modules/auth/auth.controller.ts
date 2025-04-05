@@ -1,7 +1,7 @@
 import { Controller, Post, Body, HttpCode, HttpStatus, Get, UseGuards, Res, Req } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { RegisterDto, LoginDto } from './dto/auth.dto';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard'; 
+import { JwtAuthGuard } from '../../guards/jwt-auth.guard'; 
 import { Roles } from '../../decorators/role.decorators';
 import { RolesGuard } from '../../guards/roles.guard';
 import { Request, Response as ExpressResponse } from 'express';
@@ -51,18 +51,9 @@ export class AuthController {
   @UseGuards(JwtAuthGuard)
   async getProfile(@Req() req: RequestWithUser) {
     const { role } = req.user;
-    if (!role) throw new Error('Role not found in token');
+    console.log('/auth/me')
+    //if (!role) throw new Error('Role not found in token');
     return { role };
   }
 } 
 
-@Controller('admin')
-@UseGuards(JwtAuthGuard, RolesGuard)
-export class AdminController {
-  @Get('style')
-  @Roles('admin')
-  getAdminPage() {
-    // Trả về dữ liệu cần thiết cho frontend admin
-    return { message: 'Welcome Admin! This is the admin page data.' };
-  }
-} 

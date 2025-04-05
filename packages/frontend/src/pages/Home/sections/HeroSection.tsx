@@ -62,10 +62,9 @@ const HeroSection: React.FC = () => {
           />
         </div>
 
-        <div className="absolute top-150 right-[130px]">
+        <div className="absolute top-[550px] right-[130px]">
           <RentedCounterBox end={1884} />
         </div>
-        <div className="h-[360px]"></div>
       </div>
 
       {/* Mobile Layout - Shown only on mobile screens */}

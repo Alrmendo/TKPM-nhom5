@@ -13,7 +13,7 @@ const SignIn: React.FC = () => {
   const [showPassword, setShowPassword] = useState<boolean>(false);
   const [error, setError] = useState<string>('');
   const [loading, setLoading] = useState<boolean>(false);
-  const { getRoleFromCookie } = useAuth(); // dùng alias 'saveToken' để tránh trùng tên
+  const { getRoleFromCookie } = useAuth(); 
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -35,7 +35,7 @@ const SignIn: React.FC = () => {
       if (role === 'admin') {
         navigate('/admin/style');
       } else if (role === 'user') {
-        navigate('/profile', { replace: true });
+        navigate('/profile', { replace: false });
       }
     } catch (err: any) {
       // Nếu dùng axios, bạn có thể lấy thêm thông tin lỗi từ err.response.data nếu cần
