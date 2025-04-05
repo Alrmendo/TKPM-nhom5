@@ -1,39 +1,21 @@
 import { Module } from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config';
-import { MongooseModule } from '@nestjs/mongoose';
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
-import { CloudinaryModule } from './modules/cloudinary.module';
-import databaseConfig from './config/database.config';
-import cloudinaryConfig from './config/cloudinary.config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
+import { AuthModule } from './modules/auth/auth.module';
+import { DatabaseModule } from './modules/database/database.module';
+import { AdminModule } from './modules/admin/admin.module';
+import { CloudinaryModule } from './modules/cloudinary/cloudinary.module';
+import { EmailModule } from './modules/email/email.module';
+import { UserModule } from './modules/user/user.module';
 
 @Module({
   imports: [
-    ConfigModule.forRoot({
-      isGlobal: true,
-      load: [databaseConfig, cloudinaryConfig],
-    }),
-    MongooseModule.forRootAsync({
-      useFactory: async () => {
-        const uri = process.env.MONGODB_URI || process.env.DATABASE_URL;
-        console.log('Connecting to MongoDB...');
-        return {
-          uri,
-          connectionFactory: (connection) => {
-            connection.on('connected', () => {
-              console.log('MongoDB connection established successfully!');
-            });
-            connection.on('error', (error) => {
-              console.error('MongoDB connection error:', error);
-            });
-            return connection;
-          },
-        };
-      },
-    }),
+    ConfigModule.forRoot({ isGlobal: true, }),
+    DatabaseModule,
+    AuthModule,
     CloudinaryModule,
+    AdminModule,
+    EmailModule,
+    UserModule,
   ],
-  controllers: [AppController],
-  providers: [AppService],
 })
 export class AppModule {}

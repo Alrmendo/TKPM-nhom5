@@ -213,6 +213,7 @@ export default function WeddingDressRental() {
     }
   }
 
+
   return (
     <div className="min-h-screen bg-background flex">
       {/* Sidebar */}

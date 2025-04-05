@@ -1,31 +1,91 @@
+import { useEffect, useState } from 'react';
 import Header from '../../components/header';
 import ProfileSidebar from './profile/sidebar';
 import ProfileForm from './profile/form';
 import Footer from '../../components/footer';
-import { JSX } from 'react';
+import { getUserProfile } from '../../api/user';
+import { UserProfile } from '../../api/user';
 
-interface UserData {
-  firstName: string;
-  lastName: string;
-  email: string;
-  phone: string;
-  dateOfBirth: string;
-  username: string;
-  password: string;
-}
+export default function ProfilePage() {
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [userData, setUserData] = useState<UserProfile | null>(null);
 
-// This would typically come from your database or API
-const mockUserData: UserData = {
-  firstName: 'Anjela',
-  lastName: 'Mattuew',
-  email: 'Anjela.mw85@gmail.com',
-  phone: '246-094-5746',
-  dateOfBirth: '30/11/1980',
-  username: 'Anjella80',
-  password: '********',
-};
+  useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        setLoading(true);
+        const data = await getUserProfile();
+        setUserData(data);
+        setError(null);
+      } catch (err: any) {
+        setError(err.message || 'Failed to load profile data');
+        console.error('Error fetching profile:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-export default function ProfilePage(): JSX.Element {
+    fetchUserData();
+  }, []);
+
+  const handleImageUpdate = (imageUrl: string) => {
+    if (userData) {
+      setUserData({
+        ...userData,
+        profileImageUrl: imageUrl
+      });
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex flex-col">
+        <Header />
+        <main className="container mx-auto px-4 py-8 flex-grow flex items-center justify-center">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-rose-500 mx-auto"></div>
+            <p className="mt-4 text-gray-600">Loading your profile...</p>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
+  if (error || !userData) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex flex-col">
+        <Header />
+        <main className="container mx-auto px-4 py-8 flex-grow flex items-center justify-center">
+          <div className="text-center">
+            <div className="text-rose-500 text-xl mb-4">Error loading profile</div>
+            <p className="text-gray-600">{error || 'Something went wrong'}</p>
+            <button
+              onClick={() => window.location.reload()}
+              className="mt-4 px-4 py-2 bg-rose-50 text-rose-500 rounded-md hover:bg-rose-100"
+            >
+              Try Again
+            </button>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
+  // Format userData to match the ProfileForm expected structure
+  const profileData = {
+    firstName: userData.firstName || '',
+    lastName: userData.lastName || '',
+    email: userData.email || '',
+    phone: userData.phone || '',
+    dateOfBirth: userData.dateOfBirth || '',
+    username: userData.username || '',
+    password: '********',  // For display purposes only
+    profileImageUrl: userData.profileImageUrl || '',
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
       <Header />
@@ -35,13 +95,24 @@ export default function ProfilePage(): JSX.Element {
           <div className="md:col-span-1">
             <ProfileSidebar
               activeTab="profile"
-              userName={`${mockUserData.firstName} ${mockUserData.lastName}`}
-              userImage="/placeholder.svg?height=100&width=100"
+              userName={userData.username}
+              userImage={userData.profileImageUrl}
+              onImageUpdate={handleImageUpdate}
             />
           </div>
 
           <div className="md:col-span-2 bg-white rounded-lg border p-6">
-            <ProfileForm initialData={mockUserData} />
+            <ProfileForm 
+              initialData={profileData} 
+              onProfileUpdate={(updatedData) => {
+                if (userData) {
+                  setUserData({
+                    ...userData,
+                    ...updatedData
+                  });
+                }
+              }}
+            />
           </div>
         </div>
       </main>

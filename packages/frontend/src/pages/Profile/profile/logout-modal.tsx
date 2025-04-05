@@ -18,7 +18,7 @@ interface LogoutModalProps {
 export function LogoutModal({ isOpen, onClose, onLogout }: LogoutModalProps) {
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md bg-white shadow-lg rounded-lg">
         <DialogHeader className="text-center">
           <button
             onClick={onClose}
@@ -27,22 +27,31 @@ export function LogoutModal({ isOpen, onClose, onLogout }: LogoutModalProps) {
             <X className="h-4 w-4" />
             <span className="sr-only">Close</span>
           </button>
-          <DialogTitle className="text-xl font-medium mt-4">Are you sure log out to your account?</DialogTitle>
+          <DialogTitle className="text-xl font-semibold mt-4 text-gray-900">
+            Are you sure you want to log out of your account?
+          </DialogTitle>
         </DialogHeader>
 
         <DialogFooter className="flex-col sm:flex-col gap-2 sm:gap-2 mt-4">
           <div className="flex justify-center gap-4 w-full">
-            <Button onClick={onLogout} className="bg-red-600 hover:bg-red-700 text-white w-32">
+            <Button
+              onClick={onLogout}
+              className="bg-rose-500 hover:bg-rose-600 text-white w-32"
+            >
               Log out
             </Button>
-            <Button onClick={onClose} variant="outline" className="border-gray-300 text-gray-700 w-32">
-              Stay log in
+            <Button
+              onClick={onClose}
+              variant="outline"
+              className="border-gray-400 text-gray-800 w-32 hover:bg-gray-100"
+            >
+              Stay logged in
             </Button>
           </div>
 
-          <DialogDescription className="text-center pt-4">
-            <p className="text-gray-800 font-medium">Thank you for using Enchanted</p>
-            <p className="text-gray-600 mt-1">Hope to see you soon</p>
+          <DialogDescription className="text-center pt-4 text-gray-700">
+            <p className="font-medium">Thank you for using Enchanted</p>
+            <p className="mt-1">Hope to see you soon</p>
           </DialogDescription>
         </DialogFooter>
       </DialogContent>
