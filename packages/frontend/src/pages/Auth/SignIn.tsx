@@ -29,11 +29,22 @@ const SignIn: React.FC = () => {
     setLoading(true);
 
     try {
-      await login(formData);
+      const response = await login(formData);
+      
+      // Kiểm tra xem tài khoản đã được xác thực email chưa
+      if (response.isVerified === false) {
+        setError('Your account is not verified. Please check your email and verify your account.');
+        // Chuyển hướng đến trang xác thực email
+        navigate('/verify-email', { 
+          state: { email: formData.username }
+        });
+        return;
+      }
+      
       const role = await getRoleFromCookie();
       console.log(role);
       if (role === 'admin') {
-        navigate('/admin/style');
+        navigate('/admin/measurement');
       } else if (role === 'user') {
         navigate('/profile', { replace: false });
       }
