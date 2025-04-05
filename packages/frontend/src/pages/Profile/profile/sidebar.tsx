@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import {
   Pencil,
@@ -11,8 +11,8 @@ import {
   Settings,
   HelpCircle,
 } from 'lucide-react';
+import { useAuth } from '../../../context/AuthContext';
 import { LogoutModal } from './logout-modal';
-
 interface ProfileSidebarProps {
   activeTab: string;
   userName: string;
@@ -27,6 +27,7 @@ export default function ProfileSidebar({
   const [isEditing, setIsEditing] = useState(false);
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
   const navigate = useNavigate();
+  const { clearCookie } = useAuth(); // Dùng hook useAuth để lấy hàm logout
 
   const menuItems = [
     { id: 'profile', label: 'My Profile', icon: <User className="h-5 w-5" /> },
@@ -61,7 +62,8 @@ export default function ProfileSidebar({
   const handleLogout = () => {
     // Xử lý logout ở đây, ví dụ như xoá cookie, localStorage, v.v.
     console.log('User logged out');
-    navigate('/signin'); // Navigate to the login page
+    clearCookie();
+    navigate('/signin');
   };
 
   return (

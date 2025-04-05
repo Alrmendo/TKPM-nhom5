@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Mail, Lock, Eye, EyeOff } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { login } from '../../api/auth';
+import { useAuth } from '../../context/AuthContext';
 
 const SignIn: React.FC = () => {
   const navigate = useNavigate();
@@ -12,6 +13,7 @@ const SignIn: React.FC = () => {
   const [showPassword, setShowPassword] = useState<boolean>(false);
   const [error, setError] = useState<string>('');
   const [loading, setLoading] = useState<boolean>(false);
+  const { getRoleFromCookie } = useAuth(); // dùng alias 'saveToken' để tránh trùng tên
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -27,17 +29,18 @@ const SignIn: React.FC = () => {
     setLoading(true);
 
     try {
-      const response = await login(formData);
-      if (response.accessToken) {
-        // Save token to localStorage
-        localStorage.setItem('token', response.accessToken);
-        // Redirect to home page
-        navigate('/'); // Chuyển hướng sang trang chủ
-      } else {
-        throw new Error('Invalid login response');
+      await login(formData);
+      const role = await getRoleFromCookie();
+      console.log(role);
+      if (role === 'admin') {
+        navigate('/admin/style');
+      } else if (role === 'user') {
+        navigate('/profile', { replace: true });
       }
     } catch (err: any) {
-      setError(err.message || 'Login failed');
+      // Nếu dùng axios, bạn có thể lấy thêm thông tin lỗi từ err.response.data nếu cần
+      const errorMsg = err.response?.data?.message || err.message;
+      setError(errorMsg);
     } finally {
       setLoading(false);
     }
@@ -212,6 +215,12 @@ const SignIn: React.FC = () => {
               New to ENCOUNTERED WEDDING?{' '}
               <Link to="/signup" className="text-[#c3937c] font-medium">
                 Sign Up
+              </Link>
+            </p>
+            <p className="text-10 text-[#404040]">
+              Just dont want to log in?{' '}
+              <Link to="/" className="text-[#c3937c] font-medium">
+                Be our guest!
               </Link>
             </p>
           </div>

@@ -1,4 +1,4 @@
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import AuthenticatedRoute from '../components/authenticatedRoute';
 import { lazy, Suspense } from 'react';
@@ -32,6 +32,33 @@ const ForgotPassword = lazy(() => import('../pages/Auth/ForgotPassword'));
 const Cart = lazy(() => import('../pages/Cart/Cart'));
 const AboutPage = lazy(() => import('../pages/About/About'));
 
+interface ProtectedRouteProps {
+  children: React.ReactNode;
+  requiredRole?: 'admin' | 'user';
+}
+
+// Protected Route component
+const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
+  children,
+  requiredRole,
+}) => {
+  const { isAuthenticated, isLoading, role } = useAuth();
+
+  if (isLoading) {
+    return <div>Đang tải...</div>;
+  }
+
+  if (!isAuthenticated) {
+    return <Navigate to="/signin" replace={false} />;
+  }
+
+  if (requiredRole && role !== requiredRole) {
+    return <Navigate to="/notfound" replace={false} />;
+  }
+
+  return <>{children}</>;
+};
+
 const AppRoutes = () => {
   const { isAuthenticated } = useAuth();
 
@@ -40,7 +67,14 @@ const AppRoutes = () => {
     { path: '/contact', element: <Contact /> },
     { path: '/pdp', element: <PDP /> },
     { path: '/pcp', element: <PCP /> },
-    { path: '/profile', element: <ProfilePage /> },
+    {
+      path: '/profile',
+      element: (
+        <ProtectedRoute requiredRole="user">
+          <ProfilePage />
+        </ProtectedRoute>
+      ),
+    },
     { path: '/order-history', element: <OrderHistory /> },
     { path: '/current-orders', element: <CurrentOrders /> },
     { path: '/track-order', element: <TrackOrder /> },
@@ -51,12 +85,46 @@ const AppRoutes = () => {
     { path: '/payment-shipping', element: <Shipping /> },
     { path: '/payment-checkout', element: <Checkout /> },
     { path: '/payment-successful', element: <Successful /> },
-    { path: '*', element: <NotFoundPage /> },
-    { path: '/admin/measurement', element: <Measurement /> },
-    { path: '/admin/style', element: <Style /> },
-    { path: '/admin/photography', element: <Photography /> },
-    { path: '/admin/deliver', element: <Deliver /> },
-    { path: '/admin/contact', element: <ContactAdmin /> },
+    {
+      path: '/admin/measurement',
+      element: (
+        <ProtectedRoute requiredRole="admin">
+          <Measurement />
+        </ProtectedRoute>
+      ),
+    },
+    {
+      path: '/admin/style',
+      element: (
+        <ProtectedRoute requiredRole="admin">
+          <Style />
+        </ProtectedRoute>
+      ),
+    },
+    {
+      path: '/admin/photography',
+      element: (
+        <ProtectedRoute requiredRole="admin">
+          <Photography />
+        </ProtectedRoute>
+      ),
+    },
+    {
+      path: '/admin/deliver',
+      element: (
+        <ProtectedRoute requiredRole="admin">
+          <Deliver />
+        </ProtectedRoute>
+      ),
+    },
+    {
+      path: '/admin/contact',
+      element: (
+        <ProtectedRoute requiredRole="admin">
+          <ContactAdmin />
+        </ProtectedRoute>
+      ),
+    },
     { path: '/signin', element: <SignIn /> },
     { path: '/signup', element: <SignUp /> },
     { path: '/forgotpassw', element: <ForgotPassword /> },
@@ -70,6 +138,7 @@ const AppRoutes = () => {
         </AuthenticatedRoute>
       ),
     },
+    { path: '*', element: <NotFoundPage /> },
   ];
 
   return (

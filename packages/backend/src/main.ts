@@ -3,6 +3,7 @@ import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import * as net from 'net';
+import * as cookieParser from 'cookie-parser';  // 👈 Import cookie-parser
 
 // Function to check if a port is available
 const isPortAvailable = (port: number): Promise<boolean> => {
@@ -51,7 +52,11 @@ async function bootstrap() {
     });
     
     // Enable CORS
-    app.enableCors();
+    app.enableCors({
+      origin: 'http://localhost:5173', // FE
+      credentials: true, // <-- BẮT BUỘC
+    });
+    app.use(cookieParser());
     
     // Global Validation Pipe
     app.useGlobalPipes(new ValidationPipe({ transform: true }));

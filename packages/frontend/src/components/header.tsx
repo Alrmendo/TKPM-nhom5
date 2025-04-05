@@ -34,6 +34,17 @@ const Header: React.FC<NavigationProps> = ({ isSticky = false }) => {
   const goToSearchPage = (): void => {
     navigate('/search');
   };
+  const goToProfilePage = (): void => {
+    navigate('/profile');
+  };
+
+  const goToHomePage = (): void => {
+    navigate('/');
+  };
+
+  const goToCartPage = (): void => {
+    navigate('/cart');
+  };
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -89,7 +100,7 @@ const Header: React.FC<NavigationProps> = ({ isSticky = false }) => {
             <ul className="flex flex-wrap items-center gap-3 xl:gap-20 lg:gap-10 md:gap-6">
               <li
                 className="text-[#C3937C] hover:text-[#6164bc] cursor-pointer text-sm lg:text-base"
-                onClick={() => navigate('/')}
+                onClick={goToHomePage}
               >
                 Home
               </li>
@@ -165,13 +176,13 @@ const Header: React.FC<NavigationProps> = ({ isSticky = false }) => {
                 className="w-4 h-8 cursor-pointer lg:w-5"
                 src={profileIcon}
                 alt="Profile Icon"
-                onClick={() => navigate('/profile')}
+                onClick={goToProfilePage}
               />
               <img
                 className="w-5 h-8 cursor-pointer"
                 src={cartIcon}
                 alt="Cart Icon"
-                onClick={() => navigate('/cart')}
+                onClick={goToCartPage}
               />
             </div>
           </div>
