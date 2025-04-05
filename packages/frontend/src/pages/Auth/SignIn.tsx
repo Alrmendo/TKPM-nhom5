@@ -34,9 +34,10 @@ const SignIn: React.FC = () => {
       // Kiểm tra xem tài khoản đã được xác thực email chưa
       if (response.isVerified === false) {
         setError('Your account is not verified. Please check your email and verify your account.');
-        // Chuyển hướng đến trang xác thực email
+        
+        // Chuyển hướng đến trang xác thực email với email của người dùng
         navigate('/verify-email', { 
-          state: { email: formData.username }
+          state: { email: response.email } // Use the email returned from the API response
         });
         return;
       }

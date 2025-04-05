@@ -21,6 +21,7 @@ export interface AuthResponse {
   accessToken?: string;
   message: string;
   isVerified?: boolean;
+  email?: string;
 }
 
 export interface VerifyEmailData {

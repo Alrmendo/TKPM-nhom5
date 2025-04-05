@@ -34,11 +34,11 @@ export class AuthController {
     @Body() loginDto: LoginDto,
     @Res({ passthrough: true }) res: ExpressResponse,
   ) {
-    const { accessToken, isVerified } = await this.authService.login(loginDto);
+    const { accessToken, isVerified, email } = await this.authService.login(loginDto);
     
     // Set cookie "jwt" với các option bảo mật
     res.cookie('jwt', accessToken, {
-      httpOnly: true, // Không cho phép truy cập từ JavaScript (giúp bảo vệ khỏi XSS)
+      httpOnly: true, // Không cho phép truy cập từ JavaScript
       secure: true, 
       sameSite: 'none', 
       maxAge: 7 * 24 * 60 * 60 * 1000, // Thời hạn cookie: 7 ngày
@@ -47,7 +47,8 @@ export class AuthController {
     if (!isVerified) {
       return { 
         message: 'Login successful but account not verified. Please verify your email.',
-        isVerified: false
+        isVerified: false,
+        email
       };
     }
     

@@ -64,7 +64,7 @@ export class AuthService {
     return savedUser;
   }
 
-  async login(loginDto: LoginDto): Promise<{ accessToken: string; isVerified: boolean }> {
+  async login(loginDto: LoginDto): Promise<{ accessToken: string; isVerified: boolean; email?: string }> {
     const { username, password } = loginDto;
 
     if (username === 'admin@enchanted.com' && password === 'enchanted') {
@@ -112,6 +112,15 @@ export class AuthService {
       username: user.username,
       role: user.role 
     };
+    
+    // Return email if the account is not verified
+    if (!user.isVerified) {
+      return {
+        accessToken: this.jwtService.sign(payload),
+        isVerified: false,
+        email: user.email,
+      };
+    }
     
     return {
       accessToken: this.jwtService.sign(payload),
