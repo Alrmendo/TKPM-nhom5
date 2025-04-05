@@ -1,7 +1,7 @@
 import { Routes, Route } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import AuthenticatedRoute from '../components/authenticatedRoute';
-import React, { lazy, Suspense } from 'react';
+import { lazy, Suspense } from 'react';
 
 // Lazy load pages
 const Home = lazy(() => import('../pages/Home/Home'));
@@ -29,6 +29,8 @@ const ContactAdmin = lazy(() => import('../pages/Admin/contact_admin'));
 const SignIn = lazy(() => import('../pages/Auth/SignIn'));
 const SignUp = lazy(() => import('../pages/Auth/SignUp'));
 const ForgotPassword = lazy(() => import('../pages/Auth/ForgotPassword'));
+const Cart = lazy(() => import('../pages/Cart/Cart'));
+const AboutPage = lazy(() => import('../pages/About/About'));
 
 const AppRoutes = () => {
   const { isAuthenticated } = useAuth();
@@ -58,6 +60,8 @@ const AppRoutes = () => {
     { path: '/signin', element: <SignIn /> },
     { path: '/signup', element: <SignUp /> },
     { path: '/forgotpassw', element: <ForgotPassword /> },
+    { path: '/cart', element: <Cart /> },
+    { path: '/about', element: <AboutPage /> },
     {
       path: '/search',
       element: (

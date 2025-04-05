@@ -1,6 +1,16 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Pencil, LogOut, User, ClipboardList, Package, Truck, MapPin, Settings, HelpCircle } from 'lucide-react';
+import {
+  Pencil,
+  LogOut,
+  User,
+  ClipboardList,
+  Package,
+  Truck,
+  MapPin,
+  Settings,
+  HelpCircle,
+} from 'lucide-react';
 import { LogoutModal } from './logout-modal';
 
 interface ProfileSidebarProps {
@@ -9,25 +19,49 @@ interface ProfileSidebarProps {
   userImage?: string;
 }
 
-export default function ProfileSidebar({ activeTab, userName, userImage }: ProfileSidebarProps) {
+export default function ProfileSidebar({
+  activeTab,
+  userName,
+  userImage,
+}: ProfileSidebarProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
   const navigate = useNavigate();
 
   const menuItems = [
     { id: 'profile', label: 'My Profile', icon: <User className="h-5 w-5" /> },
-    { id: 'order-history', label: 'Order History', icon: <ClipboardList className="h-5 w-5" /> },
-    { id: 'current-orders', label: 'Current orders', icon: <Package className="h-5 w-5" /> },
-    { id: 'track-order', label: 'Track Order', icon: <Truck className="h-5 w-5" /> },
-    { id: 'address', label: 'My Address', icon: <MapPin className="h-5 w-5" /> },
-    { id: 'settings', label: 'Setting', icon: <Settings className="h-5 w-5" /> },
+    {
+      id: 'order-history',
+      label: 'Order History',
+      icon: <ClipboardList className="h-5 w-5" />,
+    },
+    {
+      id: 'current-orders',
+      label: 'Current orders',
+      icon: <Package className="h-5 w-5" />,
+    },
+    {
+      id: 'track-order',
+      label: 'Track Order',
+      icon: <Truck className="h-5 w-5" />,
+    },
+    {
+      id: 'address',
+      label: 'My Address',
+      icon: <MapPin className="h-5 w-5" />,
+    },
+    {
+      id: 'settings',
+      label: 'Setting',
+      icon: <Settings className="h-5 w-5" />,
+    },
     { id: 'help', label: 'Help', icon: <HelpCircle className="h-5 w-5" /> },
   ];
 
   const handleLogout = () => {
     // Xử lý logout ở đây, ví dụ như xoá cookie, localStorage, v.v.
     console.log('User logged out');
-    navigate('/');
+    navigate('/signin'); // Navigate to the login page
   };
 
   return (
@@ -55,12 +89,14 @@ export default function ProfileSidebar({ activeTab, userName, userImage }: Profi
 
       <nav className="flex-1">
         <ul className="space-y-1">
-          {menuItems.map(item => (
+          {menuItems.map((item) => (
             <li key={item.id}>
               <Link
                 to={`/${item.id}`}
                 className={`flex items-center gap-3 px-3 py-2 rounded-md ${
-                  activeTab === item.id ? 'bg-rose-50 text-rose-500 font-medium' : 'text-gray-600 hover:bg-gray-100'
+                  activeTab === item.id
+                    ? 'bg-rose-50 text-rose-500 font-medium'
+                    : 'text-gray-600 hover:bg-gray-100'
                 }`}
               >
                 {item.icon}
@@ -81,7 +117,11 @@ export default function ProfileSidebar({ activeTab, userName, userImage }: Profi
         </button>
       </div>
 
-      <LogoutModal isOpen={isLogoutModalOpen} onClose={() => setIsLogoutModalOpen(false)} onLogout={handleLogout} />
+      <LogoutModal
+        isOpen={isLogoutModalOpen}
+        onClose={() => setIsLogoutModalOpen(false)}
+        onLogout={handleLogout}
+      />
     </div>
   );
 }
