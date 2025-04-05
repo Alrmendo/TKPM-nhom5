@@ -130,14 +130,7 @@ const AppRoutes = () => {
     { path: '/forgotpassw', element: <ForgotPassword /> },
     { path: '/cart', element: <Cart /> },
     { path: '/about', element: <AboutPage /> },
-    {
-      path: '/search',
-      element: (
-        <AuthenticatedRoute isAuthenticated={isAuthenticated}>
-          <SearchOverlay />
-        </AuthenticatedRoute>
-      ),
-    },
+    { path: '/search', element: <SearchOverlay />},
     { path: '*', element: <NotFoundPage /> },
   ];
 
