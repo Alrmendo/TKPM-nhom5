@@ -25,6 +25,12 @@ export class User {
 
   @Prop({ default: 'user' })
   role: 'user' | 'admin';
+  
+  @Prop({ type: String, nullable: true })
+  verificationCode: string | null;
+  
+  @Prop({ type: Date, nullable: true })
+  verificationExpiry: Date | null;
 }
 
 export const UserSchema = SchemaFactory.createForClass(User); 

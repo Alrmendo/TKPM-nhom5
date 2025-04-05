@@ -117,9 +117,11 @@ const SignUp: React.FC = () => {
     setLoading(true);
 
     try {
-      await register(formData);
-      // Redirect to login page after successful registration
-      navigate("/signin");
+      const response = await register(formData);
+      // Redirect to email verification page after successful registration
+      navigate("/verify-email", { 
+        state: { email: formData.email },
+      });
     } catch (err: any) {
       setError(err.message);
     } finally {

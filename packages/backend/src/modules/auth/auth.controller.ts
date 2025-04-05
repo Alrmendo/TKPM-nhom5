@@ -1,10 +1,12 @@
-import { Controller, Post, Body, HttpCode, HttpStatus, Get, UseGuards, Res, Req } from '@nestjs/common';
+import { Controller, Post, Body, HttpCode, HttpStatus, Get, UseGuards, Res, Req, BadRequestException } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { RegisterDto, LoginDto } from './dto/auth.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard'; 
 import { Roles } from '../../decorators/role.decorators';
 import { RolesGuard } from '../../guards/roles.guard';
 import { Request, Response as ExpressResponse } from 'express';
+import { VerifyEmailDto } from '../email/dto/verify-email.dto';
+import { UserDocument } from '../../models/entities/user.entity';
 
 export interface RequestWithUser extends Request {
   user: any; // Hoặc kiểu dữ liệu của bạn, ví dụ { userId: string, username: string }
@@ -16,7 +18,14 @@ export class AuthController {
 
   @Post('register')
   async register(@Body() registerDto: RegisterDto) {
-    return this.authService.register(registerDto);
+    const user = await this.authService.register(registerDto);
+    // Chuyển đổi Mongoose document thành JavaScript object để dễ truy cập
+    const userObject = user.toObject();
+    return {
+      message: 'Registration successful. Please check your email for verification code.',
+      userId: userObject._id.toString(),
+      email: user.email,
+    };
   }
 
   @Post('login')
@@ -25,7 +34,8 @@ export class AuthController {
     @Body() loginDto: LoginDto,
     @Res({ passthrough: true }) res: ExpressResponse,
   ) {
-    const { accessToken } = await this.authService.login(loginDto);
+    const { accessToken, isVerified } = await this.authService.login(loginDto);
+    
     // Set cookie "jwt" với các option bảo mật
     res.cookie('jwt', accessToken, {
       httpOnly: true, // Không cho phép truy cập từ JavaScript (giúp bảo vệ khỏi XSS)
@@ -33,7 +43,33 @@ export class AuthController {
       sameSite: 'none', 
       maxAge: 7 * 24 * 60 * 60 * 1000, // Thời hạn cookie: 7 ngày
     });
-    return { message: 'Login successful' };
+    
+    if (!isVerified) {
+      return { 
+        message: 'Login successful but account not verified. Please verify your email.',
+        isVerified: false
+      };
+    }
+    
+    return { 
+      message: 'Login successful',
+      isVerified: true
+    };
+  }
+
+  @Post('verify-email')
+  @HttpCode(HttpStatus.OK)
+  async verifyEmail(@Body() verifyEmailDto: VerifyEmailDto) {
+    return this.authService.verifyEmail(verifyEmailDto);
+  }
+
+  @Post('resend-verification')
+  @HttpCode(HttpStatus.OK)
+  async resendVerification(@Body() { email }: { email: string }) {
+    if (!email) {
+      throw new BadRequestException('Email is required');
+    }
+    return this.authService.resendVerificationCode(email);
   }
 
   @Post('logout')
