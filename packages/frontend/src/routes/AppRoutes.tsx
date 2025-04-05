@@ -67,6 +67,7 @@ const AppRoutes = () => {
     { path: '/', element: <Home /> },
     { path: '/contact', element: <Contact /> },
     { path: '/pdp', element: <PDP /> },
+    { path: '/pdp/:id', element: <PDP /> },
     { path: '/pcp', element: <PCP /> },
     {
       path: '/profile',

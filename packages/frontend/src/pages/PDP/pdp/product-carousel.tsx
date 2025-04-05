@@ -1,13 +1,21 @@
 import { JSX, useRef } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import ProductCard from './product-card';
+import { Dress } from '../../../api/dress';
+import { useNavigate } from 'react-router-dom';
 
-export default function ProductCarousel(): JSX.Element {
+interface ProductCarouselProps {
+  dresses?: Dress[];
+}
+
+export default function ProductCarousel({ dresses }: ProductCarouselProps): JSX.Element {
   const scrollRef = useRef<HTMLDivElement>(null);
+  const navigate = useNavigate();
 
-  const products = [
+  // Default products if no dresses are provided
+  const defaultProducts = [
     {
-      id: 1,
+      id: "1",
       image: '/placeholder.svg?height=400&width=300',
       title: 'French Lace',
       category: 'Modern',
@@ -16,7 +24,7 @@ export default function ProductCarousel(): JSX.Element {
       badge: 'The Most Rented',
     },
     {
-      id: 2,
+      id: "2",
       image: '/placeholder.svg?height=400&width=300',
       title: 'Sparkling flowers',
       category: 'Romance',
@@ -25,7 +33,7 @@ export default function ProductCarousel(): JSX.Element {
       badge: 'The Most Rented',
     },
     {
-      id: 3,
+      id: "3",
       image: '/placeholder.svg?height=400&width=300',
       title: 'Elegant',
       category: 'Paris',
@@ -34,7 +42,7 @@ export default function ProductCarousel(): JSX.Element {
       badge: 'Almost Booked',
     },
     {
-      id: 4,
+      id: "4",
       image: '/placeholder.svg?height=400&width=300',
       title: 'Classic White',
       category: 'Vintage',
@@ -43,7 +51,7 @@ export default function ProductCarousel(): JSX.Element {
       badge: 'The Most Rented',
     },
     {
-      id: 5,
+      id: "5",
       image: '/placeholder.svg?height=400&width=300',
       title: 'Bohemian Dream',
       category: 'Boho',
@@ -53,11 +61,27 @@ export default function ProductCarousel(): JSX.Element {
     },
   ];
 
+  // Map dress data to product format if available
+  const products = dresses ? dresses.map(dress => ({
+    id: dress._id,
+    image: dress.images[0] || '/placeholder.svg?height=400&width=300',
+    title: dress.name,
+    category: dress.style || 'Wedding Dress',
+    price: `$${dress.dailyRentalPrice} /Per Day`,
+    rating: dress.avgRating || dress.ratings.reduce((sum, rating) => sum + rating.rate, 0) / (dress.ratings.length || 1),
+    badge: dress.reviews.length > 5 ? 'The Most Rented' : 'Available',
+  })) : defaultProducts;
+
   const scroll = (direction: 'left' | 'right') => {
     if (scrollRef.current) {
       const scrollAmount = 300;
       scrollRef.current.scrollBy({ left: direction === 'left' ? -scrollAmount : scrollAmount, behavior: 'smooth' });
     }
+  };
+
+  const handleProductClick = (productId: string) => {
+    navigate(`/pdp/${productId}`);
+    window.scrollTo(0, 0);
   };
 
   return (
@@ -78,7 +102,11 @@ export default function ProductCarousel(): JSX.Element {
         style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
       >
         {products.map(product => (
-          <div key={product.id} className="flex-shrink-0 w-64">
+          <div 
+            key={product.id} 
+            className="flex-shrink-0 w-64 cursor-pointer"
+            onClick={() => handleProductClick(product.id)}
+          >
             <ProductCard {...product} />
           </div>
         ))}

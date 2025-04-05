@@ -1,74 +1,94 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import 'swiper/css';
 import DressCard from '../components/DressCard';
-
-// Định nghĩa interface cho dữ liệu card
-interface CardData {
-  imageUrl: string;
-  alt: string;
-  rating: number;
-  status: string;
-  statusColor: string;
-  title: string;
-  subtitle: string;
-  price: number;
-}
+import { getMostPopularDresses, Dress } from '../../../api/dress';
 
 // Component với kiểu React.FC
 const MostPopularSection: React.FC = () => {
-  const cards: CardData[] = [
+  const [popularDresses, setPopularDresses] = useState<Dress[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchPopularDresses = async () => {
+      try {
+        setLoading(true);
+        const dresses = await getMostPopularDresses(5);
+        setPopularDresses(dresses);
+        setError(null);
+      } catch (error) {
+        console.error('Failed to fetch popular dresses:', error);
+        setError('Failed to load popular dresses. Please try again later.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchPopularDresses();
+  }, []);
+
+  // Fallback data in case the API doesn't return anything yet
+  const fallbackCards = [
     {
-      imageUrl: "pic1.jpg",
-      alt: "Wedding Dress",
-      rating: 4.8,
+      _id: "1",
+      name: "French Lace",
+      dailyRentalPrice: 300,
+      images: ["pic1.jpg"],
+      avgRating: 4.8,
+      reviewCount: 12,
       status: "Available",
       statusColor: "#6DE588",
-      title: "French Lace",
       subtitle: "Modern",
-      price: 300,
     },
     {
-      imageUrl: "pic2.jpg",
-      alt: "Wedding Dress",
-      rating: 4.6,
+      _id: "2",
+      name: "Sparkling Flowers",
+      dailyRentalPrice: 550,
+      images: ["pic2.jpg"],
+      avgRating: 4.6,
+      reviewCount: 8,
       status: "Unavailable",
       statusColor: "#e81535",
-      title: "Sparkling Flowers",
       subtitle: "Romance",
-      price: 550,
     },
     {
-      imageUrl: "pic3.jpg",
-      alt: "Wedding Dress",
-      rating: 4.7,
+      _id: "3",
+      name: "Elegant",
+      dailyRentalPrice: 400,
+      images: ["pic3.jpg"],
+      avgRating: 4.7,
+      reviewCount: 15,
       status: "The Most Rented",
       statusColor: "#7715e8",
-      title: "Elegant",
       subtitle: "Paris",
-      price: 400,
     },
     {
-      imageUrl: "pic4.jpg",
-      alt: "Wedding Dress",
-      rating: 4.9,
+      _id: "4",
+      name: "The Most Rented",
+      dailyRentalPrice: 600,
+      images: ["pic4.jpg"],
+      avgRating: 4.9,
+      reviewCount: 20,
       status: "The Most Rented",
       statusColor: "#7715e8",
-      title: "The Most Rented",
       subtitle: "Premium",
-      price: 600,
     },
     {
-      imageUrl: "pic13.jpg",
-      alt: "Wedding Dress",
-      rating: 4.8,
+      _id: "5",
+      name: "Luxury Lace",
+      dailyRentalPrice: 450,
+      images: ["pic13.jpg"],
+      avgRating: 4.8,
+      reviewCount: 10,
       status: "Unavailable",
       statusColor: "#e81535",
-      title: "Luxury Lace",
       subtitle: "Classic",
-      price: 450,
     },
   ];
+
+  // Use the actual data or fallback if API failed or is still loading
+  const displayDresses = popularDresses.length > 0 ? popularDresses : fallbackCards;
 
   return (
     <section className="py-16 px-8 bg-cover bg-center">
@@ -76,10 +96,25 @@ const MostPopularSection: React.FC = () => {
         <h1 className="text-center text-[32px] font-[600] text-[#C3937C] mb-8">
           Most Popular
         </h1>
+
+        {error && (
+          <div className="text-red-500 text-center mb-4">{error}</div>
+        )}
+
         <Swiper spaceBetween={20} slidesPerView={'auto'} grabCursor={true}>
-          {cards.map((card, index) => (
-            <SwiperSlide key={index} style={{ width: '300px' }}>
-              <DressCard {...card} />
+          {displayDresses.map((dress, index) => (
+            <SwiperSlide key={dress._id || index} style={{ width: '300px' }}>
+              <DressCard 
+                id={dress._id}
+                imageUrl={dress.images[0]}
+                alt={dress.name}
+                rating={dress.avgRating}
+                status={dress.status || (dress.avgRating > 4.7 ? "The Most Rented" : "Available")}
+                statusColor={dress.statusColor || (dress.avgRating > 4.7 ? "#7715e8" : "#6DE588")}
+                title={dress.name}
+                subtitle={dress.subtitle || ""}
+                price={dress.dailyRentalPrice}
+              />
             </SwiperSlide>
           ))}
         </Swiper>

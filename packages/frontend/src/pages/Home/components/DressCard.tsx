@@ -1,7 +1,9 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 
 // Định nghĩa interface cho props
 interface DressCardProps {
+  id: string;
   imageUrl: string;
   alt?: string;
   rating?: number;
@@ -15,6 +17,7 @@ interface DressCardProps {
 
 // Component với kiểu dữ liệu
 const DressCard: React.FC<DressCardProps> = ({
+  id,
   imageUrl, 
   alt = "Wedding Dress", 
   rating = 4.8, 
@@ -25,8 +28,15 @@ const DressCard: React.FC<DressCardProps> = ({
   price = 450, 
   priceUnit = "Per Day"
 }) => {
+  const navigate = useNavigate();
+  
+  const handleClick = () => {
+    navigate(`/pdp/${id}`);
+    window.scrollTo(0, 0);
+  };
+  
   return (
-    <div className="relative rounded-lg w-full">
+    <div className="relative rounded-lg w-full cursor-pointer" onClick={handleClick}>
       {/* Badge container - góc trên trái */}
       <div className="absolute top-8 left-10 flex space-x-2">
         <div className="flex items-center bg-white rounded-full px-3 py-1 shadow text-sm font-medium">
@@ -46,6 +56,10 @@ const DressCard: React.FC<DressCardProps> = ({
           src={imageUrl}
           alt={alt}
           className="w-full h-full object-cover rounded-tl-[80px] rounded-tr-[80px]"
+          onError={(e) => {
+            // Fallback to a default image if the original fails to load
+            (e.target as HTMLImageElement).src = '/default-dress.jpg';
+          }}
         />
       </div>
       
