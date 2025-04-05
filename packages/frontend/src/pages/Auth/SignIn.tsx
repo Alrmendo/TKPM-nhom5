@@ -47,7 +47,7 @@ const SignIn: React.FC = () => {
       if (role === 'admin') {
         navigate('/admin/measurement');
       } else if (role === 'user') {
-        navigate('/profile', { replace: false });
+        navigate('/profile');
       }
     } catch (err: any) {
       // Nếu dùng axios, bạn có thể lấy thêm thông tin lỗi từ err.response.data nếu cần

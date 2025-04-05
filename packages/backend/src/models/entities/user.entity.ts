@@ -13,6 +13,18 @@ export class User {
 
   @Prop({ required: true })
   password: string;
+  
+  @Prop({ default: '' })
+  firstName: string;
+  
+  @Prop({ default: '' })
+  lastName: string;
+  
+  @Prop({ default: '' })
+  phone: string;
+  
+  @Prop({ default: '' })
+  dateOfBirth: string;
 
   @Prop({ default: Date.now })
   createdAt: Date;

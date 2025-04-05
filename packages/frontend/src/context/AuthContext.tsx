@@ -1,10 +1,12 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { logout as logoutApi, getRoleAPI } from '../api/auth';
+import { getUserProfile } from '../api/user';
 
 interface AuthContextType {
   isAuthenticated: boolean;
   role: 'user' | 'admin' | null;
-  getRoleFromCookie: () => Promise<'user' | 'admin' | null>; // Thay đổi kiểu trả về
+  username: string | null;
+  getRoleFromCookie: () => Promise<'user' | 'admin' | null>;
   clearCookie: () => void;
   isLoading: Boolean;
 }
@@ -12,7 +14,8 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType>({
   isAuthenticated: false,
   role: null,
-  getRoleFromCookie: async () => null, // Thêm async để khớp kiểu
+  username: null,
+  getRoleFromCookie: async () => null,
   clearCookie: async () => {},
   isLoading: true,
 });
@@ -23,30 +26,40 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
   const [role, setRole] = useState<'user' | 'admin' | null>(null);
+  const [username, setUsername] = useState<string | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
-  const [isLoading, setIsLoading] = useState<boolean>(true); // Thêm trạng thái isLoading
+  const [isLoading, setIsLoading] = useState<boolean>(true);
 
   useEffect(() => {
     console.log('useEffect run');
     const checkLogin = async () => {
       try {
-        const response = await getRoleAPI(); // Gọi /auth/me
+        const response = await getRoleAPI(); // Get role from /auth/me
         setRole(response.role);
         setIsAuthenticated(true);
+        
+        // If authenticated, get the user profile to get the username
+        if (response.role) {
+          try {
+            const userProfile = await getUserProfile();
+            setUsername(userProfile.username);
+          } catch (profileError) {
+            console.error('Error fetching user profile:', profileError);
+          }
+        }
       } catch (error) {
-        // const err = error as Error; 
-        // console.log(err.message);
         setRole(null);
+        setUsername(null);
         setIsAuthenticated(false);
       } finally {
-        setIsLoading(false); // Kết thúc quá trình kiểm tra
+        setIsLoading(false);
       }
     };
 
     checkLogin();
   }, []);
 
-  // Thêm sự kiện window focus để kiểm tra lại trạng thái đăng nhập
+  // Add window focus event to recheck login status
   useEffect(() => {
     const handleFocus = async () => {
       await getRoleFromCookie();
@@ -58,12 +71,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const getRoleFromCookie = async (): Promise<'user' | 'admin' | null> => {
     try {
-      const res = await getRoleAPI(); // Gọi /auth/me
+      const res = await getRoleAPI();
       setRole(res.role);
       setIsAuthenticated(true);
-      return res.role; // Trả về role
+      
+      // If authenticated, get the user profile to get the username
+      if (res.role) {
+        try {
+          const userProfile = await getUserProfile();
+          setUsername(userProfile.username);
+        } catch (profileError) {
+          console.error('Error fetching user profile:', profileError);
+        }
+      }
+      
+      return res.role;
     } catch (error) {
       setRole(null);
+      setUsername(null);
       setIsAuthenticated(false);
       return null;
     }
@@ -71,11 +96,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const clearCookie = async () => {
     try {
-      await logoutApi(); // Gọi API logout để server xóa cookie
+      await logoutApi();
     } catch (err) {
       console.error('Logout failed', err);
     }
     setRole(null);
+    setUsername(null);
     setIsAuthenticated(false);
   };
 
@@ -84,6 +110,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       value={{
         isAuthenticated,
         role,
+        username,
         getRoleFromCookie,
         clearCookie,
         isLoading,
