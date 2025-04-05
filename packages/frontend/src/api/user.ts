@@ -15,6 +15,7 @@ export interface UserProfile {
   dateOfBirth: string;
   role: string;
   isVerified: boolean;
+  profileImageUrl?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -74,5 +75,19 @@ export const updateUsername = async (data: UpdateUsernameData): Promise<UserProf
     return response.data;
   } catch (error: any) {
     throw new Error(error.response?.data?.message || 'Failed to update username');
+  }
+};
+
+// Upload profile image
+export const uploadProfileImage = async (formData: FormData): Promise<{ imageUrl: string }> => {
+  try {
+    const response = await API.post('/user/profile/image', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to upload image');
   }
 }; 

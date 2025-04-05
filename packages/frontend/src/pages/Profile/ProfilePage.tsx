@@ -29,6 +29,15 @@ export default function ProfilePage() {
     fetchUserData();
   }, []);
 
+  const handleImageUpdate = (imageUrl: string) => {
+    if (userData) {
+      setUserData({
+        ...userData,
+        profileImageUrl: imageUrl
+      });
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex flex-col">
@@ -74,6 +83,7 @@ export default function ProfilePage() {
     dateOfBirth: userData.dateOfBirth || '',
     username: userData.username || '',
     password: '********',  // For display purposes only
+    profileImageUrl: userData.profileImageUrl || '',
   };
 
   return (
@@ -86,7 +96,8 @@ export default function ProfilePage() {
             <ProfileSidebar
               activeTab="profile"
               userName={userData.username}
-              userImage="/placeholder.svg?height=100&width=100"
+              userImage={userData.profileImageUrl}
+              onImageUpdate={handleImageUpdate}
             />
           </div>
 

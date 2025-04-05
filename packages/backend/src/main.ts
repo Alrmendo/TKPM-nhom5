@@ -4,6 +4,9 @@ import { ValidationPipe } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import * as net from 'net';
 import * as cookieParser from 'cookie-parser';  // 👈 Import cookie-parser
+import { NestExpressApplication } from '@nestjs/platform-express';
+import { join } from 'path';
+import * as fs from 'fs';
 
 // Function to check if a port is available
 const isPortAvailable = (port: number): Promise<boolean> => {
@@ -47,7 +50,7 @@ async function bootstrap() {
     process.env.DEBUG_PORT = debugPort.toString();
     
     // Create the NestJS application
-    const app = await NestFactory.create(AppModule, {
+    const app = await NestFactory.create<NestExpressApplication>(AppModule, {
       logger: ['error', 'warn', 'debug', 'verbose'],
     });
     
@@ -57,6 +60,23 @@ async function bootstrap() {
       credentials: true, // <-- BẮT BUỘC
     });
     app.use(cookieParser());
+    
+    // Ensure uploads directory exists
+    const uploadsDir = join(__dirname, '..', 'uploads');
+    const profileImagesDir = join(uploadsDir, 'profile-images');
+    
+    if (!fs.existsSync(uploadsDir)) {
+      fs.mkdirSync(uploadsDir, { recursive: true });
+    }
+    
+    if (!fs.existsSync(profileImagesDir)) {
+      fs.mkdirSync(profileImagesDir, { recursive: true });
+    }
+    
+    // Serve static files from the uploads directory
+    app.useStaticAssets(uploadsDir, {
+      prefix: '/uploads',
+    });
     
     // Global Validation Pipe
     app.useGlobalPipes(new ValidationPipe({ transform: true }));

@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { Button } from '../../../components/button';
 import { Input } from '../../../components/input';
 import { Label } from '../../../components/label';
-import { updateProfile, updatePassword, updateUsername, UpdateProfileData } from '../../../api/user';
+import { updateProfile, updatePassword, updateUsername, uploadProfileImage, UpdateProfileData } from '../../../api/user';
 import { useAuth } from '../../../context/AuthContext';
+import { AlertCircle, Camera, Upload } from 'lucide-react';
 
 interface ProfileData {
   firstName: string;
@@ -13,6 +14,7 @@ interface ProfileData {
   dateOfBirth: string;
   username: string;
   password: string;
+  profileImageUrl?: string;
 }
 
 interface ProfileFormProps {
@@ -28,11 +30,22 @@ export default function ProfileForm({ initialData, onProfileUpdate }: ProfileFor
   const [success, setSuccess] = useState<string | null>(null);
   const { getRoleFromCookie } = useAuth();
   
+  // For image upload
+  const [isUploading, setIsUploading] = useState<boolean>(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  
+  // Form validation errors
+  const [dobError, setDobError] = useState<string | null>(null);
+  
   // For password change
   const [showPasswordChange, setShowPasswordChange] = useState<boolean>(false);
   const [passwordData, setPasswordData] = useState({
     currentPassword: '',
     newPassword: '',
+    confirmPassword: '',
+  });
+  const [passwordErrors, setPasswordErrors] = useState({
     confirmPassword: '',
   });
   
@@ -42,34 +55,225 @@ export default function ProfileForm({ initialData, onProfileUpdate }: ProfileFor
     newUsername: '',
     password: '',
   });
+  const [usernameError, setUsernameError] = useState<string | null>(null);
+
+  // Trigger the file input click
+  const handleUploadClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  // Handle file selection
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    const validTypes = ['image/jpeg', 'image/png', 'image/jpg', 'image/gif'];
+    if (!validTypes.includes(file.type)) {
+      setUploadError('Please select a valid image file (JPEG, PNG, GIF)');
+      return;
+    }
+
+    // Validate file size (max 2MB)
+    if (file.size > 2 * 1024 * 1024) {
+      setUploadError('Image size should be less than 2MB');
+      return;
+    }
+
+    try {
+      setIsUploading(true);
+      setUploadError(null);
+      
+      const formData = new FormData();
+      formData.append('image', file);
+      
+      const response = await uploadProfileImage(formData);
+      
+      setFormData(prev => ({ 
+        ...prev, 
+        profileImageUrl: response.imageUrl 
+      }));
+      
+      setSuccess('Profile image updated successfully');
+      
+      // Clear the file input
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    } catch (err: any) {
+      setUploadError(err.message || 'Failed to upload image');
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  // Format date from yyyy-mm-dd to dd/mm/yyyy for display
+  const formatDateForDisplay = (dateString: string): string => {
+    if (!dateString) return '';
+    
+    // Check if date is already in dd/mm/yyyy format
+    if (/^\d{2}\/\d{2}\/\d{4}$/.test(dateString)) {
+      return dateString;
+    }
+    
+    try {
+      const date = new Date(dateString);
+      if (isNaN(date.getTime())) return dateString;
+      
+      const day = date.getDate().toString().padStart(2, '0');
+      const month = (date.getMonth() + 1).toString().padStart(2, '0');
+      const year = date.getFullYear();
+      
+      return `${day}/${month}/${year}`;
+    } catch (e) {
+      return dateString;
+    }
+  };
+
+  // Format date from dd/mm/yyyy to yyyy-mm-dd for input
+  const formatDateForInput = (dateString: string): string => {
+    if (!dateString) return '';
+    
+    // Check if already in yyyy-mm-dd format
+    if (/^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
+      return dateString;
+    }
+    
+    try {
+      // Parse dd/mm/yyyy
+      const parts = dateString.split('/');
+      if (parts.length === 3) {
+        const day = parseInt(parts[0], 10);
+        const month = parseInt(parts[1], 10) - 1; // JS months are 0-indexed
+        const year = parseInt(parts[2], 10);
+        
+        const date = new Date(year, month, day);
+        if (isNaN(date.getTime())) return '';
+        
+        return date.toISOString().split('T')[0]; // Returns yyyy-mm-dd
+      }
+      return '';
+    } catch (e) {
+      return '';
+    }
+  };
+
+  // Validate date of birth (must be 16+ years old)
+  const validateDateOfBirth = (dateString: string): boolean => {
+    try {
+      let date;
+      
+      // Handle different date formats
+      if (/^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
+        // Format: yyyy-mm-dd
+        date = new Date(dateString);
+      } else if (/^\d{2}\/\d{2}\/\d{4}$/.test(dateString)) {
+        // Format: dd/mm/yyyy
+        const parts = dateString.split('/');
+        date = new Date(`${parts[2]}-${parts[1]}-${parts[0]}`);
+      } else {
+        return false;
+      }
+      
+      if (isNaN(date.getTime())) return false;
+      
+      // Calculate age
+      const today = new Date();
+      let age = today.getFullYear() - date.getFullYear();
+      const monthDiff = today.getMonth() - date.getMonth();
+      
+      if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < date.getDate())) {
+        age--;
+      }
+      
+      return age >= 16;
+    } catch (e) {
+      return false;
+    }
+  };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    
+    if (name === 'dateOfBirth') {
+      // Clear previous error
+      setDobError(null);
+      
+      // If using HTML date input, the value will be in yyyy-mm-dd format
+      const formattedDate = value; // We'll convert when saving
+      
+      // Validate age if a date is entered
+      if (value && !validateDateOfBirth(value)) {
+        setDobError('You must be at least 16 years old');
+      }
+      
+      setFormData(prev => ({ ...prev, [name]: formattedDate }));
+    } else {
+      setFormData(prev => ({ ...prev, [name]: value }));
+    }
   };
 
   const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
     const { name, value } = e.target;
     setPasswordData(prev => ({ ...prev, [name]: value }));
+    
+    // Clear error when user types in the field
+    if (name === 'confirmPassword') {
+      setPasswordErrors(prev => ({ ...prev, confirmPassword: '' }));
+    }
+    
+    // Validate confirm password matches new password
+    if (name === 'confirmPassword' && passwordData.newPassword !== value) {
+      setPasswordErrors(prev => ({ ...prev, confirmPassword: 'Passwords do not match' }));
+    } else if (name === 'newPassword' && passwordData.confirmPassword) {
+      // Also validate when new password is changed and confirm is already filled
+      if (passwordData.confirmPassword !== value) {
+        setPasswordErrors(prev => ({ ...prev, confirmPassword: 'Passwords do not match' }));
+      } else {
+        setPasswordErrors(prev => ({ ...prev, confirmPassword: '' }));
+      }
+    }
   };
 
   const handleUsernameChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
     const { name, value } = e.target;
     setUsernameData(prev => ({ ...prev, [name]: value }));
+    
+    // Clear error when user types in the field
+    if (name === 'newUsername') {
+      setUsernameError(null);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>): Promise<void> => {
     e.preventDefault();
+    
+    // Validate date of birth
+    if (formData.dateOfBirth && !validateDateOfBirth(formData.dateOfBirth)) {
+      setDobError('You must be at least 16 years old');
+      return;
+    }
+    
     setIsLoading(true);
     setError(null);
     setSuccess(null);
     
     try {
+      // Format date to dd/mm/yyyy for API
+      let formattedDob = formData.dateOfBirth;
+      if (formData.dateOfBirth && /^\d{4}-\d{2}-\d{2}$/.test(formData.dateOfBirth)) {
+        const date = new Date(formData.dateOfBirth);
+        const day = date.getDate().toString().padStart(2, '0');
+        const month = (date.getMonth() + 1).toString().padStart(2, '0');
+        const year = date.getFullYear();
+        formattedDob = `${day}/${month}/${year}`;
+      }
+      
       const updatedData: UpdateProfileData = {
         firstName: formData.firstName,
         lastName: formData.lastName,
         phone: formData.phone,
-        dateOfBirth: formData.dateOfBirth,
+        dateOfBirth: formattedDob,
       };
       
       const response = await updateProfile(updatedData);
@@ -89,6 +293,13 @@ export default function ProfileForm({ initialData, onProfileUpdate }: ProfileFor
 
   const handlePasswordSubmit = async (e: React.FormEvent<HTMLFormElement>): Promise<void> => {
     e.preventDefault();
+    
+    // Validate password confirmation
+    if (passwordData.newPassword !== passwordData.confirmPassword) {
+      setPasswordErrors(prev => ({ ...prev, confirmPassword: 'Passwords do not match' }));
+      return;
+    }
+    
     setIsLoading(true);
     setError(null);
     setSuccess(null);
@@ -102,6 +313,7 @@ export default function ProfileForm({ initialData, onProfileUpdate }: ProfileFor
         newPassword: '',
         confirmPassword: '',
       });
+      setPasswordErrors({ confirmPassword: '' });
     } catch (err: any) {
       setError(err.message || 'Failed to update password');
     } finally {
@@ -114,6 +326,7 @@ export default function ProfileForm({ initialData, onProfileUpdate }: ProfileFor
     setIsLoading(true);
     setError(null);
     setSuccess(null);
+    setUsernameError(null);
     
     try {
       const response = await updateUsername(usernameData);
@@ -142,8 +355,8 @@ export default function ProfileForm({ initialData, onProfileUpdate }: ProfileFor
       }, 1500);
       
     } catch (err: any) {
-      setError(err.message || 'Failed to update username');
-    } finally {
+      // Handle the error inside the modal
+      setUsernameError(err.message || 'Failed to update username');
       setIsLoading(false);
     }
   };
@@ -156,8 +369,9 @@ export default function ProfileForm({ initialData, onProfileUpdate }: ProfileFor
       </div>
 
       {error && (
-        <div className="p-3 bg-red-100 text-red-700 rounded-md">
-          {error}
+        <div className="p-3 bg-red-100 text-red-700 rounded-md flex items-start">
+          <AlertCircle className="h-5 w-5 mr-2 mt-0.5 flex-shrink-0" />
+          <span>{error}</span>
         </div>
       )}
 
@@ -183,25 +397,80 @@ export default function ProfileForm({ initialData, onProfileUpdate }: ProfileFor
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {[
-              { label: 'First name', name: 'firstName', type: 'text' },
-              { label: 'Last name', name: 'lastName', type: 'text' },
-              { label: 'E-mail', name: 'email', type: 'email', disabled: true },
-              { label: 'Phone number', name: 'phone', type: 'text' },
-              { label: 'Date of birth', name: 'dateOfBirth', type: 'text' },
-            ].map(({ label, name, type, disabled }) => (
-              <div key={name} className="space-y-2">
-                <Label htmlFor={name}>{label}</Label>
-                <Input
-                  id={name}
-                  name={name}
-                  type={type}
-                  value={formData[name as keyof ProfileData]}
-                  onChange={handleChange}
-                  disabled={!isEditing || disabled}
-                />
-              </div>
-            ))}
+            {/* First name */}
+            <div className="space-y-2">
+              <Label htmlFor="firstName">First name</Label>
+              <Input
+                id="firstName"
+                name="firstName"
+                type="text"
+                value={formData.firstName}
+                onChange={handleChange}
+                disabled={!isEditing}
+              />
+            </div>
+            
+            {/* Last name */}
+            <div className="space-y-2">
+              <Label htmlFor="lastName">Last name</Label>
+              <Input
+                id="lastName"
+                name="lastName"
+                type="text"
+                value={formData.lastName}
+                onChange={handleChange}
+                disabled={!isEditing}
+              />
+            </div>
+            
+            {/* Email */}
+            <div className="space-y-2">
+              <Label htmlFor="email">E-mail</Label>
+              <Input
+                id="email"
+                name="email"
+                type="email"
+                value={formData.email}
+                onChange={handleChange}
+                disabled={true}
+              />
+            </div>
+            
+            {/* Phone */}
+            <div className="space-y-2">
+              <Label htmlFor="phone">Phone number</Label>
+              <Input
+                id="phone"
+                name="phone"
+                type="text"
+                value={formData.phone}
+                onChange={handleChange}
+                disabled={!isEditing}
+              />
+            </div>
+            
+            {/* Date of birth with date picker */}
+            <div className="space-y-2">
+              <Label htmlFor="dateOfBirth">Date of birth</Label>
+              <Input
+                id="dateOfBirth"
+                name="dateOfBirth"
+                type={isEditing ? "date" : "text"}
+                value={isEditing ? formatDateForInput(formData.dateOfBirth) : formatDateForDisplay(formData.dateOfBirth)}
+                onChange={handleChange}
+                disabled={!isEditing}
+                max={new Date(new Date().setFullYear(new Date().getFullYear() - 16)).toISOString().split('T')[0]}
+              />
+              {dobError && (
+                <div className="text-red-600 text-sm flex items-center mt-1">
+                  <AlertCircle className="h-4 w-4 mr-1" />
+                  {dobError}
+                </div>
+              )}
+              {isEditing && (
+                <p className="text-xs text-gray-500 mt-1">You must be at least 16 years old</p>
+              )}
+            </div>
           </div>
 
           <div className="pt-6 border-t">
@@ -256,7 +525,7 @@ export default function ProfileForm({ initialData, onProfileUpdate }: ProfileFor
               <Button 
                 type="submit" 
                 className="bg-rose-50 text-rose-500 hover:bg-rose-100 hover:text-rose-600"
-                disabled={isLoading}
+                disabled={isLoading || !!dobError}
               >
                 {isLoading ? 'Saving...' : 'Save changes'}
               </Button>
@@ -300,20 +569,30 @@ export default function ProfileForm({ initialData, onProfileUpdate }: ProfileFor
                     value={passwordData.confirmPassword}
                     onChange={handlePasswordChange}
                     required
+                    className={passwordErrors.confirmPassword ? "border-red-500" : ""}
                   />
+                  {passwordErrors.confirmPassword && (
+                    <div className="text-red-600 text-sm flex items-center mt-1">
+                      <AlertCircle className="h-4 w-4 mr-1" />
+                      {passwordErrors.confirmPassword}
+                    </div>
+                  )}
                 </div>
                 <div className="flex justify-end space-x-2 pt-4">
                   <Button 
                     type="button" 
                     variant="outline" 
-                    onClick={() => setShowPasswordChange(false)}
+                    onClick={() => {
+                      setShowPasswordChange(false);
+                      setPasswordErrors({ confirmPassword: '' });
+                    }}
                   >
                     Cancel
                   </Button>
                   <Button 
                     type="submit" 
                     className="bg-rose-50 text-rose-500 hover:bg-rose-100 hover:text-rose-600"
-                    disabled={isLoading}
+                    disabled={isLoading || !!passwordErrors.confirmPassword}
                   >
                     {isLoading ? 'Saving...' : 'Save Password'}
                   </Button>
@@ -327,6 +606,14 @@ export default function ProfileForm({ initialData, onProfileUpdate }: ProfileFor
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
             <div className="bg-white rounded-lg p-6 w-full max-w-md">
               <h2 className="text-xl font-medium mb-4">Change Username</h2>
+              
+              {usernameError && (
+                <div className="p-3 mb-4 bg-red-100 text-red-700 rounded-md flex items-start">
+                  <AlertCircle className="h-5 w-5 mr-2 mt-0.5 flex-shrink-0" />
+                  <span>{usernameError}</span>
+                </div>
+              )}
+              
               <form onSubmit={handleUsernameSubmit} className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="newUsername">New Username</Label>
@@ -337,6 +624,7 @@ export default function ProfileForm({ initialData, onProfileUpdate }: ProfileFor
                     value={usernameData.newUsername}
                     onChange={handleUsernameChange}
                     required
+                    className={usernameError ? "border-red-500" : ""}
                   />
                 </div>
                 <div className="space-y-2">
@@ -354,7 +642,10 @@ export default function ProfileForm({ initialData, onProfileUpdate }: ProfileFor
                   <Button 
                     type="button" 
                     variant="outline" 
-                    onClick={() => setShowUsernameChange(false)}
+                    onClick={() => {
+                      setShowUsernameChange(false);
+                      setUsernameError(null);
+                    }}
                   >
                     Cancel
                   </Button>

@@ -25,6 +25,9 @@ export class User {
   
   @Prop({ default: '' })
   dateOfBirth: string;
+  
+  @Prop({ default: '' })
+  profileImageUrl: string;
 
   @Prop({ default: Date.now })
   createdAt: Date;

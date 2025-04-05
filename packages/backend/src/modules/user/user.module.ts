@@ -5,6 +5,7 @@ import { UserService } from './user.service';
 import { User, UserSchema } from '../../models/entities/user.entity';
 import { JwtModule } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
+import { CloudinaryModule } from '../cloudinary/cloudinary.module';
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { ConfigService } from '@nestjs/config';
       }),
       inject: [ConfigService],
     }),
+    CloudinaryModule,
   ],
   controllers: [UserController],
   providers: [UserService],

@@ -92,4 +92,16 @@ export class UserService {
     const { password: pwd, verificationCode, verificationExpiry, ...userProfile } = user.toObject();
     return userProfile;
   }
+
+  async updateProfileImage(username: string, imageUrl: string): Promise<any> {
+    const user = await this.findByUsername(username);
+    
+    // Update profile image URL
+    user.profileImageUrl = imageUrl;
+    user.updatedAt = new Date();
+    await user.save();
+    
+    const { password, verificationCode, verificationExpiry, ...userProfile } = user.toObject();
+    return userProfile;
+  }
 } 
