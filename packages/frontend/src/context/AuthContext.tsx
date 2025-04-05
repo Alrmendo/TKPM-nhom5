@@ -8,7 +8,13 @@ interface AuthContextType {
   username: string | null;
   getRoleFromCookie: () => Promise<'user' | 'admin' | null>;
   clearCookie: () => void;
-  isLoading: Boolean;
+  isLoading: boolean;
+  isAuthLoading: boolean;
+  authError: string | null;
+  authMessage: string | null;
+  setAuthLoading: (loading: boolean) => void;
+  setAuthError: (error: string | null) => void;
+  setAuthMessage: (message: string | null) => void;
 }
 
 const AuthContext = createContext<AuthContextType>({
@@ -16,8 +22,14 @@ const AuthContext = createContext<AuthContextType>({
   role: null,
   username: null,
   getRoleFromCookie: async () => null,
-  clearCookie: async () => {},
+  clearCookie: () => {},
   isLoading: true,
+  isAuthLoading: false,
+  authError: null,
+  authMessage: null,
+  setAuthLoading: () => {},
+  setAuthError: () => {},
+  setAuthMessage: () => {},
 });
 
 export const useAuth = () => useContext(AuthContext);
@@ -29,6 +41,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const [username, setUsername] = useState<string | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [isAuthLoading, setIsAuthLoading] = useState<boolean>(false);
+  const [authError, setAuthError] = useState<string | null>(null);
+  const [authMessage, setAuthMessage] = useState<string | null>(null);
 
   useEffect(() => {
     console.log('useEffect run');
@@ -69,6 +84,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     return () => window.removeEventListener('focus', handleFocus);
   }, []);
 
+  // Auto-clear messages after 5 seconds
+  useEffect(() => {
+    if (authError || authMessage) {
+      const timer = setTimeout(() => {
+        if (authError) setAuthError(null);
+        if (authMessage) setAuthMessage(null);
+      }, 5000);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [authError, authMessage]);
+
   const getRoleFromCookie = async (): Promise<'user' | 'admin' | null> => {
     try {
       const res = await getRoleAPI();
@@ -95,14 +122,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   };
 
   const clearCookie = async () => {
+    setIsAuthLoading(true);
     try {
       await logoutApi();
+      setAuthMessage("Logged out successfully");
     } catch (err) {
       console.error('Logout failed', err);
+      setAuthError("Logout failed, please try again");
+    } finally {
+      setRole(null);
+      setUsername(null);
+      setIsAuthenticated(false);
+      setIsAuthLoading(false);
     }
-    setRole(null);
-    setUsername(null);
-    setIsAuthenticated(false);
   };
 
   return (
@@ -114,6 +146,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         getRoleFromCookie,
         clearCookie,
         isLoading,
+        isAuthLoading,
+        authError,
+        authMessage,
+        setAuthLoading: setIsAuthLoading,
+        setAuthError,
+        setAuthMessage,
       }}
     >
       {children}

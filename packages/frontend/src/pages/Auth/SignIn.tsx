@@ -1,8 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Mail, Lock, Eye, EyeOff } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { login } from '../../api/auth';
 import { useAuth } from '../../context/AuthContext';
+import { LoadingOverlay } from '../../components/ui/LoadingOverlay';
+import { Notification } from '../../components/ui/Notification';
 
 const SignIn: React.FC = () => {
   const navigate = useNavigate();
@@ -14,7 +16,13 @@ const SignIn: React.FC = () => {
   const [error, setError] = useState<string>('');
   const [loading, setLoading] = useState<boolean>(false);
   const [showForgotPassword, setShowForgotPassword] = useState<boolean>(false);
-  const { getRoleFromCookie } = useAuth(); 
+  const [notification, setNotification] = useState<{
+    type: 'success' | 'error' | 'info';
+    message: string;
+    visible: boolean;
+  }>({ type: 'info', message: '', visible: false });
+  
+  const { getRoleFromCookie, setAuthLoading, isAuthLoading } = useAuth();
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -29,6 +37,7 @@ const SignIn: React.FC = () => {
     setError('');
     setShowForgotPassword(false);
     setLoading(true);
+    setAuthLoading(true);
 
     try {
       const response = await login(formData);
@@ -43,6 +52,12 @@ const SignIn: React.FC = () => {
         });
         return;
       }
+      
+      setNotification({
+        type: 'success',
+        message: 'Login successful! Redirecting...',
+        visible: true
+      });
       
       const role = await getRoleFromCookie();
       console.log(role);
@@ -64,17 +79,28 @@ const SignIn: React.FC = () => {
       } else {
         setError(errorResponse?.message || err.message || 'Login failed');
       }
+      
+      setNotification({
+        type: 'error',
+        message: 'Login failed',
+        visible: true
+      });
     } finally {
       setLoading(false);
+      setAuthLoading(false);
     }
   };
 
   const goToForgotPassword = () => {
     navigate('/forgot-password');
   };
+  
+  const handleCloseNotification = () => {
+    setNotification(prev => ({ ...prev, visible: false }));
+  };
 
   return (
-    <div className="flex min-h-screen flex-col md:flex-row">
+    <div className="flex min-h-screen flex-col md:flex-row relative">
       {/* Left side - Image */}
       <div className="w-full md:w-1/2 h-[300px] md:h-auto relative">
         <img
@@ -85,7 +111,11 @@ const SignIn: React.FC = () => {
       </div>
 
       {/* Right side - Login Form */}
-      <div className="w-full md:w-1/2 flex items-center justify-center p-4 md:p-8 lg:p-12">
+      <div className="w-full md:w-1/2 flex items-center justify-center p-4 md:p-8 lg:p-12 relative">
+        {isAuthLoading && (
+          <LoadingOverlay message="Authenticating..." />
+        )}
+        
         <div className="w-full max-w-md space-y-6 md:space-y-8">
           <h1 className="text-3xl font-medium text-[#c3937c] text-center">
             Login
@@ -120,6 +150,7 @@ const SignIn: React.FC = () => {
                 onChange={handleInputChange}
                 placeholder="Username"
                 className="w-full pl-10 pr-3 py-3 border border-[#dfdfdf] rounded-full focus:outline-none focus:ring-1 focus:ring-[#c3937c]"
+                disabled={loading}
               />
             </div>
 
@@ -135,11 +166,13 @@ const SignIn: React.FC = () => {
                 onChange={handleInputChange}
                 placeholder="Password"
                 className="w-full pl-10 pr-10 py-3 border border-[#dfdfdf] rounded-full focus:outline-none focus:ring-1 focus:ring-[#c3937c]"
+                disabled={loading}
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
                 className="absolute inset-y-0 right-0 flex items-center pr-3"
+                disabled={loading}
               >
                 {showPassword ? (
                   <EyeOff className="h-5 w-5 text-[#999999]" />
@@ -159,9 +192,14 @@ const SignIn: React.FC = () => {
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-3 bg-[#ead9c9] text-[#c3937c] rounded-full font-medium hover:bg-[#c3937c] hover:text-white transition-colors disabled:opacity-50"
+              className="w-full py-3 bg-[#ead9c9] text-[#c3937c] rounded-full font-medium hover:bg-[#c3937c] hover:text-white transition-colors disabled:opacity-50 flex items-center justify-center"
             >
-              {loading ? 'Logging in...' : 'Login'}
+              {loading ? (
+                <>
+                  <span className="mr-2">Logging in</span>
+                  <span className="animate-pulse">...</span>
+                </>
+              ) : 'Login'}
             </button>
 
             {/* Divider */}
@@ -175,6 +213,7 @@ const SignIn: React.FC = () => {
             <button
               type="button"
               className="w-full py-3 border border-[#dfdfdf] rounded-full flex items-center justify-center space-x-2 hover:bg-gray-50 transition-colors"
+              disabled={loading}
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -205,6 +244,7 @@ const SignIn: React.FC = () => {
             <button
               type="button"
               className="w-full py-3 border border-[#dfdfdf] rounded-full flex items-center justify-center space-x-2 hover:bg-gray-50 transition-colors"
+              disabled={loading}
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -223,6 +263,7 @@ const SignIn: React.FC = () => {
             <button
               type="button"
               className="w-full py-3 border border-[#dfdfdf] rounded-full flex items-center justify-center space-x-2 hover:bg-gray-50 transition-colors"
+              disabled={loading}
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -261,7 +302,7 @@ const SignIn: React.FC = () => {
               </Link>
             </p>
             <p className="text-10 text-[#404040]">
-              Just dont want to log in?{' '}
+              Just don't want to log in?{' '}
               <Link to="/" className="text-[#c3937c] font-medium">
                 Be our guest!
               </Link>
@@ -269,6 +310,13 @@ const SignIn: React.FC = () => {
           </div>
         </div>
       </div>
+      
+      <Notification
+        type={notification.type}
+        message={notification.message}
+        visible={notification.visible}
+        onClose={handleCloseNotification}
+      />
     </div>
   );
 };

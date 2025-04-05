@@ -1,6 +1,7 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { lazy, Suspense } from 'react';
+import { LoadingOverlay } from '../components/ui/LoadingOverlay';
 
 // Lazy load pages
 const Home = lazy(() => import('../pages/Home/Home'));
@@ -46,7 +47,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   const { isAuthenticated, isLoading, role } = useAuth();
 
   if (isLoading) {
-    return <div>Đang tải...</div>;
+    return <LoadingOverlay message="Verifying your account..." fullScreen />;
   }
 
   if (!isAuthenticated) {
@@ -137,7 +138,7 @@ const AppRoutes = () => {
   ];
 
   return (
-    <Suspense fallback={<div>Loading...</div>}>
+    <Suspense fallback={<LoadingOverlay message="Loading page..." fullScreen />}>
       <Routes>
         {routes.map(({ path, element }) => (
           <Route key={path} path={path} element={element} />
