@@ -220,7 +220,7 @@ export default function WeddingDressRental() {
   ]
 
   // Tabs data
-  const tabs = ["Basic measurements", "Style", "Photography", "Deliver", "Contact"]
+  const tabs = ["Basic measurements", "Style", "Photography", "Deliver", "Contact", "Dresses"]
 
   // Handle tab click
   const handleTabClick = (tab: string) => {
@@ -235,6 +235,8 @@ export default function WeddingDressRental() {
       navigate("/admin/deliver")
     } else if (tab === "Contact") {
       navigate("/admin/contact")
+    } else if (tab === "Dresses") {
+      navigate("/admin/dresses")
     }
   }
 

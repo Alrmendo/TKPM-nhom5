@@ -5,6 +5,7 @@ import { DressService } from './dress.service';
 import { Dress, DressSchema } from '../../models/entities/dress.entity';
 import { Size, SizeSchema } from '../../models/entities/size.entity';
 import { Color, ColorSchema } from '../../models/entities/color.entity';
+import { CloudinaryModule } from '../cloudinary/cloudinary.module';
 
 @Module({
   imports: [
@@ -13,6 +14,7 @@ import { Color, ColorSchema } from '../../models/entities/color.entity';
       { name: Size.name, schema: SizeSchema },
       { name: Color.name, schema: ColorSchema },
     ]),
+    CloudinaryModule,
   ],
   controllers: [DressController],
   providers: [DressService],

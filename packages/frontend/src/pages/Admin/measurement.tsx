@@ -26,6 +26,8 @@ export default function MeasurementForm() {
       navigate("/admin/deliver")
     } else if (tab === "Contact") {
       navigate("/admin/contact")
+    } else if (tab === "Dresses") {
+      navigate("/admin/dresses")
     }
   }
 
@@ -142,7 +144,7 @@ export default function MeasurementForm() {
   ]
 
   // Tabs data
-  const tabs = ["Basic measurements", "Style", "Photography", "Deliver", "Contact"]
+  const tabs = ["Basic measurements", "Style", "Photography", "Deliver", "Contact", "Dresses"]
 
   return (
     <div className="min-h-screen bg-background flex">

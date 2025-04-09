@@ -26,6 +26,7 @@ const Style = lazy(() => import('../pages/Admin/style'));
 const Photography = lazy(() => import('../pages/Admin/photography'));
 const Deliver = lazy(() => import('../pages/Admin/deliver'));
 const ContactAdmin = lazy(() => import('../pages/Admin/contact_admin'));
+const DressManager = lazy(() => import('../pages/Admin/dress-manager'));
 const SignIn = lazy(() => import('../pages/Auth/SignIn'));
 const SignUp = lazy(() => import('../pages/Auth/SignUp'));
 const VerifyEmail = lazy(() => import('../pages/Auth/VerifyEmail'));
@@ -68,6 +69,7 @@ const AppRoutes = () => {
     { path: '/contact', element: <Contact /> },
     { path: '/pdp', element: <PDP /> },
     { path: '/pdp/:id', element: <PDP /> },
+    { path: '/product/:id', element: <PDP /> },
     { path: '/pcp', element: <PCP /> },
     {
       path: '/profile',
@@ -124,6 +126,14 @@ const AppRoutes = () => {
       element: (
         <ProtectedRoute requiredRole="admin">
           <ContactAdmin />
+        </ProtectedRoute>
+      ),
+    },
+    {
+      path: '/admin/dresses',
+      element: (
+        <ProtectedRoute requiredRole="admin">
+          <DressManager />
         </ProtectedRoute>
       ),
     },

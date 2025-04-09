@@ -272,6 +272,7 @@ export default function ProductDetailPage(): JSX.Element {
           <h2 className="text-xl font-medium text-[#c3937c] text-center mb-8">You May Also Like</h2>
           <ProductCarousel 
             dresses={similarDresses.length > 0 ? similarDresses : undefined}
+            currentDressId={id}
           />
         </div>
       </main>

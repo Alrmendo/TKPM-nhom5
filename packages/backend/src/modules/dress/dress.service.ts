@@ -92,4 +92,66 @@ export class DressService {
       throw new Error(`Error fetching similar dresses: ${error.message}`);
     }
   }
+  
+  /**
+   * Create a new dress
+   */
+  async create(dressData: Partial<Dress>): Promise<Dress> {
+    try {
+      const newDress = new this.dressModel(dressData);
+      return await newDress.save();
+    } catch (error) {
+      throw new Error(`Error creating dress: ${error.message}`);
+    }
+  }
+
+  /**
+   * Update an existing dress
+   */
+  async update(id: string, dressData: Partial<Dress>): Promise<Dress> {
+    try {
+      console.log('Updating dress with data:', JSON.stringify(dressData, null, 2));
+      
+      // Make sure variants are properly formatted for database if they exist
+      if (dressData.variants && Array.isArray(dressData.variants)) {
+        console.log('Processing variants for update:', dressData.variants);
+      }
+      
+      const updatedDress = await this.dressModel.findByIdAndUpdate(
+        id,
+        dressData,
+        { new: true, runValidators: true }
+      ).exec();
+
+      if (!updatedDress) {
+        throw new NotFoundException(`Dress with ID ${id} not found`);
+      }
+
+      return updatedDress;
+    } catch (error) {
+      console.error('Error in dress service update:', error);
+      if (error instanceof NotFoundException) {
+        throw error;
+      }
+      throw new Error(`Error updating dress: ${error.message}`);
+    }
+  }
+
+  /**
+   * Delete a dress
+   */
+  async remove(id: string): Promise<void> {
+    try {
+      const result = await this.dressModel.deleteOne({ _id: id }).exec();
+      
+      if (result.deletedCount === 0) {
+        throw new NotFoundException(`Dress with ID ${id} not found`);
+      }
+    } catch (error) {
+      if (error instanceof NotFoundException) {
+        throw error;
+      }
+      throw new Error(`Error deleting dress: ${error.message}`);
+    }
+  }
 } 

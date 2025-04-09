@@ -123,4 +123,78 @@ export const getSimilarDresses = async (id: string, limit: number = 4): Promise<
     console.error(`Error fetching similar dresses for ID ${id}:`, error);
     throw error;
   }
+};
+
+// Create a new dress
+export const createDress = async (dressData: FormData): Promise<Dress> => {
+  try {
+    const response = await API.post('/dress', dressData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    
+    if (response.data && response.data.success) {
+      return response.data.data;
+    }
+    
+    throw new Error(response.data.message || 'Failed to create dress');
+  } catch (error) {
+    console.error('Error creating dress:', error);
+    throw error;
+  }
+};
+
+// Update an existing dress
+export const updateDress = async (id: string, dressData: FormData): Promise<Dress> => {
+  try {
+    const response = await API.put(`/dress/${id}`, dressData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    
+    if (response.data && response.data.success) {
+      return response.data.data;
+    }
+    
+    throw new Error(response.data.message || 'Failed to update dress');
+  } catch (error) {
+    console.error(`Error updating dress with ID ${id}:`, error);
+    throw error;
+  }
+};
+
+// Delete a dress
+export const deleteDress = async (id: string): Promise<{ success: boolean; message: string }> => {
+  try {
+    const response = await API.delete(`/dress/${id}`);
+    
+    if (response.data && response.data.success) {
+      return response.data;
+    }
+    
+    throw new Error(response.data.message || 'Failed to delete dress');
+  } catch (error) {
+    console.error(`Error deleting dress with ID ${id}:`, error);
+    throw error;
+  }
+};
+
+// Remove an image from a dress
+export const removeImage = async (dressId: string, imageUrl: string): Promise<{ success: boolean; message: string }> => {
+  try {
+    const response = await API.delete(`/dress/${dressId}/image`, {
+      data: { imageUrl }
+    });
+    
+    if (response.data && response.data.success) {
+      return response.data;
+    }
+    
+    throw new Error(response.data.message || 'Failed to remove image');
+  } catch (error) {
+    console.error(`Error removing image from dress with ID ${dressId}:`, error);
+    throw error;
+  }
 }; 

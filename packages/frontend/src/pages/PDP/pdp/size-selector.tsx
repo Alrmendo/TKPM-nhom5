@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react';
 
 interface Size {
   _id: string;
-  name: string;
+  name?: string;
+  label?: string;
   description?: string;
 }
 
@@ -23,7 +24,12 @@ export default function SizeSelector({ sizes = [] }: SizeSelectorProps) {
     { _id: 'XXL', name: 'XXL', description: 'Double Extra Large' },
   ];
 
-  // Remove duplicate sizes by _id
+  // Get a display name for a size
+  const getSizeName = (size: Size): string => {
+    return size.name || size.label || size._id || 'Unknown';
+  };
+
+  // Remove duplicate sizes by _id and ensure all sizes have necessary properties
   const uniqueSizes = sizes.length > 0 
     ? [...new Map(sizes.map(size => [size._id, size])).values()]
     : defaultSizes;
@@ -33,7 +39,12 @@ export default function SizeSelector({ sizes = [] }: SizeSelectorProps) {
     if (!selectedSize && uniqueSizes.length > 0) {
       setSelectedSize(uniqueSizes[0]._id);
     }
-  }, [uniqueSizes]);
+  }, [uniqueSizes, selectedSize]);
+
+  // If no sizes, show a message
+  if (uniqueSizes.length === 0) {
+    return <div className="text-gray-500">No sizes available</div>;
+  }
 
   return (
     <div className="flex flex-wrap gap-2">
@@ -44,9 +55,9 @@ export default function SizeSelector({ sizes = [] }: SizeSelectorProps) {
             selectedSize === size._id ? 'bg-[#333333] text-white' : 'bg-[#f2f2f2] text-[#333333]'
           }`}
           onClick={() => setSelectedSize(size._id)}
-          title={size.description || size.name}
+          title={size.description || getSizeName(size)}
         >
-          {size.name}
+          {getSizeName(size)}
         </button>
       ))}
     </div>
