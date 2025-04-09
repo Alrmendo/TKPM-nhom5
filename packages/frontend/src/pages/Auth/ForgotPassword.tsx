@@ -1,47 +1,92 @@
-import type React from 'react';
-import { useState, type FormEvent } from 'react';
+import { useState } from 'react';
 import { Mail } from 'lucide-react';
-import LOGO from '../../assets/LOGO.svg';
+import { useNavigate } from 'react-router-dom';
+import { requestPasswordReset } from '../../api/auth';
+import { useAuth } from '../../context/AuthContext';
+import { LoadingOverlay } from '../../components/ui/LoadingOverlay';
+import { Notification } from '../../components/ui/Notification';
 
-interface ForgotPasswordProps {
-  onSubmit?: (email: string) => void;
-  onReturnToSignIn?: () => void;
-}
+const ForgotPassword = () => {
+  const navigate = useNavigate();
+  const [email, setEmail] = useState('');
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [notification, setNotification] = useState<{
+    type: 'success' | 'error' | 'info';
+    message: string;
+    visible: boolean;
+  }>({ type: 'info', message: '', visible: false });
+  
+  const { setAuthLoading, isAuthLoading } = useAuth();
 
-const ForgotPassword: React.FC<ForgotPasswordProps> = ({
-  onSubmit,
-  onReturnToSignIn,
-}) => {
-  const [email, setEmail] = useState<string>('');
-
-  const handleSubmit = (e: FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (onSubmit) {
-      onSubmit(email);
+    if (!email) {
+      setError('Email is required');
+      return;
     }
+
+    setLoading(true);
+    setAuthLoading(true);
+    setError(null);
+    setSuccess(null);
+
+    try {
+      const response = await requestPasswordReset({ email });
+      setSuccess(response.message);
+      setNotification({
+        type: 'success',
+        message: 'Reset code sent to your email',
+        visible: true
+      });
+      
+      setTimeout(() => {
+        navigate('/reset-password', { state: { email } });
+      }, 2000);
+    } catch (err: any) {
+      setError(err.message || 'Failed to request password reset');
+      setNotification({
+        type: 'error',
+        message: 'Failed to send reset code: ' + (err.message || 'Unknown error'),
+        visible: true
+      });
+    } finally {
+      setLoading(false);
+      setAuthLoading(false);
+    }
+  };
+  
+  const handleCloseNotification = () => {
+    setNotification(prev => ({ ...prev, visible: false }));
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-[#f5f5f5] p-4">
-      <div className="w-full max-w-md rounded-2xl border border-[#dfdfdf] bg-white p-8 shadow-sm">
-        <div className="mb-8 flex justify-center">
-          <div className="relative h-16 w-64">
-            <img
-              src={LOGO}
-              alt="Enchanted Weddings"
-              className="h-full w-full object-contain"
-            />
-          </div>
-        </div>
-
-        <h1 className="mb-4 text-center text-xl font-medium text-[#000000]">
-          Forgot your password
+    <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-4 relative">
+      {isAuthLoading && (
+        <LoadingOverlay message="Sending reset code..." fullScreen />
+      )}
+      
+      <div className="w-full max-w-md bg-white rounded-lg shadow-md p-6">
+        <h1 className="text-2xl font-medium text-center text-[#c3937c] mb-6">
+          Forgot Password
         </h1>
-
-        <p className="mb-6 text-center text-[#404040]">
-          Please enter your email address associated with your account. We'll
-          send you a link to reset your password.
+        
+        <p className="text-gray-600 mb-6 text-center">
+          Enter your email address and we'll send you a code to reset your password.
         </p>
+
+        {error && (
+          <div className="p-3 mb-4 bg-red-100 text-red-700 rounded-md">
+            {error}
+          </div>
+        )}
+
+        {success && (
+          <div className="p-3 mb-4 bg-green-100 text-green-700 rounded-md">
+            {success}
+          </div>
+        )}
 
         <form onSubmit={handleSubmit}>
           <div className="mb-6">
@@ -50,9 +95,10 @@ const ForgotPassword: React.FC<ForgotPasswordProps> = ({
               <input
                 type="email"
                 placeholder="Enter your email address"
-                className="flex-1 border-0 bg-transparent outline-none placeholder:text-[#868686] focus:outline-none focus:ring-0"
+                className="flex-1 border-0 bg-transparent outline-none placeholder:text-[#868686] focus:outline-none focus:ring-0 disabled:opacity-50"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
+                disabled={loading}
                 required
               />
             </div>
@@ -60,24 +106,37 @@ const ForgotPassword: React.FC<ForgotPasswordProps> = ({
 
           <button
             type="submit"
-            className="mb-6 w-full rounded-[100px] bg-[#e3b186] py-3 text-[#505050] font-[600] hover:bg-[#dfdfdf] transition-colors cursor-pointer"
+            disabled={loading}
+            className="mb-6 w-full rounded-[100px] bg-[#e3b186] py-3 text-[#505050] font-[600] hover:bg-[#dfdfdf] transition-colors cursor-pointer disabled:opacity-50 flex items-center justify-center"
           >
-            Send
+            {loading ? (
+              <>
+                <span className="mr-2">Sending</span>
+                <span className="animate-pulse">...</span>
+              </>
+            ) : 'Send Reset Code'}
           </button>
         </form>
 
         <div className="text-center">
           <button
-            onClick={onReturnToSignIn}
-            className="mb-6 w-full rounded-[100px] font-[600] bg-[#f5f5f5] py-3 text-[#505050] hover:bg-[#dfdfdf] transition-colors cursor-pointer"
+            onClick={() => navigate('/signin')}
+            className="mb-6 w-full rounded-[100px] font-[600] bg-[#f5f5f5] py-3 text-[#505050] hover:bg-[#dfdfdf] transition-colors cursor-pointer disabled:opacity-50"
+            disabled={loading}
           >
-            Return to sign in
+            Back to Sign In
           </button>
         </div>
       </div>
+      
+      <Notification
+        type={notification.type}
+        message={notification.message}
+        visible={notification.visible}
+        onClose={handleCloseNotification}
+      />
     </div>
   );
 };
-// mb-6 w-full rounded-[100px] bg-[#f5f5f5] py-3 text-[#505050] hover:bg-[#dfdfdf] transition-colors cursor-pointer
 
 export default ForgotPassword;

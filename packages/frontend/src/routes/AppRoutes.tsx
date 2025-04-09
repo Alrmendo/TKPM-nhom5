@@ -1,7 +1,7 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import AuthenticatedRoute from '../components/authenticatedRoute';
 import { lazy, Suspense } from 'react';
+import { LoadingOverlay } from '../components/ui/LoadingOverlay';
 
 // Lazy load pages
 const Home = lazy(() => import('../pages/Home/Home'));
@@ -28,7 +28,9 @@ const Deliver = lazy(() => import('../pages/Admin/deliver'));
 const ContactAdmin = lazy(() => import('../pages/Admin/contact_admin'));
 const SignIn = lazy(() => import('../pages/Auth/SignIn'));
 const SignUp = lazy(() => import('../pages/Auth/SignUp'));
+const VerifyEmail = lazy(() => import('../pages/Auth/VerifyEmail'));
 const ForgotPassword = lazy(() => import('../pages/Auth/ForgotPassword'));
+const ResetPassword = lazy(() => import('../pages/Auth/ResetPassword'));
 const Cart = lazy(() => import('../pages/Cart/Cart'));
 const AboutPage = lazy(() => import('../pages/About/About'));
 
@@ -45,22 +47,21 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   const { isAuthenticated, isLoading, role } = useAuth();
 
   if (isLoading) {
-    return <div>Đang tải...</div>;
+    return <LoadingOverlay message="Verifying your account..." fullScreen />;
   }
 
   if (!isAuthenticated) {
-    return <Navigate to="/signin" replace={false} />;
+    return <Navigate to="/signin" replace={true} />;
   }
 
   if (requiredRole && role !== requiredRole) {
-    return <Navigate to="/notfound" replace={false} />;
+    return <Navigate to="/notfound" replace={true} />;
   }
 
   return <>{children}</>;
 };
 
 const AppRoutes = () => {
-  const { isAuthenticated } = useAuth();
 
   const routes = [
     { path: '/', element: <Home /> },
@@ -127,22 +128,17 @@ const AppRoutes = () => {
     },
     { path: '/signin', element: <SignIn /> },
     { path: '/signup', element: <SignUp /> },
-    { path: '/forgotpassw', element: <ForgotPassword /> },
+    { path: '/verify-email', element: <VerifyEmail /> },
+    { path: '/forgot-password', element: <ForgotPassword /> },
+    { path: '/reset-password', element: <ResetPassword /> },
     { path: '/cart', element: <Cart /> },
     { path: '/about', element: <AboutPage /> },
-    {
-      path: '/search',
-      element: (
-        <AuthenticatedRoute isAuthenticated={isAuthenticated}>
-          <SearchOverlay />
-        </AuthenticatedRoute>
-      ),
-    },
+    { path: '/search', element: <SearchOverlay />},
     { path: '*', element: <NotFoundPage /> },
   ];
 
   return (
-    <Suspense fallback={<div>Loading...</div>}>
+    <Suspense fallback={<LoadingOverlay message="Loading page..." fullScreen />}>
       <Routes>
         {routes.map(({ path, element }) => (
           <Route key={path} path={path} element={element} />

@@ -4,6 +4,8 @@ import { AuthModule } from './modules/auth/auth.module';
 import { DatabaseModule } from './modules/database/database.module';
 import { AdminModule } from './modules/admin/admin.module';
 import { CloudinaryModule } from './modules/cloudinary/cloudinary.module';
+import { EmailModule } from './modules/email/email.module';
+import { UserModule } from './modules/user/user.module';
 
 @Module({
   imports: [
@@ -12,6 +14,8 @@ import { CloudinaryModule } from './modules/cloudinary/cloudinary.module';
     AuthModule,
     CloudinaryModule,
     AdminModule,
+    EmailModule,
+    UserModule,
   ],
 })
 export class AppModule {}

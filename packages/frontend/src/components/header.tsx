@@ -35,7 +35,7 @@ const Header: React.FC<NavigationProps> = ({ isSticky = false }) => {
     navigate('/search');
   };
   const goToProfilePage = (): void => {
-    navigate('/profile');
+    navigate('/profile', { replace: false });
   };
 
   const goToHomePage = (): void => {

@@ -3,6 +3,9 @@ import { useState } from "react"
 import { Eye, EyeOff } from "lucide-react"
 import { Link, useNavigate } from "react-router-dom"
 import { register } from "../../api/auth"
+import { useAuth } from "../../context/AuthContext"
+import { LoadingOverlay } from "../../components/ui/LoadingOverlay"
+import { Notification } from "../../components/ui/Notification"
 
 interface InputFieldProps {
   id: string
@@ -11,9 +14,10 @@ interface InputFieldProps {
   value: string
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void
   placeholder?: string
+  disabled?: boolean
 }
 
-const InputField: React.FC<InputFieldProps> = ({ id, label, type, value, onChange, placeholder }) => {
+const InputField: React.FC<InputFieldProps> = ({ id, label, type, value, onChange, placeholder, disabled }) => {
   return (
     <div className="space-y-2">
       <label htmlFor={id} className="block text-[#404040]">
@@ -25,7 +29,8 @@ const InputField: React.FC<InputFieldProps> = ({ id, label, type, value, onChang
         value={value}
         onChange={onChange}
         placeholder={placeholder}
-        className="w-full p-3 border border-[#dfdfdf] rounded-md"
+        disabled={disabled}
+        className="w-full p-3 border border-[#dfdfdf] rounded-md disabled:opacity-50 disabled:bg-gray-100"
       />
     </div>
   )
@@ -37,9 +42,10 @@ interface PasswordFieldProps {
   value: string
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void
   placeholder?: string
+  disabled?: boolean
 }
 
-const PasswordField: React.FC<PasswordFieldProps> = ({ id, label, value, onChange, placeholder }) => {
+const PasswordField: React.FC<PasswordFieldProps> = ({ id, label, value, onChange, placeholder, disabled }) => {
   const [showPassword, setShowPassword] = useState<boolean>(false)
 
   const togglePasswordVisibility = () => {
@@ -58,13 +64,15 @@ const PasswordField: React.FC<PasswordFieldProps> = ({ id, label, value, onChang
           value={value}
           onChange={onChange}
           placeholder={placeholder}
-          className="w-full p-3 border border-[#dfdfdf] rounded-md pr-10"
+          disabled={disabled}
+          className="w-full p-3 border border-[#dfdfdf] rounded-md pr-10 disabled:opacity-50 disabled:bg-gray-100"
         />
         <button
           type="button"
           onClick={togglePasswordVisibility}
           className="absolute right-3 top-1/2 -translate-y-1/2 text-[#868686]"
           aria-label={showPassword ? "Hide password" : "Show password"}
+          disabled={disabled}
         >
           {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
         </button>
@@ -78,14 +86,16 @@ interface SocialButtonProps {
   icon: React.ReactNode
   text: string
   onClick: () => void
+  disabled?: boolean
 }
 
-const SocialButton: React.FC<SocialButtonProps> = ({ icon, text, onClick }) => {
+const SocialButton: React.FC<SocialButtonProps> = ({ icon, text, onClick, disabled }) => {
   return (
     <button
       type="button"
       onClick={onClick}
-      className="w-full border border-[#dfdfdf] rounded-full py-3 flex items-center justify-center gap-2 hover:bg-gray-50 transition-colors"
+      disabled={disabled}
+      className="w-full border border-[#dfdfdf] rounded-full py-3 flex items-center justify-center gap-2 hover:bg-gray-50 transition-colors disabled:opacity-50"
     >
       {icon}
       <span className="text-[#404040]">{text}</span>
@@ -102,6 +112,13 @@ const SignUp: React.FC = () => {
   });
   const [error, setError] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(false);
+  const [notification, setNotification] = useState<{
+    type: 'success' | 'error' | 'info';
+    message: string;
+    visible: boolean;
+  }>({ type: 'info', message: '', visible: false });
+  
+  const { setAuthLoading, isAuthLoading } = useAuth();
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { id, value } = e.target;
@@ -115,15 +132,33 @@ const SignUp: React.FC = () => {
     e.preventDefault();
     setError("");
     setLoading(true);
+    setAuthLoading(true);
 
     try {
-      await register(formData);
-      // Redirect to login page after successful registration
-      navigate("/signin");
+      const response = await register(formData);
+      // Show success notification
+      setNotification({
+        type: 'success',
+        message: 'Registration successful! Please check your email.',
+        visible: true
+      });
+      
+      // Redirect to email verification page after successful registration
+      setTimeout(() => {
+        navigate("/verify-email", { 
+          state: { email: formData.email },
+        });
+      }, 2000);
     } catch (err: any) {
       setError(err.message);
+      setNotification({
+        type: 'error',
+        message: 'Registration failed: ' + err.message,
+        visible: true
+      });
     } finally {
       setLoading(false);
+      setAuthLoading(false);
     }
   };
 
@@ -131,9 +166,13 @@ const SignUp: React.FC = () => {
     console.log(`Login with ${provider}`);
     // Add your social login logic here
   };
+  
+  const handleCloseNotification = () => {
+    setNotification(prev => ({ ...prev, visible: false }));
+  };
 
   return (
-    <div className="flex flex-col lg:flex-row min-h-screen">
+    <div className="flex flex-col lg:flex-row min-h-screen relative">
       {/* Mobile & Desktop: Hình ảnh */}
       <div className="w-full lg:w-1/2">
         <div className="h-64 lg:h-full relative">
@@ -146,7 +185,11 @@ const SignUp: React.FC = () => {
       </div>
 
       {/* Form đăng ký */}
-      <div className="w-full lg:w-1/2 p-8 md:p-12 lg:p-16 flex flex-col justify-center">
+      <div className="w-full lg:w-1/2 p-8 md:p-12 lg:p-16 flex flex-col justify-center relative">
+        {isAuthLoading && (
+          <LoadingOverlay message="Creating your account..." />
+        )}
+        
         <div className="max-w-md mx-auto w-full">
           <h1 className="text-[#c3937c] text-4xl font-medium mb-2">Sign up</h1>
           <p className="mb-8 text-[#404040]">
@@ -169,6 +212,7 @@ const SignUp: React.FC = () => {
               type="text"
               value={formData.username}
               onChange={handleInputChange}
+              disabled={loading}
             />
 
             <InputField
@@ -177,6 +221,7 @@ const SignUp: React.FC = () => {
               type="email"
               value={formData.email}
               onChange={handleInputChange}
+              disabled={loading}
             />
 
             <PasswordField
@@ -184,18 +229,28 @@ const SignUp: React.FC = () => {
               label="Password"
               value={formData.password}
               onChange={handleInputChange}
+              disabled={loading}
             />
 
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-[#ead9c9] text-[#404040] py-3 rounded-full hover:bg-[#c3937c] hover:text-white transition-colors disabled:opacity-50"
+              className="w-full bg-[#ead9c9] text-[#404040] py-3 rounded-full hover:bg-[#c3937c] hover:text-white transition-colors disabled:opacity-50 flex items-center justify-center"
             >
-              {loading ? "Creating account..." : "Create an account"}
+              {loading ? (
+                <>
+                  <span className="mr-2">Creating account</span>
+                  <span className="animate-pulse">...</span>
+                </>
+              ) : "Create an account"}
             </button>
           </form>
 
-          <div className="my-6 text-center text-[#868686]">Or</div>
+          <div className="mt-5 mb-5 flex items-center justify-center">
+              <div className="border-t border-[#dfdfdf] w-full"></div>
+              <span className="px-4 text-[#999999]">Or</span>
+              <div className="border-t border-[#dfdfdf] w-full"></div>
+          </div>
 
           <div className="space-y-4">
             <SocialButton
@@ -226,6 +281,7 @@ const SignUp: React.FC = () => {
               }
               text="Sign up with Google"
               onClick={() => handleSocialLogin("Google")}
+              disabled={loading}
             />
 
             <SocialButton
@@ -242,6 +298,7 @@ const SignUp: React.FC = () => {
               }
               text="Login with facebook"
               onClick={() => handleSocialLogin("Facebook")}
+              disabled={loading}
             />
 
             <SocialButton
@@ -251,24 +308,19 @@ const SignUp: React.FC = () => {
                   viewBox="0 0 24 24"
                   width="24"
                   height="24"
-                  fill="#000000"
                 >
                   <path d="M12.152 6.896c-.948 0-2.415-1.078-3.96-1.04-2.04.027-3.91 1.183-4.961 3.014-2.117 3.675-.546 9.103 1.519 12.09 1.013 1.454 2.208 3.09 3.792 3.039 1.52-.065 2.09-.987 3.935-.987 1.831 0 2.35.987 3.96.948 1.637-.026 2.676-1.48 3.676-2.948 1.156-1.688 1.636-3.325 1.662-3.415-.039-.013-3.182-1.221-3.22-4.857-.026-3.04 2.48-4.494 2.597-4.559-1.429-2.09-3.623-2.324-4.39-2.376-2-.156-3.675 1.09-4.61 1.09zM15.53 3.83c.843-1.012 1.4-2.427 1.245-3.83-1.207.052-2.662.805-3.532 1.818-.78.896-1.454 2.338-1.273 3.714 1.338.104 2.715-.688 3.559-1.701z" />
                 </svg>
               }
-              text="Login with Apple ID"
+              text="Sign up with Apple ID"
               onClick={() => handleSocialLogin("Apple")}
+              disabled={loading}
             />
           </div>
-
+          
+          {/* Add Terms and Guest Link */}
           <div className="mt-8 text-center text-sm">
-            <p className="text-[#868686]">
-              New to ENCOUNTED WEDDING?{" "}
-              <Link to="/signin" className="text-[#c3937c] hover:underline">
-                Sign In
-              </Link>
-            </p>
-            <p className="mt-2 text-[#868686]">
+            <p className="text-xs text-[#868686] mb-4">
               Signing up means you agree to the{" "}
               <a href="#" className="text-[#c3937c] hover:underline">
                 Privacy policy
@@ -283,12 +335,25 @@ const SignUp: React.FC = () => {
               </a>
               .
             </p>
+            <p className="text-[#404040]">
+              Just don't want to sign up?{" "}
+              <Link to="/" className="text-[#c3937c] font-medium hover:underline">
+                Be our guest!
+              </Link>
+            </p>
           </div>
         </div>
       </div>
+      
+      <Notification
+        type={notification.type}
+        message={notification.message}
+        visible={notification.visible}
+        onClose={handleCloseNotification}
+      />
     </div>
   );
 };
 
-export default SignUp
+export default SignUp;
 

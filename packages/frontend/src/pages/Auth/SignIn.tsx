@@ -1,8 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Mail, Lock, Eye, EyeOff } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { login } from '../../api/auth';
 import { useAuth } from '../../context/AuthContext';
+import { LoadingOverlay } from '../../components/ui/LoadingOverlay';
+import { Notification } from '../../components/ui/Notification';
 
 const SignIn: React.FC = () => {
   const navigate = useNavigate();
@@ -13,7 +15,14 @@ const SignIn: React.FC = () => {
   const [showPassword, setShowPassword] = useState<boolean>(false);
   const [error, setError] = useState<string>('');
   const [loading, setLoading] = useState<boolean>(false);
-  const { getRoleFromCookie } = useAuth(); // dùng alias 'saveToken' để tránh trùng tên
+  const [showForgotPassword, setShowForgotPassword] = useState<boolean>(false);
+  const [notification, setNotification] = useState<{
+    type: 'success' | 'error' | 'info';
+    message: string;
+    visible: boolean;
+  }>({ type: 'info', message: '', visible: false });
+  
+  const { getRoleFromCookie, setAuthLoading, isAuthLoading } = useAuth();
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -26,28 +35,72 @@ const SignIn: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError('');
+    setShowForgotPassword(false);
     setLoading(true);
+    setAuthLoading(true);
 
     try {
-      await login(formData);
+      const response = await login(formData);
+      
+      // Kiểm tra xem tài khoản đã được xác thực email chưa
+      if (response.isVerified === false) {
+        setError('Your account is not verified. Please check your email and verify your account.');
+        
+        // Chuyển hướng đến trang xác thực email với email của người dùng
+        navigate('/verify-email', { 
+          state: { email: response.email } // Use the email returned from the API response
+        });
+        return;
+      }
+      
+      setNotification({
+        type: 'success',
+        message: 'Login successful! Redirecting...',
+        visible: true
+      });
+      
       const role = await getRoleFromCookie();
       console.log(role);
       if (role === 'admin') {
-        navigate('/admin/style');
+        navigate('/admin/measurement');
       } else if (role === 'user') {
-        navigate('/profile', { replace: true });
+        navigate('/profile');
       }
     } catch (err: any) {
-      // Nếu dùng axios, bạn có thể lấy thêm thông tin lỗi từ err.response.data nếu cần
-      const errorMsg = err.response?.data?.message || err.message;
-      setError(errorMsg);
+      // Handle specific error codes
+      const errorResponse = err.response?.data;
+      
+      if (errorResponse?.errorCode === 'USER_NOT_FOUND') {
+        setError('Account not found. Please register to create an account.');
+        // Add a button/link to registration page
+      } else if (errorResponse?.errorCode === 'INVALID_PASSWORD') {
+        setError('Incorrect password. Did you forget your password?');
+        setShowForgotPassword(true);
+      } else {
+        setError(errorResponse?.message || err.message || 'Login failed');
+      }
+      
+      setNotification({
+        type: 'error',
+        message: 'Login failed',
+        visible: true
+      });
     } finally {
       setLoading(false);
+      setAuthLoading(false);
     }
   };
 
+  const goToForgotPassword = () => {
+    navigate('/forgot-password');
+  };
+  
+  const handleCloseNotification = () => {
+    setNotification(prev => ({ ...prev, visible: false }));
+  };
+
   return (
-    <div className="flex min-h-screen flex-col md:flex-row">
+    <div className="flex min-h-screen flex-col md:flex-row relative">
       {/* Left side - Image */}
       <div className="w-full md:w-1/2 h-[300px] md:h-auto relative">
         <img
@@ -58,7 +111,11 @@ const SignIn: React.FC = () => {
       </div>
 
       {/* Right side - Login Form */}
-      <div className="w-full md:w-1/2 flex items-center justify-center p-4 md:p-8 lg:p-12">
+      <div className="w-full md:w-1/2 flex items-center justify-center p-4 md:p-8 lg:p-12 relative">
+        {isAuthLoading && (
+          <LoadingOverlay message="Authenticating..." />
+        )}
+        
         <div className="w-full max-w-md space-y-6 md:space-y-8">
           <h1 className="text-3xl font-medium text-[#c3937c] text-center">
             Login
@@ -67,6 +124,16 @@ const SignIn: React.FC = () => {
           {error && (
             <div className="p-3 bg-red-100 text-red-700 rounded-md">
               {error}
+              {showForgotPassword && (
+                <div className="mt-2">
+                  <button 
+                    onClick={goToForgotPassword}
+                    className="text-rose-700 underline hover:text-rose-800"
+                  >
+                    Reset your password
+                  </button>
+                </div>
+              )}
             </div>
           )}
 
@@ -83,6 +150,7 @@ const SignIn: React.FC = () => {
                 onChange={handleInputChange}
                 placeholder="Username"
                 className="w-full pl-10 pr-3 py-3 border border-[#dfdfdf] rounded-full focus:outline-none focus:ring-1 focus:ring-[#c3937c]"
+                disabled={loading}
               />
             </div>
 
@@ -98,11 +166,13 @@ const SignIn: React.FC = () => {
                 onChange={handleInputChange}
                 placeholder="Password"
                 className="w-full pl-10 pr-10 py-3 border border-[#dfdfdf] rounded-full focus:outline-none focus:ring-1 focus:ring-[#c3937c]"
+                disabled={loading}
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
                 className="absolute inset-y-0 right-0 flex items-center pr-3"
+                disabled={loading}
               >
                 {showPassword ? (
                   <EyeOff className="h-5 w-5 text-[#999999]" />
@@ -112,13 +182,24 @@ const SignIn: React.FC = () => {
               </button>
             </div>
 
+            <div className="flex justify-end">
+              <Link to="/forgot-password" className="text-sm text-[#c3937c] hover:underline">
+                Forgot Password?
+              </Link>
+            </div>
+
             {/* Login Button */}
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-3 bg-[#ead9c9] text-[#c3937c] rounded-full font-medium hover:bg-[#c3937c] hover:text-white transition-colors disabled:opacity-50"
+              className="w-full py-3 bg-[#ead9c9] text-[#c3937c] rounded-full font-medium hover:bg-[#c3937c] hover:text-white transition-colors disabled:opacity-50 flex items-center justify-center"
             >
-              {loading ? 'Logging in...' : 'Login'}
+              {loading ? (
+                <>
+                  <span className="mr-2">Logging in</span>
+                  <span className="animate-pulse">...</span>
+                </>
+              ) : 'Login'}
             </button>
 
             {/* Divider */}
@@ -132,6 +213,7 @@ const SignIn: React.FC = () => {
             <button
               type="button"
               className="w-full py-3 border border-[#dfdfdf] rounded-full flex items-center justify-center space-x-2 hover:bg-gray-50 transition-colors"
+              disabled={loading}
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -162,6 +244,7 @@ const SignIn: React.FC = () => {
             <button
               type="button"
               className="w-full py-3 border border-[#dfdfdf] rounded-full flex items-center justify-center space-x-2 hover:bg-gray-50 transition-colors"
+              disabled={loading}
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -180,6 +263,7 @@ const SignIn: React.FC = () => {
             <button
               type="button"
               className="w-full py-3 border border-[#dfdfdf] rounded-full flex items-center justify-center space-x-2 hover:bg-gray-50 transition-colors"
+              disabled={loading}
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -218,7 +302,7 @@ const SignIn: React.FC = () => {
               </Link>
             </p>
             <p className="text-10 text-[#404040]">
-              Just dont want to log in?{' '}
+              Just don't want to log in?{' '}
               <Link to="/" className="text-[#c3937c] font-medium">
                 Be our guest!
               </Link>
@@ -226,6 +310,13 @@ const SignIn: React.FC = () => {
           </div>
         </div>
       </div>
+      
+      <Notification
+        type={notification.type}
+        message={notification.message}
+        visible={notification.visible}
+        onClose={handleCloseNotification}
+      />
     </div>
   );
 };
