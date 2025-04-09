@@ -9,9 +9,10 @@ interface Size {
 
 interface SizeSelectorProps {
   sizes?: Size[];
+  onSizeSelect?: (sizeId: string) => void;
 }
 
-export default function SizeSelector({ sizes = [] }: SizeSelectorProps) {
+export default function SizeSelector({ sizes = [], onSizeSelect }: SizeSelectorProps) {
   const [selectedSize, setSelectedSize] = useState<string>('');
 
   // Default sizes if none provided
@@ -37,9 +38,23 @@ export default function SizeSelector({ sizes = [] }: SizeSelectorProps) {
   // Initialize selected size if not set
   useEffect(() => {
     if (!selectedSize && uniqueSizes.length > 0) {
-      setSelectedSize(uniqueSizes[0]._id);
+      const initialSize = uniqueSizes[0]._id;
+      setSelectedSize(initialSize);
+      // Call the onSizeSelect callback with initial size
+      if (onSizeSelect) {
+        onSizeSelect(initialSize);
+      }
     }
   }, [uniqueSizes, selectedSize]);
+
+  // Handle size selection
+  const handleSizeSelect = (sizeId: string) => {
+    setSelectedSize(sizeId);
+    // Call the onSizeSelect callback if provided
+    if (onSizeSelect) {
+      onSizeSelect(sizeId);
+    }
+  };
 
   // If no sizes, show a message
   if (uniqueSizes.length === 0) {
@@ -54,7 +69,7 @@ export default function SizeSelector({ sizes = [] }: SizeSelectorProps) {
           className={`min-w-10 h-10 px-3 rounded-full flex items-center justify-center text-sm ${
             selectedSize === size._id ? 'bg-[#333333] text-white' : 'bg-[#f2f2f2] text-[#333333]'
           }`}
-          onClick={() => setSelectedSize(size._id)}
+          onClick={() => handleSizeSelect(size._id)}
           title={size.description || getSizeName(size)}
         >
           {getSizeName(size)}

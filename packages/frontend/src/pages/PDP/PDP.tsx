@@ -19,6 +19,16 @@ export default function ProductDetailPage(): JSX.Element {
   const [similarDresses, setSimilarDresses] = useState<Dress[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  
+  // New states for date selection, variants and quantity
+  const [startDate, setStartDate] = useState<Date | null>(null);
+  const [endDate, setEndDate] = useState<Date | null>(null);
+  const [showStartDatePicker, setShowStartDatePicker] = useState<boolean>(false);
+  const [showEndDatePicker, setShowEndDatePicker] = useState<boolean>(false);
+  const [selectedSize, setSelectedSize] = useState<string>('');
+  const [selectedColor, setSelectedColor] = useState<string>('');
+  const [quantity, setQuantity] = useState<number>(1);
+  const [availableStock, setAvailableStock] = useState<number | null>(null);
 
   useEffect(() => {
     const fetchDressData = async () => {
@@ -36,6 +46,13 @@ export default function ProductDetailPage(): JSX.Element {
         const dressData = await getDressById(id);
         setDress(dressData);
         
+        // Set initial selected variants if available
+        if (dressData.variants && dressData.variants.length > 0) {
+          setSelectedSize(dressData.variants[0].size._id);
+          setSelectedColor(dressData.variants[0].color._id);
+          updateAvailableStock(dressData, dressData.variants[0].size._id, dressData.variants[0].color._id);
+        }
+        
         // Fetch similar dresses
         const similar = await getSimilarDresses(id, 4);
         setSimilarDresses(similar);
@@ -51,6 +68,65 @@ export default function ProductDetailPage(): JSX.Element {
 
     fetchDressData();
   }, [id]);
+  
+  // Update available stock when size or color changes
+  useEffect(() => {
+    if (dress && selectedSize && selectedColor) {
+      updateAvailableStock(dress, selectedSize, selectedColor);
+    }
+  }, [dress, selectedSize, selectedColor]);
+  
+  // Function to calculate available stock based on selected variants
+  const updateAvailableStock = (dressData: Dress, sizeId: string, colorId: string) => {
+    const variant = dressData.variants.find(
+      v => v.size._id === sizeId && v.color._id === colorId
+    );
+    
+    if (variant) {
+      setAvailableStock(variant.stock);
+      // Adjust quantity if it exceeds available stock
+      if (quantity > variant.stock) {
+        setQuantity(variant.stock > 0 ? variant.stock : 1);
+      }
+    } else {
+      setAvailableStock(0);
+      setQuantity(1);
+    }
+  };
+  
+  // Handle size selection
+  const handleSizeSelect = (sizeId: string) => {
+    setSelectedSize(sizeId);
+  };
+  
+  // Handle color selection
+  const handleColorSelect = (colorId: string) => {
+    setSelectedColor(colorId);
+  };
+  
+  // Handle quantity change
+  const decreaseQuantity = () => {
+    if (quantity > 1) {
+      setQuantity(quantity - 1);
+    }
+  };
+  
+  const increaseQuantity = () => {
+    if (availableStock !== null && quantity < availableStock) {
+      setQuantity(quantity + 1);
+    }
+  };
+  
+  // Handle date selection
+  const handleStartDateChange = (date: Date) => {
+    setStartDate(date);
+    setShowStartDatePicker(false);
+  };
+  
+  const handleEndDateChange = (date: Date) => {
+    setEndDate(date);
+    setShowEndDatePicker(false);
+  };
 
   // Calculate average rating
   const avgRating = dress?.ratings?.length 
@@ -138,6 +214,7 @@ export default function ProductDetailPage(): JSX.Element {
               <h3 className="text-sm font-medium text-[#333333]">Color</h3>
               <ColorSelector 
                 colors={dress?.variants.map(v => v.color) || []}
+                onColorSelect={handleColorSelect}
               />
             </div>
 
@@ -151,20 +228,89 @@ export default function ProductDetailPage(): JSX.Element {
               </div>
               <SizeSelector 
                 sizes={dress?.variants.map(v => v.size) || []}
+                onSizeSelect={handleSizeSelect}
               />
+              
+              {/* Display available stock */}
+              {availableStock !== null && (
+                <p className="text-sm text-gray-600">
+                  {availableStock > 0 
+                    ? `${availableStock} in stock` 
+                    : "Out of stock"}
+                </p>
+              )}
+            </div>
+            
+            {/* Quantity Selector */}
+            <div className="space-y-3">
+              <h3 className="text-sm font-medium text-[#333333]">Quantity</h3>
+              <div className="flex items-center border border-gray-300 rounded-md w-32">
+                <button 
+                  className="px-3 py-2 text-gray-600" 
+                  onClick={decreaseQuantity}
+                  disabled={quantity <= 1}
+                >
+                  <Minus className="w-4 h-4" />
+                </button>
+                <div className="flex-1 text-center">{quantity}</div>
+                <button 
+                  className="px-3 py-2 text-gray-600"
+                  onClick={increaseQuantity}
+                  disabled={availableStock !== null && quantity >= availableStock}
+                >
+                  <Plus className="w-4 h-4" />
+                </button>
+              </div>
             </div>
 
             {/* Date Selection */}
-            <button className="w-full border border-[#d9d9d9] rounded-md py-3 px-4 text-[#868686] text-left flex justify-between items-center">
-              Tap to Select a Date
-              <ChevronRight className="w-4 h-4" />
-            </button>
-
-            {/* Calendar */}
-            <DatePicker 
-              startDate={dress?.rentalStartDate}
-              endDate={dress?.rentalEndDate}
-            />
+            <div className="space-y-3">
+              <h3 className="text-sm font-medium text-[#333333]">Rental Period</h3>
+              
+              {/* Start Date */}
+              <div>
+                <button 
+                  className="w-full border border-[#d9d9d9] rounded-md py-3 px-4 text-[#868686] text-left flex justify-between items-center"
+                  onClick={() => {
+                    setShowStartDatePicker(!showStartDatePicker);
+                    setShowEndDatePicker(false);
+                  }}
+                >
+                  {startDate 
+                    ? `Start Date: ${startDate.toLocaleDateString()}` 
+                    : "Select Start Date"}
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+                
+                {showStartDatePicker && (
+                  <div className="mt-2">
+                    <DatePicker onDateChange={handleStartDateChange} />
+                  </div>
+                )}
+              </div>
+              
+              {/* End Date */}
+              <div>
+                <button 
+                  className="w-full border border-[#d9d9d9] rounded-md py-3 px-4 text-[#868686] text-left flex justify-between items-center"
+                  onClick={() => {
+                    setShowEndDatePicker(!showEndDatePicker);
+                    setShowStartDatePicker(false);
+                  }}
+                >
+                  {endDate 
+                    ? `End Date: ${endDate.toLocaleDateString()}` 
+                    : "Select End Date"}
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+                
+                {showEndDatePicker && (
+                  <div className="mt-2">
+                    <DatePicker onDateChange={handleEndDateChange} startDate={startDate} />
+                  </div>
+                )}
+              </div>
+            </div>
 
             {/* Booking Info */}
             <div className="text-xs text-[#868686] italic">

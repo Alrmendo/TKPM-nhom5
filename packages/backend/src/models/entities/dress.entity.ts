@@ -56,12 +56,6 @@ export class Dress {
     stock: number;
   }[];
 
-  @Prop()
-  rentalStartDate: Date;
-
-  @Prop()
-  rentalEndDate: Date;
-
   @Prop({
     type: {
       productDetail: String,

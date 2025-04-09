@@ -8,9 +8,10 @@ interface Color {
 
 interface ColorSelectorProps {
   colors?: Color[];
+  onColorSelect?: (colorId: string) => void;
 }
 
-export default function ColorSelector({ colors = [] }: ColorSelectorProps) {
+export default function ColorSelector({ colors = [], onColorSelect }: ColorSelectorProps) {
   const [selectedColor, setSelectedColor] = useState<string>('');
 
   // Default colors if none provided
@@ -39,9 +40,23 @@ export default function ColorSelector({ colors = [] }: ColorSelectorProps) {
   // Initialize selected color if not set
   useEffect(() => {
     if (!selectedColor && uniqueColors.length > 0) {
-      setSelectedColor(uniqueColors[0]._id);
+      const initialColor = uniqueColors[0]._id;
+      setSelectedColor(initialColor);
+      // Call the onColorSelect callback with initial color
+      if (onColorSelect) {
+        onColorSelect(initialColor);
+      }
     }
   }, [uniqueColors]);
+
+  // Handle color selection
+  const handleColorSelect = (colorId: string) => {
+    setSelectedColor(colorId);
+    // Call the onColorSelect callback if provided
+    if (onColorSelect) {
+      onColorSelect(colorId);
+    }
+  };
 
   return (
     <div className="flex space-x-2">
@@ -49,7 +64,7 @@ export default function ColorSelector({ colors = [] }: ColorSelectorProps) {
         <button
           key={color._id}
           className={`relative rounded-full p-0.5 ${selectedColor === color._id ? 'ring-2 ring-[#c3937c]' : ''}`}
-          onClick={() => setSelectedColor(color._id)}
+          onClick={() => handleColorSelect(color._id)}
         >
           <div
             className={`w-8 h-8 rounded-full flex items-center justify-center ${

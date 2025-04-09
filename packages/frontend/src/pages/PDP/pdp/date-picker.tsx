@@ -1,179 +1,122 @@
-import { useState, useEffect } from 'react';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { useState } from 'react';
 
-interface DatePickerProps {
-  startDate?: Date | string;
-  endDate?: Date | string;
-  onDateChange?: (date: Date) => void;
-}
+type DatePickerProps = {
+  onDateChange: (date: Date) => void;
+  startDate?: Date | null;
+};
 
-export default function DatePicker({ startDate, endDate, onDateChange }: DatePickerProps) {
-  const today = new Date();
-  const [currentMonth, setCurrentMonth] = useState(today.getMonth());
-  const [currentYear, setCurrentYear] = useState(today.getFullYear());
-  const [selectedDate, setSelectedDate] = useState<number | null>(null);
+export default function DatePicker({ onDateChange, startDate }: DatePickerProps) {
+  const [currentMonth, setCurrentMonth] = useState(new Date());
   
-  // Initialize with provided start date if available
-  useEffect(() => {
-    if (startDate) {
-      // Convert string to Date if needed
-      const startDateObj = startDate instanceof Date ? startDate : new Date(startDate);
-      
-      // Check if date is valid before using it
-      if (!isNaN(startDateObj.getTime())) {
-        setCurrentMonth(startDateObj.getMonth());
-        setCurrentYear(startDateObj.getFullYear());
-        setSelectedDate(startDateObj.getDate());
-      }
-    }
-  }, [startDate]);
-
-  // Convert endDate to Date object if it's a string
-  const endDateObj = endDate ? (endDate instanceof Date ? endDate : new Date(endDate)) : undefined;
-  
-  // Only use endDate if it's a valid date
-  const validEndDate = endDateObj && !isNaN(endDateObj.getTime()) ? endDateObj : undefined;
-
-  const months = [
-    'January',
-    'February',
-    'March',
-    'April',
-    'May',
-    'June',
-    'July',
-    'August',
-    'September',
-    'October',
-    'November',
-    'December',
-  ];
-
-  const days = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
-
-  // Generate calendar days
+  // Get days in month
   const getDaysInMonth = (year: number, month: number) => {
     return new Date(year, month + 1, 0).getDate();
   };
-
+  
+  // Get day of week of first day in month (0 = Sunday, 1 = Monday, etc.)
   const getFirstDayOfMonth = (year: number, month: number) => {
     return new Date(year, month, 1).getDay();
   };
-
-  const daysInMonth = getDaysInMonth(currentYear, currentMonth);
-  const firstDay = getFirstDayOfMonth(currentYear, currentMonth);
-
-  const calendarDays = [];
-  for (let i = 0; i < firstDay; i++) {
-    calendarDays.push(null);
-  }
-
-  for (let i = 1; i <= daysInMonth; i++) {
-    calendarDays.push(i);
-  }
-
-  const handlePrevMonth = () => {
-    if (currentMonth === 0) {
-      setCurrentMonth(11);
-      setCurrentYear(currentYear - 1);
-    } else {
-      setCurrentMonth(currentMonth - 1);
-    }
+  
+  // Format month name
+  const formatMonth = (date: Date) => {
+    return date.toLocaleString('default', { month: 'long' }) + ' ' + date.getFullYear();
   };
-
-  const handleNextMonth = () => {
-    if (currentMonth === 11) {
-      setCurrentMonth(0);
-      setCurrentYear(currentYear + 1);
-    } else {
-      setCurrentMonth(currentMonth + 1);
-    }
+  
+  // Change month
+  const nextMonth = () => {
+    setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 1));
   };
-
-  const handleDateSelect = (day: number) => {
-    setSelectedDate(day);
-    if (onDateChange) {
-      onDateChange(new Date(currentYear, currentMonth, day));
-    }
+  
+  const prevMonth = () => {
+    setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1, 1));
   };
-
-  // Check if a date is available (not in the past and not after endDate)
-  const isDateAvailable = (day: number): boolean => {
-    const date = new Date(currentYear, currentMonth, day);
-    const isPast = date < new Date(today.setHours(0, 0, 0, 0));
-    const isAfterEndDate = validEndDate ? date > validEndDate : false;
+  
+  // Check if date is in the past or before startDate (if provided)
+  const isDisabled = (date: Date) => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
     
-    return !isPast && !isAfterEndDate;
+    // Disable dates in the past
+    if (date < today) return true;
+    
+    // Disable dates before startDate if provided
+    if (startDate && date < startDate) return true;
+    
+    return false;
   };
-
-  // Rest of the component remains unchanged
+  
+  // Generate calendar
+  const year = currentMonth.getFullYear();
+  const month = currentMonth.getMonth();
+  const daysInMonth = getDaysInMonth(year, month);
+  const firstDayOfMonth = getFirstDayOfMonth(year, month);
+  
+  const days = [];
+  // Add empty cells for days before the 1st of the month
+  for (let i = 0; i < firstDayOfMonth; i++) {
+    days.push(<div key={`empty-${i}`} className="h-8 w-8"></div>);
+  }
+  
+  // Add days of the month
+  for (let day = 1; day <= daysInMonth; day++) {
+    const date = new Date(year, month, day);
+    const disabled = isDisabled(date);
+    
+    days.push(
+      <button
+        key={`day-${day}`}
+        className={`h-8 w-8 rounded-full flex items-center justify-center text-sm
+          ${disabled 
+            ? 'text-gray-300 cursor-not-allowed' 
+            : 'hover:bg-[#ead9c9] text-[#333333] cursor-pointer'}`}
+        onClick={() => !disabled && onDateChange(date)}
+        disabled={disabled}
+      >
+        {day}
+      </button>
+    );
+  }
+  
+  // Create rows for the calendar
+  const rows = [];
+  let cells = [];
+  
+  days.forEach((day, i) => {
+    if (i % 7 === 0 && i > 0) {
+      rows.push(<div key={`row-${i}`} className="grid grid-cols-7 gap-1">{cells}</div>);
+      cells = [];
+    }
+    cells.push(day);
+  });
+  
+  // Add the last row
+  if (cells.length > 0) {
+    rows.push(<div key={`row-last`} className="grid grid-cols-7 gap-1">{cells}</div>);
+  }
+  
   return (
-    <div className="border border-[#ededed] rounded-md p-4">
+    <div className="bg-white rounded-lg shadow p-4">
       <div className="flex justify-between items-center mb-4">
-        <button onClick={handlePrevMonth} className="text-[#333333]">
-          <ChevronLeft className="w-5 h-5" />
+        <button onClick={prevMonth} className="text-[#333333]">
+          &lt;
         </button>
-        <div className="flex space-x-4">
-          {[currentMonth - 1, currentMonth, currentMonth + 1].map((monthIndex, i) => {
-            let month = monthIndex;
-            let year = currentYear;
-            
-            if (month < 0) {
-              month = 11;
-              year -= 1;
-            } else if (month > 11) {
-              month = 0;
-              year += 1;
-            }
-            
-            return (
-              <button
-                key={i}
-                className={`px-4 py-1 rounded-md ${currentMonth === month && currentYear === year ? 'bg-[#333333] text-white' : 'text-[#333333]'}`}
-                onClick={() => {
-                  setCurrentMonth(month);
-                  setCurrentYear(year);
-                }}
-              >
-                {months[month]} {year}
-              </button>
-            );
-          })}
-        </div>
-        <button onClick={handleNextMonth} className="text-[#333333]">
-          <ChevronRight className="w-5 h-5" />
+        <div className="text-[#333333] font-medium">{formatMonth(currentMonth)}</div>
+        <button onClick={nextMonth} className="text-[#333333]">
+          &gt;
         </button>
       </div>
-
-      <div className="grid grid-cols-7 gap-1">
-        {days.map(day => (
-          <div key={day} className="text-center text-xs font-medium text-[#868686] py-1">
+      
+      <div className="grid grid-cols-7 gap-1 mb-2">
+        {['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map(day => (
+          <div key={day} className="h-8 w-8 flex items-center justify-center text-xs text-[#868686]">
             {day}
           </div>
         ))}
-
-        {calendarDays.map((day, index) => {
-          const isAvailable = day !== null && isDateAvailable(day);
-          
-          return (
-            <button
-              key={index}
-              className={`aspect-square flex items-center justify-center text-sm rounded-md ${
-                day === null
-                  ? 'invisible'
-                  : day === selectedDate
-                  ? 'bg-[#c3937c] text-white'
-                  : !isAvailable
-                  ? 'bg-[#f2f2f2] text-[#c3c3c3] cursor-not-allowed'
-                  : 'hover:bg-[#f2f2f2] text-[#333333]'
-              }`}
-              onClick={() => day !== null && isAvailable && handleDateSelect(day)}
-              disabled={day === null || !isAvailable}
-            >
-              {day}
-            </button>
-          );
-        })}
+      </div>
+      
+      <div className="space-y-1">
+        {rows}
       </div>
     </div>
   );

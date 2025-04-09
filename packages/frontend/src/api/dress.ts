@@ -46,8 +46,6 @@ export interface Dress {
   ratings: DressRating[];
   reviews: DressReview[];
   variants: DressVariant[];
-  rentalStartDate?: Date;
-  rentalEndDate?: Date;
   description: DressDescription;
   images: string[];
   style?: string;
