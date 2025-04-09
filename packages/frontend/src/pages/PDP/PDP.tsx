@@ -84,13 +84,17 @@ export default function ProductDetailPage(): JSX.Element {
     
     if (variant) {
       setAvailableStock(variant.stock);
-      // Adjust quantity if it exceeds available stock
-      if (quantity > variant.stock) {
-        setQuantity(variant.stock > 0 ? variant.stock : 1);
+      // Adjust quantity based on stock availability
+      if (variant.stock === 0) {
+        // Set quantity to 0 if out of stock
+        setQuantity(0);
+      } else if (quantity > variant.stock || quantity === 0) {
+        // If current quantity exceeds available stock or was previously 0, set to min(1, stock)
+        setQuantity(Math.min(variant.stock, 1));
       }
     } else {
       setAvailableStock(0);
-      setQuantity(1);
+      setQuantity(0);
     }
   };
   
@@ -112,7 +116,8 @@ export default function ProductDetailPage(): JSX.Element {
   };
   
   const increaseQuantity = () => {
-    if (availableStock !== null && quantity < availableStock) {
+    // Only increase if there's stock and current quantity is less than available stock
+    if (availableStock !== null && availableStock > 0 && quantity < availableStock) {
       setQuantity(quantity + 1);
     }
   };
@@ -248,7 +253,7 @@ export default function ProductDetailPage(): JSX.Element {
                 <button 
                   className="px-3 py-2 text-gray-600" 
                   onClick={decreaseQuantity}
-                  disabled={quantity <= 1}
+                  disabled={quantity <= 1 || availableStock === 0}
                 >
                   <Minus className="w-4 h-4" />
                 </button>
@@ -256,7 +261,7 @@ export default function ProductDetailPage(): JSX.Element {
                 <button 
                   className="px-3 py-2 text-gray-600"
                   onClick={increaseQuantity}
-                  disabled={availableStock !== null && quantity >= availableStock}
+                  disabled={availableStock === 0 || (availableStock !== null && quantity >= availableStock)}
                 >
                   <Plus className="w-4 h-4" />
                 </button>
@@ -318,9 +323,16 @@ export default function ProductDetailPage(): JSX.Element {
             </div>
 
             {/* Book Button */}
-            <button className="w-full bg-[#ead9c9] text-[#333333] py-3 rounded-md flex items-center justify-center">
-              Request to Book
-              <ChevronRight className="w-4 h-4 ml-1" />
+            <button 
+              className={`w-full py-3 rounded-md flex items-center justify-center ${
+                availableStock === 0 || quantity === 0
+                  ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                  : 'bg-[#ead9c9] text-[#333333] hover:bg-[#e0cbb9]'
+              }`}
+              disabled={availableStock === 0 || quantity === 0}
+            >
+              {availableStock === 0 ? 'Out of Stock' : 'Request to Book'}
+              {availableStock > 0 && <ChevronRight className="w-4 h-4 ml-1" />}
             </button>
 
             {/* Accordion Sections */}
