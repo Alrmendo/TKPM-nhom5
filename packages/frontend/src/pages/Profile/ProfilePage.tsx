@@ -98,6 +98,7 @@ export default function ProfilePage() {
               userName={userData.username}
               userImage={userData.profileImageUrl}
               onImageUpdate={handleImageUpdate}
+              fullName={`${userData.firstName} ${userData.lastName}`}
             />
           </div>
 

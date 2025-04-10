@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import Header from '../../components/header';
 import ProfileSidebar from './profile/sidebar';
 import Footer from '../../components/footer';
@@ -6,12 +6,10 @@ import { Button } from '../../components/button';
 import { PlusCircle } from 'lucide-react';
 import { AddressCard, type AddressData } from './profile/address-card';
 import { AddressFormDialog } from './profile/address-form-dialog';
-import { useToast } from '../../hooks/use-toast'; // Đảm bảo có hook này
-
-const mockUserData = {
-  firstName: 'Anjela',
-  lastName: 'Mattuew',
-};
+import { useToast } from '../../hooks/use-toast';
+import { useAuth } from '../../context/AuthContext';
+import { getUserProfile } from '../../api/user';
+import { UserProfile } from '../../api/user';
 
 const initialAddresses: AddressData[] = [
   {
@@ -42,7 +40,24 @@ export default function AddressPage() {
   const [addresses, setAddresses] = useState<AddressData[]>(initialAddresses);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [editingAddress, setEditingAddress] = useState<AddressData | null>(null);
+  const [userData, setUserData] = useState<UserProfile | null>(null);
+  const { isAuthenticated } = useAuth();
   const { toast } = useToast();
+  
+  useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        const data = await getUserProfile();
+        setUserData(data);
+      } catch (err) {
+        console.error('Error fetching profile:', err);
+      }
+    };
+
+    if (isAuthenticated) {
+      fetchUserData();
+    }
+  }, [isAuthenticated]);
 
   const handleAddAddress = useCallback(
     (newAddress: Omit<AddressData, 'id' | 'mapImage'>) => {
@@ -95,8 +110,9 @@ export default function AddressPage() {
           <div className="md:col-span-1">
             <ProfileSidebar
               activeTab="address"
-              userName={`${mockUserData.firstName} ${mockUserData.lastName}`}
-              userImage="/placeholder.svg"
+              userName={userData ? userData.username : 'User'}
+              userImage={userData?.profileImageUrl}
+              fullName={userData ? `${userData.firstName} ${userData.lastName}` : undefined}
             />
           </div>
 

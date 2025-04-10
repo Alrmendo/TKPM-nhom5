@@ -109,10 +109,14 @@ export class AuthController {
   @Get('me')
   @UseGuards(JwtAuthGuard)
   async getProfile(@Req() req: RequestWithUser) {
-    const { role } = req.user;
-    console.log('/auth/me')
-    //if (!role) throw new Error('Role not found in token');
-    return { role };
+    console.log('/auth/me - User:', req.user);
+    const { userId, role, username } = req.user;
+    
+    if (!userId) {
+      console.error('User ID missing from authenticated request:', req.user);
+    }
+    
+    return { userId, role, username };
   }
 } 
 

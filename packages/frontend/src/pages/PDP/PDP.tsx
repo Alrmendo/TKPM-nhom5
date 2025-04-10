@@ -1,6 +1,7 @@
-import { Heart, ChevronRight, Plus, Minus, Instagram, Send, Mail } from 'lucide-react';
+import { Heart, ChevronRight, Plus, Minus, Instagram, Send, Mail, CheckCircle2, Truck, AlertCircle } from 'lucide-react';
 import { useEffect, useState, JSX } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { toast } from 'react-hot-toast';
 import ProductGallery from './pdp/product-gallery';
 import ColorSelector from './pdp/color-selector';
 import SizeSelector from './pdp/size-selector';
@@ -11,14 +12,19 @@ import ProductCarousel from './pdp/product-carousel';
 import Header from '../../components/header';
 import Footer from '../../components/footer';
 import { getDressById, getSimilarDresses, Dress } from '../../api/dress';
+import { addToCart } from '../../api/cart';
+import { useAuth } from '../../context/AuthContext';
+import { format } from 'date-fns';
 
 export default function ProductDetailPage(): JSX.Element {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { isAuthenticated, checkAuthStatus } = useAuth();
   const [dress, setDress] = useState<Dress | null>(null);
   const [similarDresses, setSimilarDresses] = useState<Dress[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const [isAddingToCart, setIsAddingToCart] = useState<boolean>(false);
   
   // New states for date selection, variants and quantity
   const [startDate, setStartDate] = useState<Date | null>(null);
@@ -133,10 +139,99 @@ export default function ProductDetailPage(): JSX.Element {
     setShowEndDatePicker(false);
   };
 
+  // Handle request to book
+  const handleRequestToBook = async () => {
+    try {
+      // Check authentication with delay to ensure cookie is correctly set and read
+      console.log('PDP: Current auth status:', isAuthenticated);
+      
+      // Force a refresh of authentication status before proceeding
+      const isAuthenticatedNow = await checkAuthStatus();
+      console.log('PDP: Updated auth status:', isAuthenticatedNow);
+      
+      if (!isAuthenticatedNow) {
+        console.error('Not authenticated, redirecting to login');
+        toast.error('Please sign in to add items to your cart');
+        navigate('/signin');
+        return;
+      }
+      
+      if (!id || !selectedSize || !selectedColor || !startDate || !endDate) {
+        toast.error('Please select size, color, and rental dates');
+        return;
+      }
+
+      if (quantity <= 0 || availableStock === 0) {
+        toast.error('Selected item is out of stock');
+        return;
+      }
+
+      setIsAddingToCart(true);
+      
+      const formattedStartDate = format(startDate, 'yyyy-MM-dd');
+      const formattedEndDate = format(endDate, 'yyyy-MM-dd');
+      
+      console.log('Adding to cart with params:', {
+        dressId: id,
+        sizeId: selectedSize,
+        colorId: selectedColor,
+        quantity,
+        startDate: formattedStartDate,
+        endDate: formattedEndDate
+      });
+      
+      // Wait for a short time to ensure auth cookie is set properly
+      // This can help resolve timing issues with cookie setting
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      const result = await addToCart({
+        dressId: id,
+        sizeId: selectedSize,
+        colorId: selectedColor,
+        quantity,
+        startDate: formattedStartDate,
+        endDate: formattedEndDate
+      });
+      
+      console.log('Add to cart successful, result:', result);
+      toast.success('Item added to cart successfully');
+      navigate('/cart');
+    } catch (error: any) {
+      console.error('Failed to add item to cart:', error);
+      console.error('Error details:', error.message);
+      
+      if (error.response) {
+        console.error('Error response:', error.response);
+        if (error.response.status === 401) {
+          toast.error('Your session has expired. Please sign in again.');
+          navigate('/signin');
+          return;
+        }
+      }
+      
+      toast.error(error.message || 'Failed to add item to cart');
+    } finally {
+      setIsAddingToCart(false);
+    }
+  };
+
   // Calculate average rating
   const avgRating = dress?.ratings?.length 
     ? dress.ratings.reduce((sum, rating) => sum + rating.rate, 0) / dress.ratings.length 
     : 0;
+
+  // Format rental price as number
+  const rentalPrice = dress?.dailyRentalPrice ? dress.dailyRentalPrice : 0;
+
+  // Check if all required fields are filled
+  const isBookingEnabled = 
+    selectedSize && 
+    selectedColor && 
+    startDate && 
+    endDate && 
+    quantity > 0 && 
+    availableStock !== null && 
+    availableStock > 0;
 
   // If loading, show loading state
   if (loading) {
@@ -212,7 +307,7 @@ export default function ProductDetailPage(): JSX.Element {
             </div>
 
             {/* Price */}
-            <div className="text-xl font-medium text-[#333333]">${dress?.dailyRentalPrice || 350}/ per day</div>
+            <div className="text-xl font-medium text-[#333333]">${rentalPrice}/ per day</div>
 
             {/* Color Selection */}
             <div className="space-y-3">
@@ -271,53 +366,32 @@ export default function ProductDetailPage(): JSX.Element {
             {/* Date Selection */}
             <div className="space-y-3">
               <h3 className="text-sm font-medium text-[#333333]">Rental Period</h3>
-              
-              {/* Start Date */}
-              <div>
-                <button 
-                  className="w-full border border-[#d9d9d9] rounded-md py-3 px-4 text-[#868686] text-left flex justify-between items-center"
-                  onClick={() => {
-                    setShowStartDatePicker(!showStartDatePicker);
-                    setShowEndDatePicker(false);
-                  }}
-                >
-                  {startDate 
-                    ? `Start Date: ${startDate.toLocaleDateString()}` 
-                    : "Select Start Date"}
-                  <ChevronRight className="w-4 h-4" />
-                </button>
-                
-                {showStartDatePicker && (
-                  <div className="mt-2">
-                    <DatePicker onDateChange={handleStartDateChange} />
-                  </div>
-                )}
-              </div>
-              
-              {/* End Date */}
-              <div>
-                <button 
-                  className="w-full border border-[#d9d9d9] rounded-md py-3 px-4 text-[#868686] text-left flex justify-between items-center"
-                  onClick={() => {
-                    setShowEndDatePicker(!showEndDatePicker);
-                    setShowStartDatePicker(false);
-                  }}
-                >
-                  {endDate 
-                    ? `End Date: ${endDate.toLocaleDateString()}` 
-                    : "Select End Date"}
-                  <ChevronRight className="w-4 h-4" />
-                </button>
-                
-                {showEndDatePicker && (
-                  <div className="mt-2">
-                    <DatePicker onDateChange={handleEndDateChange} startDate={startDate} />
-                  </div>
-                )}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <DatePicker
+                    label="Start Date"
+                    selectedDate={startDate}
+                    onDateChange={handleStartDateChange}
+                    showPicker={showStartDatePicker}
+                    onPickerChange={setShowStartDatePicker}
+                    disabled={availableStock === 0}
+                    minDate={new Date()}
+                  />
+                </div>
+                <div>
+                  <DatePicker
+                    label="End Date"
+                    selectedDate={endDate}
+                    onDateChange={handleEndDateChange}
+                    showPicker={showEndDatePicker}
+                    onPickerChange={setShowEndDatePicker}
+                    disabled={availableStock === 0 || !startDate}
+                    minDate={startDate || new Date()}
+                  />
+                </div>
               </div>
             </div>
-
-            {/* Booking Info */}
+            
             <div className="text-xs text-[#868686] italic">
               *Tip to select Start Date, preferably 1 month before you plan to wear it
             </div>
@@ -325,115 +399,76 @@ export default function ProductDetailPage(): JSX.Element {
             {/* Book Button */}
             <button 
               className={`w-full py-3 rounded-md flex items-center justify-center ${
-                availableStock === 0 || quantity === 0
-                  ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                  : 'bg-[#ead9c9] text-[#333333] hover:bg-[#e0cbb9]'
+                isBookingEnabled && !isAddingToCart
+                  ? 'bg-[#ead9c9] text-[#333333] hover:bg-[#e0cbb9]'
+                  : 'bg-gray-300 text-gray-500 cursor-not-allowed'
               }`}
-              disabled={availableStock === 0 || quantity === 0}
+              disabled={!isBookingEnabled || isAddingToCart}
+              onClick={handleRequestToBook}
             >
-              {availableStock === 0 ? 'Out of Stock' : 'Request to Book'}
-              {availableStock > 0 && <ChevronRight className="w-4 h-4 ml-1" />}
+              {isAddingToCart ? 'Adding to cart...' : (availableStock === 0 ? 'Out of Stock' : 'Request to Book')}
+              {!isAddingToCart && availableStock > 0 && <ChevronRight className="w-4 h-4 ml-1" />}
             </button>
 
             {/* Accordion Sections */}
-            <div className="space-y-4 pt-4">
-              <AccordionSection
-                title="Product Detail"
-                icon={<Plus className="w-5 h-5" />}
-                iconOpen={<Minus className="w-5 h-5" />}
-              >
-                <p className="text-sm text-[#333333]">
-                  {dress?.description?.productDetail || "Detailed information about the wedding dress would go here, including materials, features, and other important details."}
-                </p>
-              </AccordionSection>
-
-              <AccordionSection
-                title="Size &amp; Fit"
-                icon={<Plus className="w-5 h-5" />}
-                iconOpen={<Minus className="w-5 h-5" />}
-              >
-                <p className="text-sm text-[#333333]">
-                  {dress?.description?.sizeAndFit || "Size and fit information for the wedding dress would go here, including measurements and sizing recommendations."}
-                </p>
-              </AccordionSection>
-
-              <AccordionSection
-                title="Description"
-                icon={<Plus className="w-5 h-5" />}
-                iconOpen={<Minus className="w-5 h-5" />}
-              >
-                <p className="text-sm text-[#333333]">
-                  {dress?.description?.description || "A detailed description of the wedding dress would go here, including its style, design elements, and ideal occasions."}
-                </p>
-              </AccordionSection>
-
-              <AccordionSection
-                title="Review"
-                defaultOpen={true}
-                icon={<Plus className="w-5 h-5" />}
-                iconOpen={<Minus className="w-5 h-5" />}
-              >
-                <div className="space-y-4">
-                  {dress?.reviews && dress.reviews.length > 0 ? (
-                    dress.reviews.map((review, index) => (
-                      <ReviewItem
-                        key={index}
-                        name={review.username}
-                        date={new Date(review.date).toLocaleDateString()}
-                        rating={dress.ratings.find(r => r.username === review.username)?.rate || 5}
-                        review={review.reviewText}
-                      />
-                    ))
-                  ) : (
-                    <p className="text-sm text-gray-500">No reviews yet for this dress.</p>
-                  )}
-                </div>
-              </AccordionSection>
+            <div className="space-y-4 mt-8">
+              <AccordionSection 
+                title="Product Details" 
+                content={dress?.description?.productDetail || "No product details available"}
+              />
+              <AccordionSection 
+                title="Size & Fit Information" 
+                content={dress?.description?.sizeAndFit || "No size and fit information available"}
+              />
+              <AccordionSection 
+                title="Description" 
+                content={dress?.description?.description || "No description available"}
+              />
             </div>
 
-            {/* Share */}
-            <div className="flex items-center space-x-4 pt-4">
-              <span className="text-sm font-medium text-[#333333]">Share</span>
-              <div className="flex items-center space-x-3">
-                <a href="#" className="text-[#333333]">
-                  <Instagram className="w-5 h-5" />
-                </a>
-                <a href="#" className="text-[#333333]">
-                  <Send className="w-5 h-5" />
-                </a>
-                <a href="#" className="text-[#333333]">
-                  <Mail className="w-5 h-5" />
-                </a>
-                <a href="#" className="text-[#333333]">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="20"
-                    height="20"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.403 5.403 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4"></path>
-                    <path d="M9 18c-4.51 2-5-2-7-2"></path>
-                  </svg>
-                </a>
+            {/* Reviews */}
+            {dress?.reviews && dress.reviews.length > 0 && (
+              <div className="space-y-4 mt-8">
+                <h3 className="text-xl font-medium">Reviews</h3>
+                <div className="space-y-4">
+                  {dress.reviews.slice(0, 3).map((review, index) => (
+                    <ReviewItem key={index} review={review} />
+                  ))}
+                  {dress.reviews.length > 3 && (
+                    <button className="text-sm text-[#c3937c] hover:underline">
+                      View all {dress.reviews.length} reviews
+                    </button>
+                  )}
+                </div>
               </div>
+            )}
+
+            {/* Share */}
+            <div className="flex items-center space-x-4 mt-8">
+              <span className="text-sm text-[#333333]">Share:</span>
+              <button className="text-[#333333] hover:text-[#c3937c]">
+                <Instagram className="w-5 h-5" />
+              </button>
+              <button className="text-[#333333] hover:text-[#c3937c]">
+                <Send className="w-5 h-5" />
+              </button>
+              <button className="text-[#333333] hover:text-[#c3937c]">
+                <Mail className="w-5 h-5" />
+              </button>
             </div>
           </div>
         </div>
 
-        {/* You May Also Like */}
-        <div className="mt-16">
-          <h2 className="text-xl font-medium text-[#c3937c] text-center mb-8">You May Also Like</h2>
-          <ProductCarousel 
-            dresses={similarDresses.length > 0 ? similarDresses : undefined}
-            currentDressId={id}
-          />
-        </div>
+        {/* Similar Products */}
+        {similarDresses.length > 0 && (
+          <div className="mt-16">
+            <h2 className="text-2xl font-medium text-center mb-8">You might also like</h2>
+            <ProductCarousel products={similarDresses} />
+          </div>
+        )}
       </main>
+
+      {/* Footer */}
       <Footer />
     </div>
   );

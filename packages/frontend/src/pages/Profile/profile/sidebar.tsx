@@ -24,6 +24,7 @@ interface ProfileSidebarProps {
   userName: string;
   userImage?: string;
   onImageUpdate?: (imageUrl: string) => void;
+  fullName?: string;
 }
 
 export default function ProfileSidebar({
@@ -31,6 +32,7 @@ export default function ProfileSidebar({
   userName,
   userImage,
   onImageUpdate,
+  fullName,
 }: ProfileSidebarProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
@@ -207,7 +209,8 @@ export default function ProfileSidebar({
           </div>
         )}
         
-        <h2 className="mt-3 font-medium text-lg">{userName}</h2>
+        <h2 className="mt-3 font-medium text-lg">{fullName || userName}</h2>
+        {fullName && <p className="text-gray-500 text-sm">@{userName}</p>}
         <div className="w-full border-t my-4"></div>
       </div>
 
