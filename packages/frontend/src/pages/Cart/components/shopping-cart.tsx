@@ -172,43 +172,15 @@ export const ShoppingCart: React.FC = () => {
     }
   };
 
-  // Handle proceeding to checkout
-  const handleCheckout = async () => {
+  // Handle proceeding to payment
+  const handleContinueToPayment = () => {
     if (cartItems.length === 0) {
       toast.error('Your cart is empty');
       return;
     }
 
-    try {
-      setIsProcessingOrder(true);
-      console.log('Starting order creation process with cart items:', cartItems);
-      
-      // Create order from cart
-      const order = await createOrder();
-      console.log('Order created successfully:', order);
-      console.log('Order details:', JSON.stringify(order, null, 2));
-      
-      // Show success message
-      toast.success('Order created successfully!');
-      
-      // Clear cart after successful order creation
-      await clearCart();
-      console.log('Cart cleared after order creation');
-      
-      // Navigate to current orders page in profile
-      console.log('Navigating to current orders page');
-      navigate('/profile/current-orders');
-    } catch (error: any) {
-      console.error('Failed to create order:', error);
-      console.error('Error details:', error.message);
-      if (error.response) {
-        console.error('Server response:', error.response.data);
-        console.error('Status code:', error.response.status);
-      }
-      toast.error(error.message || 'Failed to create order. Please try again.');
-    } finally {
-      setIsProcessingOrder(false);
-    }
+    // Navigate to the payment review page
+    navigate('/payment-review');
   };
 
   // Calculate rental days for an item
@@ -431,10 +403,10 @@ export const ShoppingCart: React.FC = () => {
       <div className="mt-8 flex justify-center">
         <button
           className="bg-[#c3937c] hover:bg-[#a67563] text-white rounded-full px-8 py-6 h-auto font-medium"
-          onClick={handleCheckout}
+          onClick={handleContinueToPayment}
           disabled={isProcessingOrder || cartItems.length === 0}
         >
-          {isProcessingOrder ? 'Processing...' : 'Continue payment'}
+          {isProcessingOrder ? 'Processing...' : 'Continue to Payment'}
         </button>
       </div>
 

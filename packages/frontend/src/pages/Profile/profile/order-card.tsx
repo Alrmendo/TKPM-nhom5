@@ -1,4 +1,4 @@
-import { CheckCircle, XCircle, Clock, Hourglass } from 'lucide-react';
+import { CheckCircle, XCircle, Clock, Hourglass, Trash2 } from 'lucide-react';
 import { JSX } from 'react';
 import { Link } from 'react-router-dom';
 
@@ -17,9 +17,10 @@ export interface OrderItem {
 
 interface OrderCardProps {
   order: OrderItem;
+  onDelete?: (orderId: string) => Promise<void>;
 }
 
-export function OrderCard({ order }: OrderCardProps): JSX.Element {
+export function OrderCard({ order, onDelete }: OrderCardProps): JSX.Element {
   const getStatusIcon = () => {
     switch (order.status) {
       case 'done':
@@ -47,6 +48,14 @@ export function OrderCard({ order }: OrderCardProps): JSX.Element {
         return 'Canceled';
       default:
         return '';
+    }
+  };
+
+  const handleDelete = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (onDelete) {
+      await onDelete(order.id);
     }
   };
 
@@ -90,21 +99,33 @@ export function OrderCard({ order }: OrderCardProps): JSX.Element {
             </span>
           </div>
 
-          {order.isCartItem ? (
-            <Link
-              to="/cart"
-              className="px-4 py-1 border rounded-full text-sm text-amber-600 hover:bg-amber-50 border-amber-200"
-            >
-              Go to Cart
-            </Link>
-          ) : (
-            <a
-              href={`/order-details/${order.id}`}
-              className="px-4 py-1 border rounded-full text-sm text-gray-600 hover:bg-gray-50"
-            >
-              More details
-            </a>
-          )}
+          <div className="flex space-x-2">
+            {(order.status === 'pending' || order.status === 'under-review') && onDelete && (
+              <button
+                onClick={handleDelete}
+                className="px-4 py-1 border rounded-full text-sm text-red-600 hover:bg-red-50 border-red-200 flex items-center"
+              >
+                <Trash2 className="w-3 h-3 mr-1" />
+                Delete
+              </button>
+            )}
+
+            {order.isCartItem ? (
+              <Link
+                to="/cart"
+                className="px-4 py-1 border rounded-full text-sm text-amber-600 hover:bg-amber-50 border-amber-200"
+              >
+                Go to Cart
+              </Link>
+            ) : (
+              <a
+                href={`/order-details/${order.id}`}
+                className="px-4 py-1 border rounded-full text-sm text-gray-600 hover:bg-gray-50"
+              >
+                More details
+              </a>
+            )}
+          </div>
         </div>
       </div>
     </div>

@@ -1,19 +1,176 @@
-import { CheckCircle, Truck, CreditCard, Info, FileText, Calendar, ChevronRight } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { CheckCircle, Truck, CreditCard, Info, FileText, Calendar, ChevronRight, ChevronLeft } from 'lucide-react';
 import Header from '../../components/header';
 import Footer from '../../components/footer';
 import { useNavigate } from 'react-router-dom';
-import { OrderItem, OrderSummary } from './types';
+import { getCart } from '../../api/cart';
+import { format, differenceInDays } from 'date-fns';
+import { toast } from 'react-hot-toast';
 
-interface ReviewProps {}
+interface CartItem {
+  _id: string;
+  dress: {
+    _id: string;
+    name: string;
+    dailyRentalPrice?: number;
+    images?: string[];
+  } | string;
+  dressId?: string;
+  name?: string;
+  image?: string;
+  size: {
+    _id: string;
+    name: string;
+  } | string;
+  sizeId?: string;
+  sizeName?: string;
+  color: {
+    _id: string;
+    name: string;
+  } | string;
+  colorId?: string;
+  colorName?: string;
+  quantity: number;
+  pricePerDay?: number;
+  startDate: string;
+  endDate: string;
+}
 
-const Review: React.FC<ReviewProps> = () => {
+const Review = () => {
   const navigate = useNavigate();
+  const [cartItems, setCartItems] = useState<CartItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchCartData = async () => {
+      try {
+        setLoading(true);
+        const cartData = await getCart();
+        if (!cartData || !cartData.items || cartData.items.length === 0) {
+          setError('Your cart is empty');
+          navigate('/cart');
+          return;
+        }
+        setCartItems(cartData.items || []);
+      } catch (err: any) {
+        console.error('Failed to fetch cart:', err);
+        setError('Failed to load your cart. Please try again later.');
+        toast.error('Failed to load your cart');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchCartData();
+  }, [navigate]);
+
+  // Helper functions for getting cart item properties
+  const getDressName = (item: CartItem): string => {
+    if (typeof item.dress === 'object' && item.dress?.name) {
+      return item.dress.name;
+    }
+    return item.name || 'Dress';
+  };
+  
+  const getDressImage = (item: CartItem): string => {
+    if (typeof item.dress === 'object' && item.dress?.images && item.dress.images.length > 0) {
+      return item.dress.images[0];
+    }
+    return item.image || '/placeholder.svg';
+  };
+  
+  const getSizeName = (item: CartItem): string => {
+    if (typeof item.size === 'object' && item.size?.name) {
+      return item.size.name;
+    }
+    return item.sizeName || 'One Size';
+  };
+  
+  const getColorName = (item: CartItem): string => {
+    if (typeof item.color === 'object' && item.color?.name) {
+      return item.color.name;
+    }
+    return item.colorName || 'Standard';
+  };
+  
+  const getPricePerDay = (item: CartItem): number => {
+    if (typeof item.dress === 'object' && item.dress?.dailyRentalPrice) {
+      return item.dress.dailyRentalPrice;
+    }
+    return item.pricePerDay || 0;
+  };
+
+  // Calculate rental days for an item
+  const getRentalDays = (item: CartItem): number => {
+    try {
+      const start = new Date(item.startDate);
+      const end = new Date(item.endDate);
+      return differenceInDays(end, start) + 1; // Include both start and end dates
+    } catch (err) {
+      console.error('Error calculating rental days:', err);
+      return 1; // Default to 1 day if calculation fails
+    }
+  };
+
+  // Calculate total for a single item
+  const calculateItemTotal = (item: CartItem): number => {
+    try {
+      const rentalDays = getRentalDays(item);
+      const pricePerDay = getPricePerDay(item);
+      return pricePerDay * rentalDays * item.quantity;
+    } catch (err) {
+      console.error('Error calculating item total:', err, item);
+      return 0;
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-white">
+        <Header />
+        <main className="container mx-auto px-4 py-8 flex-grow">
+          <div className="text-center py-12">
+            <p>Loading your order details...</p>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
+  if (error || cartItems.length === 0) {
+    return (
+      <div className="min-h-screen bg-white">
+        <Header />
+        <main className="container mx-auto px-4 py-8 flex-grow">
+          <div className="text-center py-12">
+            <p className="text-red-500">{error || 'Your cart is empty'}</p>
+            <button 
+              onClick={() => navigate('/cart')}
+              className="mt-4 px-6 py-2 bg-gray-200 rounded-md"
+            >
+              Return to Cart
+            </button>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
+  // Get the first item for display
+  const firstItem = cartItems[0];
+  const formattedStartDate = format(new Date(firstItem.startDate), 'dd/MM/yyyy');
+  const formattedEndDate = format(new Date(firstItem.endDate), 'dd/MM/yyyy');
+  const rentalDays = getRentalDays(firstItem);
+  const itemTotal = calculateItemTotal(firstItem);
 
   return (
     <div className="min-h-screen bg-white">
       <Header />
-{/* Progress Tracker */}
-<div className="container mx-auto px-4 py-8">
+      {/* Progress Tracker */}
+      <div className="container mx-auto px-4 py-8">
         <div className="flex flex-wrap justify-between items-center max-w-4xl mx-auto">
           <div className="flex flex-col items-center mb-4 md:mb-0">
             <div className="w-12 h-12 rounded-full bg-[#000000] flex items-center justify-center">
@@ -64,27 +221,33 @@ const Review: React.FC<ReviewProps> = () => {
       <main className="container mx-auto px-4 py-6 flex-grow">
         <div className="max-w-4xl mx-auto bg-white rounded-lg border border-[#ededed] p-6 flex flex-col md:flex-row gap-6">
           <div className="md:w-1/3 bg-[#f8f0ff] rounded-lg overflow-hidden">
-            <img src="/placeholder.svg?height=400&width=300" alt="Eliza Satin Wedding Dress" width="300" height="400" className="w-full h-full object-cover" />
+            <img 
+              src={getDressImage(firstItem)} 
+              alt={getDressName(firstItem)} 
+              width="300" 
+              height="400" 
+              className="w-full h-full object-cover" 
+            />
           </div>
 
           <div className="md:w-2/3">
-            <h1 className="text-2xl font-semibold mb-4">Eliza Satin</h1>
+            <h1 className="text-2xl font-semibold mb-4">{getDressName(firstItem)}</h1>
 
             <div className="space-y-2 mb-4">
               <p>
-                <span className="font-medium">Size:</span> M
+                <span className="font-medium">Size:</span> {getSizeName(firstItem)}
               </p>
               <p>
-                <span className="font-medium">Color:</span> White
+                <span className="font-medium">Color:</span> {getColorName(firstItem)}
               </p>
               <p>
-                <span className="font-medium">Price:</span> 350 $ per night
+                <span className="font-medium">Price:</span> ${getPricePerDay(firstItem)} per night
               </p>
               <p>
-                <span className="font-medium">Rental fee for 3 nights:</span> $1050
+                <span className="font-medium">Rental fee for {rentalDays} nights:</span> ${itemTotal.toFixed(2)}
               </p>
               <p>
-                <span className="font-medium">Quantity:</span> 1
+                <span className="font-medium">Quantity:</span> {firstItem.quantity}
               </p>
             </div>
 
@@ -95,7 +258,12 @@ const Review: React.FC<ReviewProps> = () => {
                 </span>
               </div>
 
-              <button className="px-4 py-2 border border-[#c3937c] text-[#c3937c] rounded-full text-sm hover:bg-[#c3937c] hover:text-white transition-colors">Change details</button>
+              <button 
+                onClick={() => navigate('/cart')}
+                className="px-4 py-2 border border-[#c3937c] text-[#c3937c] rounded-full text-sm hover:bg-[#c3937c] hover:text-white transition-colors"
+              >
+                Change details
+              </button>
             </div>
           </div>
         </div>
@@ -104,7 +272,7 @@ const Review: React.FC<ReviewProps> = () => {
         <div className="max-w-4xl mx-auto mt-6 flex flex-col md:flex-row gap-4 justify-between">
           <div className="flex-1 border border-[#ededed] rounded-full p-4 flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium">Arrives by 25/10/2024</p>
+              <p className="text-sm font-medium">Arrives by {formattedStartDate}</p>
               <p className="text-sm text-[#404040]">Time: 8 to 10 am</p>
             </div>
             <Calendar className="w-5 h-5 text-[#404040]" />
@@ -112,17 +280,29 @@ const Review: React.FC<ReviewProps> = () => {
 
           <div className="flex-1 border border-[#ededed] rounded-full p-4 flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium">Returns by 28/10/2024</p>
+              <p className="text-sm font-medium">Returns by {formattedEndDate}</p>
               <p className="text-sm text-[#404040]">Time: 8 to 10 am</p>
             </div>
             <Calendar className="w-5 h-5 text-[#404040]" />
           </div>
 
-          <button className="px-6 py-4 border border-[#c3937c] text-[#c3937c] rounded-full text-sm hover:bg-[#c3937c] hover:text-white transition-colors">Change Date</button>
+          <button 
+            onClick={() => navigate('/cart')}
+            className="px-6 py-4 border border-[#c3937c] text-[#c3937c] rounded-full text-sm hover:bg-[#c3937c] hover:text-white transition-colors"
+          >
+            Change Date
+          </button>
         </div>
 
-        {/* CTA Button */}
-        <div className="max-w-4xl mx-auto mt-8 flex justify-end">
+        {/* Navigation buttons */}
+        <div className="max-w-4xl mx-auto mt-8 flex justify-between">
+          <button
+            onClick={() => navigate('/cart')}
+            className="px-6 py-3 border border-[#c3937c] text-[#c3937c] rounded-full flex items-center gap-2 hover:bg-[#c3937c] hover:text-white transition-colors">
+            <ChevronLeft className="w-4 h-4" />
+            Back to cart
+          </button>
+          
           <button
             onClick={() => {
               navigate('/payment-information');

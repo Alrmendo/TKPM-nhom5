@@ -6,10 +6,11 @@ import { OrderCard, type OrderItem } from './profile/order-card';
 import Footer from '../../components/footer';
 import { useAuth } from '../../context/AuthContext';
 import { getUserProfile } from '../../api/user';
-import { getUserOrders } from '../../api/order';
-import { getCart } from '../../api/cart';
+import { getUserOrders, cancelOrder } from '../../api/order';
+import { getCart, clearCart } from '../../api/cart';
 import { UserProfile } from '../../api/user';
 import { format, differenceInDays } from 'date-fns';
+import { toast } from 'react-hot-toast';
 
 type OrderFilterTab = 'current' | 'previous' | 'canceled';
 
@@ -97,39 +98,37 @@ const CurrentOrdersPage: React.FC = () => {
           });
         }
         
-        // If there are no orders, check if there are items in the cart
-        if (formattedOrders.length === 0) {
-          console.log('No orders found, checking cart...');
-          try {
-            const cartData = await getCart();
+        // Always fetch cart items and add them to current orders
+        console.log('Fetching cart items...');
+        try {
+          const cartData = await getCart();
+          
+          if (cartData && cartData.items && cartData.items.length > 0) {
+            console.log('Found items in cart:', cartData.items);
             
-            if (cartData && cartData.items && cartData.items.length > 0) {
-              console.log('Found items in cart:', cartData.items);
+            // Add cart items as "pending" orders
+            cartData.items.forEach((item, index) => {
+              const startDate = new Date(item.startDate);
+              const endDate = new Date(item.endDate);
+              const daysCount = differenceInDays(endDate, startDate) + 1;
               
-              // Add cart items as "pending" orders
-              cartData.items.forEach((item, index) => {
-                const startDate = new Date(item.startDate);
-                const endDate = new Date(item.endDate);
-                const daysCount = differenceInDays(endDate, startDate) + 1;
-                
-                formattedOrders.push({
-                  id: `cart-item-${index}`,
-                  name: typeof item.dress === 'object' ? item.dress.name : item.name || 'Dress',
-                  image: typeof item.dress === 'object' && item.dress.images?.length ? 
-                    item.dress.images[0] : item.image || '/placeholder.svg',
-                  size: typeof item.size === 'object' ? item.size.name : item.sizeName || 'One Size',
-                  color: typeof item.color === 'object' ? item.color.name : item.colorName || 'Standard',
-                  rentalDuration: `${daysCount} Nights`,
-                  arrivalDate: format(startDate, 'MM/dd/yyyy'),
-                  returnDate: format(endDate, 'MM/dd/yyyy'),
-                  status: 'pending',
-                  isCartItem: true
-                });
+              formattedOrders.push({
+                id: `cart-item-${index}`,
+                name: typeof item.dress === 'object' ? item.dress.name : item.name || 'Dress',
+                image: typeof item.dress === 'object' && item.dress.images?.length ? 
+                  item.dress.images[0] : item.image || '/placeholder.svg',
+                size: typeof item.size === 'object' ? item.size.name : item.sizeName || 'One Size',
+                color: typeof item.color === 'object' ? item.color.name : item.colorName || 'Standard',
+                rentalDuration: `${daysCount} Nights`,
+                arrivalDate: format(startDate, 'MM/dd/yyyy'),
+                returnDate: format(endDate, 'MM/dd/yyyy'),
+                status: 'pending',
+                isCartItem: true
               });
-            }
-          } catch (cartErr) {
-            console.error('Error fetching cart:', cartErr);
+            });
           }
+        } catch (cartErr) {
+          console.error('Error fetching cart:', cartErr);
         }
         
         console.log('Formatted orders with cart items:', formattedOrders);
@@ -164,6 +163,24 @@ const CurrentOrdersPage: React.FC = () => {
   console.log('Active tab:', activeTab);
   console.log('Number of filtered orders:', filteredOrders.length);
 
+  // Handle canceling/deleting an order
+  const handleDeleteOrder = async (orderId: string) => {
+    try {
+      setLoading(true);
+      await cancelOrder(orderId);
+      // Clear the cart since the order is deleted
+      await clearCart();
+      // Remove the canceled order from the list or reload orders
+      setOrders(prevOrders => prevOrders.filter(order => order.id !== orderId));
+      toast.success('Order deleted successfully');
+    } catch (err: any) {
+      console.error('Failed to delete order:', err);
+      toast.error(err.message || 'Failed to delete order');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
       <Header />
@@ -188,7 +205,13 @@ const CurrentOrdersPage: React.FC = () => {
                   <p className="text-gray-500">Loading orders...</p>
                 </div>
               ) : filteredOrders.length > 0 ? (
-                filteredOrders.map(order => <OrderCard key={order.id} order={order} />)
+                filteredOrders.map(order => (
+                  <OrderCard 
+                    key={order.id} 
+                    order={order} 
+                    onDelete={activeTab === 'current' ? handleDeleteOrder : undefined}
+                  />
+                ))
               ) : (
                 <div className="bg-white rounded-lg border p-8 text-center">
                   <p className="text-gray-500">No {activeTab} orders found.</p>
