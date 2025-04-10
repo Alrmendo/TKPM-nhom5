@@ -1,40 +1,49 @@
-import { Input } from "./components/input"
-import { Button } from "./components/button"
-import { Textarea } from "./components/textarea"
-import { useState } from "react"
-import { useNavigate } from "react-router-dom"
+import { Input } from './components/input';
+import { Button } from './components/button';
+import { Textarea } from './components/textarea';
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 export default function MeasurementForm() {
-  const navigate = useNavigate()
-  
+  const navigate = useNavigate();
+
   // State for active tab
-  const [activeTab, setActiveTab] = useState("Basic measurements")
-  
+  const [activeTab, setActiveTab] = useState('Basic measurements');
+
   // State for active sidebar item
-  const [activeSidebarItem, setActiveSidebarItem] = useState("Order")
+  const [activeSidebarItem, setActiveSidebarItem] = useState('Order');
+
+  // Handle sidebar item click
+  const handleSidebarItemClick = (itemName: string) => {
+    setActiveSidebarItem(itemName);
+    if (itemName === 'Statistics') {
+      navigate('/admin/statistics');
+    }
+    // Add other navigation cases here if needed
+  };
 
   // Handle tab click
   const handleTabClick = (tab: string) => {
-    setActiveTab(tab)
-    if (tab === "Style") {
-      navigate("/admin/style")
-    } else if (tab === "Basic measurements") {
-      navigate("/admin/measurement")
-    } else if (tab === "Photography") {
-      navigate("/admin/photography")
-    } else if (tab === "Deliver") {
-      navigate("/admin/deliver")
-    } else if (tab === "Contact") {
-      navigate("/admin/contact")
-    } else if (tab === "Dresses") {
-      navigate("/admin/dresses")
+    setActiveTab(tab);
+    if (tab === 'Style') {
+      navigate('/admin/style');
+    } else if (tab === 'Basic measurements') {
+      navigate('/admin/measurement');
+    } else if (tab === 'Photography') {
+      navigate('/admin/photography');
+    } else if (tab === 'Deliver') {
+      navigate('/admin/deliver');
+    } else if (tab === 'Contact') {
+      navigate('/admin/contact');
+    } else if (tab === 'Dresses') {
+      navigate('/admin/dresses');
     }
-  }
+  };
 
   // Sidebar items data
   const sidebarItems = [
     {
-      name: "Order",
+      name: 'Order',
       icon: (
         <svg
           xmlns="http://www.w3.org/2000/svg"
@@ -52,7 +61,7 @@ export default function MeasurementForm() {
       ),
     },
     {
-      name: "Current orders",
+      name: 'Current orders',
       icon: (
         <svg
           xmlns="http://www.w3.org/2000/svg"
@@ -73,7 +82,7 @@ export default function MeasurementForm() {
       ),
     },
     {
-      name: "Calender",
+      name: 'Calender',
       icon: (
         <svg
           xmlns="http://www.w3.org/2000/svg"
@@ -91,7 +100,7 @@ export default function MeasurementForm() {
       ),
     },
     {
-      name: "Customer list",
+      name: 'Customer list',
       icon: (
         <svg
           xmlns="http://www.w3.org/2000/svg"
@@ -107,7 +116,7 @@ export default function MeasurementForm() {
       ),
     },
     {
-      name: "Statistics",
+      name: 'Statistics',
       icon: (
         <svg
           xmlns="http://www.w3.org/2000/svg"
@@ -125,7 +134,7 @@ export default function MeasurementForm() {
       ),
     },
     {
-      name: "Settings",
+      name: 'Settings',
       icon: (
         <svg
           xmlns="http://www.w3.org/2000/svg"
@@ -141,10 +150,18 @@ export default function MeasurementForm() {
         </svg>
       ),
     },
-  ]
+  ];
 
   // Tabs data
-  const tabs = ["Basic measurements", "Style", "Photography", "Deliver", "Contact", "Dresses"]
+  const tabs = [
+    'Basic measurements',
+    'Style',
+    'Photography',
+    'Deliver',
+    'Contact',
+    'Dresses',
+    'Statistics',
+  ];
 
   return (
     <div className="min-h-screen bg-background flex">
@@ -152,7 +169,11 @@ export default function MeasurementForm() {
       <div className="w-[220px] bg-[#fbf8f1] border-r border-[#ededed] flex flex-col">
         <div className="flex flex-col items-center py-8">
           <div className="w-24 h-24 rounded-full overflow-hidden mb-3">
-            <img src="/placeholder.svg?height=96&width=96" alt="Profile" className="w-full h-full object-cover" />
+            <img
+              src="/placeholder.svg?height=96&width=96"
+              alt="Profile"
+              className="w-full h-full object-cover"
+            />
           </div>
           <h3 className="font-medium text-[#0c0c0c]">Anjela Mattuew</h3>
         </div>
@@ -164,9 +185,9 @@ export default function MeasurementForm() {
             {sidebarItems.map((item) => (
               <li
                 key={item.name}
-                className={`flex items-center ${activeSidebarItem === item.name ? "text-[#db5c1f]" : "text-[#606060]"} 
+                className={`flex items-center ${activeSidebarItem === item.name ? 'text-[#db5c1f]' : 'text-[#606060]'} 
                   hover:text-[#db5c1f] transition-colors cursor-pointer`}
-                onClick={() => setActiveSidebarItem(item.name)}
+                onClick={() => handleSidebarItemClick(item.name)}
               >
                 <span className="w-6 h-6 mr-3">{item.icon}</span>
                 <span>{item.name}</span>
@@ -206,7 +227,9 @@ export default function MeasurementForm() {
               <button
                 key={tab}
                 className={`px-4 py-2 rounded-full text-sm transition-colors ${
-                  activeTab === tab ? "bg-[#c3937c] text-white" : "text-[#868686] hover:bg-[#f8f8f8]"
+                  activeTab === tab
+                    ? 'bg-[#c3937c] text-white'
+                    : 'text-[#868686] hover:bg-[#f8f8f8]'
                 }`}
                 onClick={() => handleTabClick(tab)}
               >
@@ -218,7 +241,9 @@ export default function MeasurementForm() {
 
         {/* Form Content */}
         <div className="bg-white rounded-xl p-8 shadow-sm border border-[#eaeaea] flex-1 overflow-auto">
-          <h2 className="text-[#292d32] text-lg mb-4">Fill in the following information.</h2>
+          <h2 className="text-[#292d32] text-lg mb-4">
+            Fill in the following information.
+          </h2>
 
           <div className="mb-6">
             <h3 className="text-[#c3937c] mb-4">Detailed measurements</h3>
@@ -226,43 +251,83 @@ export default function MeasurementForm() {
             <div className="grid grid-cols-3 gap-6">
               <div>
                 <label className="block text-[#292d32] mb-2">Height</label>
-                <Input type="text" placeholder="1.7 m" className="border-[#dfdfdf] rounded-md" />
+                <Input
+                  type="text"
+                  placeholder="1.7 m"
+                  className="border-[#dfdfdf] rounded-md"
+                />
               </div>
               <div>
                 <label className="block text-[#292d32] mb-2">Chest</label>
-                <Input type="text" placeholder="35 cm" className="border-[#dfdfdf] rounded-md" />
+                <Input
+                  type="text"
+                  placeholder="35 cm"
+                  className="border-[#dfdfdf] rounded-md"
+                />
               </div>
               <div>
                 <label className="block text-[#292d32] mb-2">Neck</label>
-                <Input type="text" placeholder="35 cm" className="border-[#dfdfdf] rounded-md" />
+                <Input
+                  type="text"
+                  placeholder="35 cm"
+                  className="border-[#dfdfdf] rounded-md"
+                />
               </div>
               <div>
                 <label className="block text-[#292d32] mb-2">Weight</label>
-                <Input type="text" placeholder="52 kg" className="border-[#dfdfdf] rounded-md" />
+                <Input
+                  type="text"
+                  placeholder="52 kg"
+                  className="border-[#dfdfdf] rounded-md"
+                />
               </div>
               <div>
                 <label className="block text-[#292d32] mb-2">Waist</label>
-                <Input type="text" placeholder="60 cm" className="border-[#dfdfdf] rounded-md" />
+                <Input
+                  type="text"
+                  placeholder="60 cm"
+                  className="border-[#dfdfdf] rounded-md"
+                />
               </div>
               <div>
                 <label className="block text-[#292d32] mb-2">Hip</label>
-                <Input type="text" placeholder="35 cm" className="border-[#dfdfdf] rounded-md" />
+                <Input
+                  type="text"
+                  placeholder="35 cm"
+                  className="border-[#dfdfdf] rounded-md"
+                />
               </div>
               <div>
                 <label className="block text-[#292d32] mb-2">Calf</label>
-                <Input type="text" placeholder="35 cm" className="border-[#dfdfdf] rounded-md" />
+                <Input
+                  type="text"
+                  placeholder="35 cm"
+                  className="border-[#dfdfdf] rounded-md"
+                />
               </div>
               <div>
                 <label className="block text-[#292d32] mb-2">Wrist</label>
-                <Input type="text" placeholder="15 cm" className="border-[#dfdfdf] rounded-md" />
+                <Input
+                  type="text"
+                  placeholder="15 cm"
+                  className="border-[#dfdfdf] rounded-md"
+                />
               </div>
               <div>
                 <label className="block text-[#292d32] mb-2">Thigh</label>
-                <Input type="text" placeholder="55 cm" className="border-[#dfdfdf] rounded-md" />
+                <Input
+                  type="text"
+                  placeholder="55 cm"
+                  className="border-[#dfdfdf] rounded-md"
+                />
               </div>
               <div>
                 <label className="block text-[#292d32] mb-2">Upper arm</label>
-                <Input type="text" placeholder="30 cm" className="border-[#dfdfdf] rounded-md" />
+                <Input
+                  type="text"
+                  placeholder="30 cm"
+                  className="border-[#dfdfdf] rounded-md"
+                />
               </div>
             </div>
           </div>
@@ -281,6 +346,5 @@ export default function MeasurementForm() {
         </div>
       </div>
     </div>
-  )
+  );
 }
-

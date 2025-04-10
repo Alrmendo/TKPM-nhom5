@@ -27,6 +27,7 @@ const Photography = lazy(() => import('../pages/Admin/photography'));
 const Deliver = lazy(() => import('../pages/Admin/deliver'));
 const ContactAdmin = lazy(() => import('../pages/Admin/contact_admin'));
 const DressManager = lazy(() => import('../pages/Admin/dress-manager'));
+const Statistics = lazy(() => import('../pages/Admin/statistic'));
 const SignIn = lazy(() => import('../pages/Auth/SignIn'));
 const SignUp = lazy(() => import('../pages/Auth/SignUp'));
 const VerifyEmail = lazy(() => import('../pages/Auth/VerifyEmail'));
@@ -63,7 +64,6 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
 };
 
 const AppRoutes = () => {
-
   const routes = [
     { path: '/', element: <Home /> },
     { path: '/contact', element: <Contact /> },
@@ -137,6 +137,14 @@ const AppRoutes = () => {
         </ProtectedRoute>
       ),
     },
+    {
+      path: '/admin/statistics',
+      element: (
+        <ProtectedRoute requiredRole="admin">
+          <Statistics />
+        </ProtectedRoute>
+      ),
+    },
     { path: '/signin', element: <SignIn /> },
     { path: '/signup', element: <SignUp /> },
     { path: '/verify-email', element: <VerifyEmail /> },
@@ -144,12 +152,14 @@ const AppRoutes = () => {
     { path: '/reset-password', element: <ResetPassword /> },
     { path: '/cart', element: <Cart /> },
     { path: '/about', element: <AboutPage /> },
-    { path: '/search', element: <SearchOverlay />},
+    { path: '/search', element: <SearchOverlay /> },
     { path: '*', element: <NotFoundPage /> },
   ];
 
   return (
-    <Suspense fallback={<LoadingOverlay message="Loading page..." fullScreen />}>
+    <Suspense
+      fallback={<LoadingOverlay message="Loading page..." fullScreen />}
+    >
       <Routes>
         {routes.map(({ path, element }) => (
           <Route key={path} path={path} element={element} />
