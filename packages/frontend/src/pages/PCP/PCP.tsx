@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Header from '../../components/header';
 import Footer from '../../components/footer';
 import ProductCard from './pcp/product-card';
@@ -6,136 +6,7 @@ import FilterSection from './pcp/filter-section';
 import SortDropdown from './pcp/sort-dropdown';
 import { Link } from 'react-router-dom';
 import SearchBar from './pcp/search-bar';
-
-// Sample data for wedding dresses
-const weddingDresses = [
-  {
-    id: '1',
-    name: 'V-Neck',
-    designer: 'Inspire',
-    price: 250,
-    rating: 4.7,
-    status: 'Almost Booked' as const,
-    mainImage: '/placeholder.svg?height=500&width=400',
-    thumbnails: [
-      '/placeholder.svg?height=40&width=40',
-      '/placeholder.svg?height=40&width=40',
-      '/placeholder.svg?height=40&width=40',
-    ],
-  },
-  {
-    id: '2',
-    name: 'Ivory',
-    designer: 'Flora',
-    price: 450,
-    rating: 4.4,
-    status: 'Available' as const,
-    mainImage: '/placeholder.svg?height=500&width=400',
-    thumbnails: [
-      '/placeholder.svg?height=40&width=40',
-      '/placeholder.svg?height=40&width=40',
-      '/placeholder.svg?height=40&width=40',
-    ],
-  },
-  {
-    id: '3',
-    name: 'Oleg',
-    designer: 'Cassini',
-    price: 420,
-    rating: 4.8,
-    status: 'Available' as const,
-    mainImage: '/placeholder.svg?height=500&width=400',
-    thumbnails: [
-      '/placeholder.svg?height=40&width=40',
-      '/placeholder.svg?height=40&width=40',
-      '/placeholder.svg?height=40&width=40',
-    ],
-  },
-  {
-    id: '4',
-    name: 'Viola',
-    designer: 'Chain',
-    price: 400,
-    rating: 4.7,
-    status: 'The Most Rented' as const,
-    mainImage: '/placeholder.svg?height=500&width=400',
-    thumbnails: [
-      '/placeholder.svg?height=40&width=40',
-      '/placeholder.svg?height=40&width=40',
-      '/placeholder.svg?height=40&width=40',
-    ],
-  },
-  {
-    id: '5',
-    name: 'Strapless',
-    designer: 'Alin',
-    price: 400,
-    rating: 4.9,
-    status: 'Last Promotion' as const,
-    mainImage: '/placeholder.svg?height=500&width=400',
-    thumbnails: [
-      '/placeholder.svg?height=40&width=40',
-      '/placeholder.svg?height=40&width=40',
-      '/placeholder.svg?height=40&width=40',
-    ],
-  },
-  {
-    id: '6',
-    name: 'Sunshine',
-    designer: 'Sani',
-    price: 380,
-    rating: 4.7,
-    status: 'Available' as const,
-    mainImage: '/placeholder.svg?height=500&width=400',
-    thumbnails: [
-      '/placeholder.svg?height=40&width=40',
-      '/placeholder.svg?height=40&width=40',
-      '/placeholder.svg?height=40&width=40',
-    ],
-  },
-  {
-    id: '7',
-    name: 'Saint Lura',
-    designer: 'Rosy',
-    price: 200,
-    rating: 4.5,
-    status: 'Last Promotion' as const,
-    mainImage: '/placeholder.svg?height=500&width=400',
-    thumbnails: [
-      '/placeholder.svg?height=40&width=40',
-      '/placeholder.svg?height=40&width=40',
-      '/placeholder.svg?height=40&width=40',
-    ],
-  },
-  {
-    id: '8',
-    name: 'Pelerin',
-    designer: 'Satin',
-    price: 450,
-    rating: 4.9,
-    status: 'Almost Booked' as const,
-    mainImage: '/placeholder.svg?height=500&width=400',
-    thumbnails: [
-      '/placeholder.svg?height=40&width=40',
-      '/placeholder.svg?height=40&width=40',
-      '/placeholder.svg?height=40&width=40',
-    ],
-  },
-  {
-    id: '9',
-    name: 'Balon',
-    designer: 'Orla',
-    price: 650,
-    rating: 4.7,
-    status: 'Available' as const,
-    mainImage: '/placeholder.svg?height=500&width=400',
-    thumbnails: [
-      '/placeholder.svg?height=40&width=40',
-      '/placeholder.svg?height=40&width=40',
-      '/placeholder.svg?height=40&width=40',
-    ],
-  },
-];
+import { getAllDresses, Dress } from '../../api/dress';
 
 // Style filter options
 const styleOptions = [
@@ -180,6 +51,28 @@ const sortOptions = [
 export default function WeddingDressPage(): JSX.Element {
   const [sortBy, setSortBy] = useState('default');
   const [searchQuery, setSearchQuery] = useState('');
+  const [dresses, setDresses] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [visibleDresses, setVisibleDresses] = useState<number>(6); // Number of dresses to show initially
+  
+  useEffect(() => {
+    const fetchDresses = async () => {
+      try {
+        setLoading(true);
+        const dressesData = await getAllDresses();
+        setDresses(dressesData);
+        setError(null);
+      } catch (error) {
+        console.error('Error fetching dresses:', error);
+        setError('Failed to load dresses');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchDresses();
+  }, []);
 
   const handleSort = (optionId: string) => {
     setSortBy(optionId);
@@ -190,6 +83,36 @@ export default function WeddingDressPage(): JSX.Element {
     setSearchQuery(query);
     // Thực hiện logic tìm kiếm tại đây
   };
+  
+  const handleLoadMore = () => {
+    setVisibleDresses(prev => prev + 6); // Load 6 more dresses
+  };
+
+  // Map API data to the format expected by ProductCard
+  const mapDressesToCardFormat = (apiDresses: Dress[]) => {
+    return apiDresses.map(dress => ({
+      id: dress._id,
+      name: dress.name,
+      designer: dress.style || 'Designer',
+      price: dress.dailyRentalPrice,
+      rating: dress.avgRating || 4.5,
+      status: 'Available' as const,
+      mainImage: dress.images && dress.images.length > 0 
+        ? dress.images[0] 
+        : '/placeholder.svg?height=500&width=400',
+      thumbnails: dress.images && dress.images.length > 0 
+        ? dress.images.slice(0, 3).map(img => img) 
+        : [
+            '/placeholder.svg?height=40&width=40',
+            '/placeholder.svg?height=40&width=40',
+            '/placeholder.svg?height=40&width=40',
+          ],
+    }));
+  };
+  
+  // Get limited number of dresses to display
+  const displayDresses = mapDressesToCardFormat(dresses).slice(0, visibleDresses);
+  const hasMoreDresses = dresses.length > visibleDresses;
 
   return (
     <div>
@@ -221,17 +144,32 @@ export default function WeddingDressPage(): JSX.Element {
               <SortDropdown options={sortOptions} onSort={handleSort} />
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {weddingDresses.map(dress => (
-                <ProductCard key={dress.id} {...dress} />
-              ))}
-            </div>
+            {loading ? (
+              <div className="flex justify-center items-center h-40">
+                <p>Loading dresses...</p>
+              </div>
+            ) : error ? (
+              <div className="flex justify-center items-center h-40">
+                <p className="text-red-500">{error}</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {displayDresses.map(dress => (
+                  <ProductCard key={dress.id} {...dress} />
+                ))}
+              </div>
+            )}
 
-            <div className="flex justify-center mt-12">
-              <button className="border border-gray-300 rounded-md px-6 py-2 text-sm hover:bg-gray-50">
-                Load more
-              </button>
-            </div>
+            {hasMoreDresses && (
+              <div className="flex justify-center mt-12">
+                <button 
+                  className="border border-gray-300 rounded-md px-6 py-2 text-sm hover:bg-gray-50"
+                  onClick={handleLoadMore}
+                >
+                  Load more
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </main>

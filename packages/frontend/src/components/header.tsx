@@ -6,6 +6,7 @@ import cartIcon from '../assets/cart.svg';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import DropdownPanel from './dropDownPanel';
+import { useAuth } from '../context/AuthContext';
 
 interface NavigationProps {
   isSticky?: boolean;
@@ -16,6 +17,7 @@ const Header: React.FC<NavigationProps> = ({ isSticky = false }) => {
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
   const navRef = useRef<HTMLDivElement | null>(null);
   const navigate = useNavigate();
+  const { role, isAuthenticated } = useAuth();
 
   const toggleMenu = (): void => {
     setIsMenuOpen(!isMenuOpen);
@@ -34,8 +36,17 @@ const Header: React.FC<NavigationProps> = ({ isSticky = false }) => {
   const goToSearchPage = (): void => {
     navigate('/search');
   };
+  
   const goToProfilePage = (): void => {
-    navigate('/profile', { replace: false });
+    if (isAuthenticated) {
+      if (role === 'admin') {
+        navigate('/admin/measurement');
+      } else {
+        navigate('/profile', { replace: false });
+      }
+    } else {
+      navigate('/signin');
+    }
   };
 
   const goToHomePage = (): void => {
@@ -122,6 +133,12 @@ const Header: React.FC<NavigationProps> = ({ isSticky = false }) => {
                       items={categoryItems}
                       imageUrl="./pic16.jpg"
                       altText="Category image"
+                      onItemClick={(item) => {
+                        if (item === 'Wedding dress') {
+                          navigate('/pcp');
+                        }
+                        setActiveDropdown(null);
+                      }}
                     />
                   </div>
                 )}
@@ -273,6 +290,13 @@ const Header: React.FC<NavigationProps> = ({ isSticky = false }) => {
                     imageUrl="./pic14.jpg"
                     altText="Category image"
                     isMobile={true}
+                    onItemClick={(item) => {
+                      if (item === 'Wedding dress') {
+                        navigate('/pcp');
+                      }
+                      setIsMenuOpen(false);
+                      setActiveDropdown(null);
+                    }}
                   />
                 </div>
               )}

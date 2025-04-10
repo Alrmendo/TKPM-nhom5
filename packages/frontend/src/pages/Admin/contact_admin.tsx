@@ -150,7 +150,7 @@ export default function WeddingDressRental() {
   ]
 
   // Tabs data
-  const tabs = ["Style", "Basic measurements", "Photography", "Deliver", "Contact"]
+  const tabs = ["Basic measurements", "Style", "Photography", "Deliver", "Contact", "Dresses"]
 
   // Secondary tabs data
   // const secondaryTabs = ["Photography", "Wedding Dress"]
@@ -210,6 +210,8 @@ export default function WeddingDressRental() {
       navigate("/admin/deliver")
     } else if (tab === "Contact") {
       navigate("/admin/contact")
+    } else if (tab === "Dresses") {
+      navigate("/admin/dresses")
     }
   }
 
