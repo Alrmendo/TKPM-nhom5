@@ -4,9 +4,11 @@ import { getUserProfile } from '../api/user';
 
 interface AuthContextType {
   isAuthenticated: boolean;
+  userId: string | null;
   role: 'user' | 'admin' | null;
   username: string | null;
   getRoleFromCookie: () => Promise<'user' | 'admin' | null>;
+  checkAuthStatus: () => Promise<boolean>;
   clearCookie: () => void;
   isLoading: boolean;
   isAuthLoading: boolean;
@@ -19,9 +21,11 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType>({
   isAuthenticated: false,
+  userId: null,
   role: null,
   username: null,
   getRoleFromCookie: async () => null,
+  checkAuthStatus: async () => false,
   clearCookie: () => {},
   isLoading: true,
   isAuthLoading: false,
@@ -37,6 +41,7 @@ export const useAuth = () => useContext(AuthContext);
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
+  const [userId, setUserId] = useState<string | null>(null);
   const [role, setRole] = useState<'user' | 'admin' | null>(null);
   const [username, setUsername] = useState<string | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
@@ -44,30 +49,29 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const [isAuthLoading, setIsAuthLoading] = useState<boolean>(false);
   const [authError, setAuthError] = useState<string | null>(null);
   const [authMessage, setAuthMessage] = useState<string | null>(null);
+  const [lastAuthCheck, setLastAuthCheck] = useState<number>(0);
 
   useEffect(() => {
-    console.log('useEffect run');
+    console.log('AuthContext: Initial authentication check');
     const checkLogin = async () => {
       try {
+        setIsAuthLoading(true);
         const response = await getRoleAPI(); // Get role from /auth/me
+        console.log('AuthContext: Role API response:', response);
         setRole(response.role);
+        setUserId(response.userId);
+        setUsername(response.username);
         setIsAuthenticated(true);
-        
-        // If authenticated, get the user profile to get the username
-        if (response.role) {
-          try {
-            const userProfile = await getUserProfile();
-            setUsername(userProfile.username);
-          } catch (profileError) {
-            console.error('Error fetching user profile:', profileError);
-          }
-        }
+        setLastAuthCheck(Date.now());
       } catch (error) {
+        console.error('AuthContext: Authentication check failed:', error);
         setRole(null);
+        setUserId(null);
         setUsername(null);
         setIsAuthenticated(false);
       } finally {
         setIsLoading(false);
+        setIsAuthLoading(false);
       }
     };
 
@@ -77,6 +81,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   // Add window focus event to recheck login status
   useEffect(() => {
     const handleFocus = async () => {
+      console.log('AuthContext: Window focus - rechecking authentication');
       await getRoleFromCookie();
     };
 
@@ -98,32 +103,65 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const getRoleFromCookie = async (): Promise<'user' | 'admin' | null> => {
     try {
+      console.log('AuthContext: Getting role from cookie');
+      setIsAuthLoading(true);
       const res = await getRoleAPI();
-      setRole(res.role);
-      setIsAuthenticated(true);
+      console.log('AuthContext: Role API result:', res);
       
-      // If authenticated, get the user profile to get the username
-      if (res.role) {
-        try {
-          const userProfile = await getUserProfile();
-          setUsername(userProfile.username);
-        } catch (profileError) {
-          console.error('Error fetching user profile:', profileError);
-        }
+      if (res && res.userId) {
+        setUserId(res.userId);
+        setRole(res.role);
+        setUsername(res.username);
+        setIsAuthenticated(true);
+        setLastAuthCheck(Date.now());
+        return res.role;
+      } else {
+        console.error('AuthContext: No userId in response', res);
+        setRole(null);
+        setUserId(null);
+        setUsername(null);
+        setIsAuthenticated(false);
+        return null;
       }
-      
-      return res.role;
     } catch (error) {
+      console.error('AuthContext: Failed to get role from cookie:', error);
       setRole(null);
+      setUserId(null);
       setUsername(null);
       setIsAuthenticated(false);
       return null;
+    } finally {
+      setIsAuthLoading(false);
+    }
+  };
+
+  // New method to check auth status before performing actions
+  const checkAuthStatus = async (): Promise<boolean> => {
+    console.log('AuthContext: Checking auth status before action');
+    
+    // If recently checked (within last 30 seconds), use cached result
+    const timeSinceLastCheck = Date.now() - lastAuthCheck;
+    if (isAuthenticated && timeSinceLastCheck < 30000) {
+      console.log('AuthContext: Using cached auth status (recent check)');
+      return true;
+    }
+    
+    // Otherwise, refresh the auth status
+    try {
+      const role = await getRoleFromCookie();
+      const isAuth = role !== null && userId !== null;
+      console.log('AuthContext: Auth check result:', isAuth, 'userId:', userId);
+      return isAuth;
+    } catch (error) {
+      console.error('AuthContext: Auth check failed:', error);
+      return false;
     }
   };
 
   const clearCookie = async () => {
     setIsAuthLoading(true);
     try {
+      console.log('AuthContext: Logging out');
       await logoutApi();
       setAuthMessage("Logged out successfully");
     } catch (err) {
@@ -131,6 +169,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       setAuthError("Logout failed, please try again");
     } finally {
       setRole(null);
+      setUserId(null);
       setUsername(null);
       setIsAuthenticated(false);
       setIsAuthLoading(false);
@@ -141,9 +180,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     <AuthContext.Provider
       value={{
         isAuthenticated,
+        userId,
         role,
         username,
         getRoleFromCookie,
+        checkAuthStatus,
         clearCookie,
         isLoading,
         isAuthLoading,

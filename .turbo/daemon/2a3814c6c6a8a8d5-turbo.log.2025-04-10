@@ -1,0 +1,345 @@
+2025-04-10T03:06:23.335013Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("packages/frontend/vite.config.ts.timestamp-1744254383242-56ad1722a56bb.mjs")}
+2025-04-10T03:06:23.335029Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@tkpm-nhom5/frontend"), path: AnchoredSystemPathBuf("packages/frontend") }}))
+2025-04-10T03:16:01.325717Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("packages/frontend/src/pages/Cart/components/shopping-cart.tsx")}
+2025-04-10T03:16:01.325743Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@tkpm-nhom5/frontend"), path: AnchoredSystemPathBuf("packages/frontend") }}))
+2025-04-10T03:16:01.524793Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("packages/frontend/src/pages/Cart/components/shopping-cart.tsx")}
+2025-04-10T03:16:01.524805Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@tkpm-nhom5/frontend"), path: AnchoredSystemPathBuf("packages/frontend") }}))
+2025-04-10T03:16:01.524863Z  WARN turborepo_lib::package_changes_watcher: hashes are the same, no need to rerun
+2025-04-10T03:16:19.824805Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("packages/frontend/src/pages/PDP/PDP.tsx")}
+2025-04-10T03:16:19.824820Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@tkpm-nhom5/frontend"), path: AnchoredSystemPathBuf("packages/frontend") }}))
+2025-04-10T03:16:21.825362Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("packages/frontend/src/pages/PDP/PDP.tsx")}
+2025-04-10T03:16:21.825372Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@tkpm-nhom5/frontend"), path: AnchoredSystemPathBuf("packages/frontend") }}))
+2025-04-10T03:16:21.851074Z  WARN turborepo_lib::package_changes_watcher: hashes are the same, no need to rerun
+2025-04-10T03:16:42.824888Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("packages/frontend/src/api/cart.ts")}
+2025-04-10T03:16:42.824906Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@tkpm-nhom5/frontend"), path: AnchoredSystemPathBuf("packages/frontend") }}))
+2025-04-10T03:16:43.826007Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("packages/frontend/src/api/cart.ts")}
+2025-04-10T03:16:43.826017Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@tkpm-nhom5/frontend"), path: AnchoredSystemPathBuf("packages/frontend") }}))
+2025-04-10T03:16:43.852317Z  WARN turborepo_lib::package_changes_watcher: hashes are the same, no need to rerun
+2025-04-10T03:17:17.124708Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("packages/frontend/src/context/AuthContext.tsx")}
+2025-04-10T03:17:17.124721Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@tkpm-nhom5/frontend"), path: AnchoredSystemPathBuf("packages/frontend") }}))
+2025-04-10T03:17:17.226037Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("packages/frontend/src/context/AuthContext.tsx")}
+2025-04-10T03:17:17.226046Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@tkpm-nhom5/frontend"), path: AnchoredSystemPathBuf("packages/frontend") }}))
+2025-04-10T03:17:17.238247Z  WARN turborepo_lib::package_changes_watcher: hashes are the same, no need to rerun
+2025-04-10T03:17:32.925679Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("packages/frontend/src/pages/PDP/PDP.tsx")}
+2025-04-10T03:17:32.925697Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@tkpm-nhom5/frontend"), path: AnchoredSystemPathBuf("packages/frontend") }}))
+2025-04-10T03:17:32.964703Z  WARN turborepo_lib::package_changes_watcher: hashes are the same, no need to rerun
+2025-04-10T03:17:36.626301Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("packages/frontend/src/pages/PDP/PDP.tsx")}
+2025-04-10T03:17:36.626312Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@tkpm-nhom5/frontend"), path: AnchoredSystemPathBuf("packages/frontend") }}))
+2025-04-10T03:17:36.825742Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("packages/frontend/src/pages/PDP/PDP.tsx")}
+2025-04-10T03:17:36.825751Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@tkpm-nhom5/frontend"), path: AnchoredSystemPathBuf("packages/frontend") }}))
+2025-04-10T03:17:36.825804Z  WARN turborepo_lib::package_changes_watcher: hashes are the same, no need to rerun
+2025-04-10T03:18:00.926235Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("packages/frontend/vite.config.ts.timestamp-1744255080807-9c4c97527fc6c.mjs")}
+2025-04-10T03:18:00.926245Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@tkpm-nhom5/frontend"), path: AnchoredSystemPathBuf("packages/frontend") }}))
+2025-04-10T03:18:00.927478Z  WARN turborepo_lib::package_changes_watcher: hashes are the same, no need to rerun
+2025-04-10T03:18:07.625939Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("packages/backend/dist")}
+2025-04-10T03:18:07.625950Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@tkpm-nhom5/backend"), path: AnchoredSystemPathBuf("packages/backend") }}))
+2025-04-10T03:18:10.026218Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("packages/backend/dist")}
+2025-04-10T03:18:10.026227Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@tkpm-nhom5/backend"), path: AnchoredSystemPathBuf("packages/backend") }}))
+2025-04-10T03:18:10.266253Z  WARN turborepo_lib::package_changes_watcher: hashes are the same, no need to rerun
+2025-04-10T03:18:33.925894Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("packages/backend/src/modules/cart/cart.service.ts")}
+2025-04-10T03:18:33.925904Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@tkpm-nhom5/backend"), path: AnchoredSystemPathBuf("packages/backend") }}))
+2025-04-10T03:18:34.025580Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("packages/backend/src/modules/cart/cart.service.ts")}
+2025-04-10T03:18:34.025590Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@tkpm-nhom5/backend"), path: AnchoredSystemPathBuf("packages/backend") }}))
+2025-04-10T03:18:34.071990Z  WARN turborepo_lib::package_changes_watcher: hashes are the same, no need to rerun
+2025-04-10T03:19:04.225910Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("packages/frontend/src/api/auth.ts")}
+2025-04-10T03:19:04.225920Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@tkpm-nhom5/frontend"), path: AnchoredSystemPathBuf("packages/frontend") }}))
+2025-04-10T03:19:04.325935Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("packages/frontend/src/api/auth.ts")}
+2025-04-10T03:19:04.325946Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@tkpm-nhom5/frontend"), path: AnchoredSystemPathBuf("packages/frontend") }}))
+2025-04-10T03:19:04.334674Z  WARN turborepo_lib::package_changes_watcher: hashes are the same, no need to rerun
+2025-04-10T03:19:40.526348Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("packages/backend/src/modules/cart/cart.service.ts")}
+2025-04-10T03:19:40.526357Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@tkpm-nhom5/backend"), path: AnchoredSystemPathBuf("packages/backend") }}))
+2025-04-10T03:19:40.526377Z  WARN turborepo_lib::package_changes_watcher: hashes are the same, no need to rerun
+2025-04-10T03:19:44.826933Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("packages/backend/src/modules/cart/cart.service.ts")}
+2025-04-10T03:19:44.826958Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@tkpm-nhom5/backend"), path: AnchoredSystemPathBuf("packages/backend") }}))
+2025-04-10T03:19:45.826407Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("packages/backend/src/modules/cart/cart.service.ts")}
+2025-04-10T03:19:45.826418Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@tkpm-nhom5/backend"), path: AnchoredSystemPathBuf("packages/backend") }}))
+2025-04-10T03:19:45.834992Z  WARN turborepo_lib::package_changes_watcher: hashes are the same, no need to rerun
+2025-04-10T03:20:45.525835Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("packages/backend/dist")}
+2025-04-10T03:20:45.525846Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@tkpm-nhom5/backend"), path: AnchoredSystemPathBuf("packages/backend") }}))
+2025-04-10T03:20:45.528508Z  WARN turborepo_lib::package_changes_watcher: hashes are the same, no need to rerun
+2025-04-10T03:20:47.826601Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("packages/backend/dist")}
+2025-04-10T03:20:47.826618Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@tkpm-nhom5/backend"), path: AnchoredSystemPathBuf("packages/backend") }}))
+2025-04-10T03:20:48.095058Z  WARN turborepo_lib::package_changes_watcher: hashes are the same, no need to rerun
+2025-04-10T03:23:19.827944Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("packages/backend/src/modules/auth/auth.service.ts")}
+2025-04-10T03:23:19.827976Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@tkpm-nhom5/backend"), path: AnchoredSystemPathBuf("packages/backend") }}))
+2025-04-10T03:23:20.827490Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("packages/backend/src/modules/auth/auth.service.ts")}
+2025-04-10T03:23:20.827499Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@tkpm-nhom5/backend"), path: AnchoredSystemPathBuf("packages/backend") }}))
+2025-04-10T03:23:20.827519Z  WARN turborepo_lib::package_changes_watcher: hashes are the same, no need to rerun
+2025-04-10T03:23:37.827630Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("packages/backend/src/modules/auth/strategies/jwt.strategy.ts")}
+2025-04-10T03:23:37.827653Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@tkpm-nhom5/backend"), path: AnchoredSystemPathBuf("packages/backend") }}))
+2025-04-10T03:23:38.827764Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("packages/backend/src/modules/auth/strategies/jwt.strategy.ts")}
+2025-04-10T03:23:38.827774Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@tkpm-nhom5/backend"), path: AnchoredSystemPathBuf("packages/backend") }}))
+2025-04-10T03:23:38.827793Z  WARN turborepo_lib::package_changes_watcher: hashes are the same, no need to rerun
+2025-04-10T03:23:58.827364Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("packages/backend/src/modules/cart/cart.controller.ts")}
+2025-04-10T03:23:58.827385Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@tkpm-nhom5/backend"), path: AnchoredSystemPathBuf("packages/backend") }}))
+2025-04-10T03:24:00.827767Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("packages/backend/src/modules/cart/cart.controller.ts")}
+2025-04-10T03:24:00.827778Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@tkpm-nhom5/backend"), path: AnchoredSystemPathBuf("packages/backend") }}))
+2025-04-10T03:24:00.839885Z  WARN turborepo_lib::package_changes_watcher: hashes are the same, no need to rerun
+2025-04-10T03:24:28.528423Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("packages/backend/src/modules/auth/auth.controller.ts")}
+2025-04-10T03:24:28.528452Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@tkpm-nhom5/backend"), path: AnchoredSystemPathBuf("packages/backend") }}))
+2025-04-10T03:24:28.627681Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("packages/backend/src/modules/auth/auth.controller.ts")}
+2025-04-10T03:24:28.627691Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@tkpm-nhom5/backend"), path: AnchoredSystemPathBuf("packages/backend") }}))
+2025-04-10T03:24:28.687314Z  WARN turborepo_lib::package_changes_watcher: hashes are the same, no need to rerun
+2025-04-10T03:24:46.728553Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("packages/backend/dist")}
+2025-04-10T03:24:46.728563Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@tkpm-nhom5/backend"), path: AnchoredSystemPathBuf("packages/backend") }}))
+2025-04-10T03:24:46.775955Z  WARN turborepo_lib::package_changes_watcher: hashes are the same, no need to rerun
+2025-04-10T03:24:49.026915Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("packages/backend/dist")}
+2025-04-10T03:24:49.026925Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@tkpm-nhom5/backend"), path: AnchoredSystemPathBuf("packages/backend") }}))
+2025-04-10T03:24:49.269436Z  WARN turborepo_lib::package_changes_watcher: hashes are the same, no need to rerun
+2025-04-10T03:24:51.927219Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("packages/frontend/vite.config.ts.timestamp-1744255491900-995b99500b9fd.mjs")}
+2025-04-10T03:24:51.927230Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@tkpm-nhom5/frontend"), path: AnchoredSystemPathBuf("packages/frontend") }}))
+2025-04-10T03:24:52.016622Z  WARN turborepo_lib::package_changes_watcher: hashes are the same, no need to rerun
+2025-04-10T03:24:52.027899Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("packages/frontend/vite.config.ts.timestamp-1744255491900-995b99500b9fd.mjs")}
+2025-04-10T03:24:52.027911Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@tkpm-nhom5/frontend"), path: AnchoredSystemPathBuf("packages/frontend") }}))
+2025-04-10T03:24:52.027973Z  WARN turborepo_lib::package_changes_watcher: hashes are the same, no need to rerun
+2025-04-10T03:26:47.628400Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("packages/frontend/src/api/cart.ts")}
+2025-04-10T03:26:47.628409Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@tkpm-nhom5/frontend"), path: AnchoredSystemPathBuf("packages/frontend") }}))
+2025-04-10T03:26:47.728544Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("packages/frontend/src/api/cart.ts")}
+2025-04-10T03:26:47.728554Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@tkpm-nhom5/frontend"), path: AnchoredSystemPathBuf("packages/frontend") }}))
+2025-04-10T03:26:47.776891Z  WARN turborepo_lib::package_changes_watcher: hashes are the same, no need to rerun
+2025-04-10T03:27:08.728536Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("packages/frontend/src/pages/PDP/PDP.tsx")}
+2025-04-10T03:27:08.728561Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@tkpm-nhom5/frontend"), path: AnchoredSystemPathBuf("packages/frontend") }}))
+2025-04-10T03:27:08.928886Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("packages/frontend/src/pages/PDP/PDP.tsx")}
+2025-04-10T03:27:08.928897Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@tkpm-nhom5/frontend"), path: AnchoredSystemPathBuf("packages/frontend") }}))
+2025-04-10T03:27:08.932552Z  WARN turborepo_lib::package_changes_watcher: hashes are the same, no need to rerun
+2025-04-10T03:27:43.828571Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("packages/frontend/src/context/AuthContext.tsx")}
+2025-04-10T03:27:43.828581Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@tkpm-nhom5/frontend"), path: AnchoredSystemPathBuf("packages/frontend") }}))
+2025-04-10T03:27:44.929114Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("packages/frontend/src/context/AuthContext.tsx")}
+2025-04-10T03:27:44.929132Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@tkpm-nhom5/frontend"), path: AnchoredSystemPathBuf("packages/frontend") }}))
+2025-04-10T03:27:44.962204Z  WARN turborepo_lib::package_changes_watcher: hashes are the same, no need to rerun
+2025-04-10T03:29:25.930009Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("packages/backend/dist")}
+2025-04-10T03:29:25.930020Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@tkpm-nhom5/backend"), path: AnchoredSystemPathBuf("packages/backend") }}))
+2025-04-10T03:29:25.981300Z  WARN turborepo_lib::package_changes_watcher: hashes are the same, no need to rerun
+2025-04-10T03:29:28.028534Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("packages/backend/dist")}
+2025-04-10T03:29:28.028546Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@tkpm-nhom5/backend"), path: AnchoredSystemPathBuf("packages/backend") }}))
+2025-04-10T03:29:28.329557Z  WARN turborepo_lib::package_changes_watcher: hashes are the same, no need to rerun
+2025-04-10T03:29:35.328619Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("packages/frontend/vite.config.ts.timestamp-1744255775274-e87787f13c7a4.mjs")}
+2025-04-10T03:29:35.328633Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@tkpm-nhom5/frontend"), path: AnchoredSystemPathBuf("packages/frontend") }}))
+2025-04-10T03:29:35.398559Z  WARN turborepo_lib::package_changes_watcher: hashes are the same, no need to rerun
+2025-04-10T03:29:35.428776Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("packages/frontend/vite.config.ts.timestamp-1744255775274-e87787f13c7a4.mjs")}
+2025-04-10T03:29:35.428786Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@tkpm-nhom5/frontend"), path: AnchoredSystemPathBuf("packages/frontend") }}))
+2025-04-10T03:29:35.428836Z  WARN turborepo_lib::package_changes_watcher: hashes are the same, no need to rerun
+2025-04-10T03:38:25.424932Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("packages/frontend/src/pages/PDP/PDP.tsx")}
+2025-04-10T03:38:25.424957Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@tkpm-nhom5/frontend"), path: AnchoredSystemPathBuf("packages/frontend") }}))
+2025-04-10T03:38:25.824750Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("packages/frontend/src/pages/PDP/PDP.tsx")}
+2025-04-10T03:38:25.824758Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@tkpm-nhom5/frontend"), path: AnchoredSystemPathBuf("packages/frontend") }}))
+2025-04-10T03:38:25.859925Z  WARN turborepo_lib::package_changes_watcher: hashes are the same, no need to rerun
+2025-04-10T03:38:37.520167Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("packages/frontend/vite.config.ts.timestamp-1744256317490-02dd7819ce51a.mjs")}
+2025-04-10T03:38:37.520175Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@tkpm-nhom5/frontend"), path: AnchoredSystemPathBuf("packages/frontend") }}))
+2025-04-10T03:38:37.611080Z  WARN turborepo_lib::package_changes_watcher: hashes are the same, no need to rerun
+2025-04-10T03:38:37.621186Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("packages/frontend/vite.config.ts.timestamp-1744256317490-02dd7819ce51a.mjs")}
+2025-04-10T03:38:37.621194Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@tkpm-nhom5/frontend"), path: AnchoredSystemPathBuf("packages/frontend") }}))
+2025-04-10T03:38:37.621255Z  WARN turborepo_lib::package_changes_watcher: hashes are the same, no need to rerun
+2025-04-10T03:42:13.118357Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("packages/frontend/src/pages/Cart/components/shopping-cart.tsx")}
+2025-04-10T03:42:13.118369Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@tkpm-nhom5/frontend"), path: AnchoredSystemPathBuf("packages/frontend") }}))
+2025-04-10T03:42:13.419275Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("packages/frontend/src/pages/Cart/components/shopping-cart.tsx")}
+2025-04-10T03:42:13.419285Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@tkpm-nhom5/frontend"), path: AnchoredSystemPathBuf("packages/frontend") }}))
+2025-04-10T03:42:13.431389Z  WARN turborepo_lib::package_changes_watcher: hashes are the same, no need to rerun
+2025-04-10T03:42:32.919085Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("packages/frontend/src/pages/Cart/components/shopping-cart.tsx")}
+2025-04-10T03:42:32.919097Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@tkpm-nhom5/frontend"), path: AnchoredSystemPathBuf("packages/frontend") }}))
+2025-04-10T03:42:32.925030Z  WARN turborepo_lib::package_changes_watcher: hashes are the same, no need to rerun
+2025-04-10T03:42:36.218666Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("packages/frontend/src/pages/Cart/components/shopping-cart.tsx")}
+2025-04-10T03:42:36.218688Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@tkpm-nhom5/frontend"), path: AnchoredSystemPathBuf("packages/frontend") }}))
+2025-04-10T03:42:36.386460Z  WARN turborepo_lib::package_changes_watcher: hashes are the same, no need to rerun
+2025-04-10T03:42:36.386543Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("packages/frontend/src/pages/Cart/components/shopping-cart.tsx")}
+2025-04-10T03:42:36.386547Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@tkpm-nhom5/frontend"), path: AnchoredSystemPathBuf("packages/frontend") }}))
+2025-04-10T03:42:36.386598Z  WARN turborepo_lib::package_changes_watcher: hashes are the same, no need to rerun
+2025-04-10T03:43:40.718824Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("packages/frontend/vite.config.ts.timestamp-1744256620637-fd5b233d0768c.mjs")}
+2025-04-10T03:43:40.718835Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@tkpm-nhom5/frontend"), path: AnchoredSystemPathBuf("packages/frontend") }}))
+2025-04-10T03:43:40.770273Z  WARN turborepo_lib::package_changes_watcher: hashes are the same, no need to rerun
+2025-04-10T03:49:40.818637Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("packages/frontend/src/pages/Cart/components/shopping-cart.tsx")}
+2025-04-10T03:49:40.818656Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@tkpm-nhom5/frontend"), path: AnchoredSystemPathBuf("packages/frontend") }}))
+2025-04-10T03:49:41.818680Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("packages/frontend/src/pages/Cart/components/shopping-cart.tsx")}
+2025-04-10T03:49:41.818688Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@tkpm-nhom5/frontend"), path: AnchoredSystemPathBuf("packages/frontend") }}))
+2025-04-10T03:49:41.818732Z  WARN turborepo_lib::package_changes_watcher: hashes are the same, no need to rerun
+2025-04-10T03:50:28.219324Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("packages/frontend/src/pages/Profile/CurrentOrders.tsx")}
+2025-04-10T03:50:28.219349Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@tkpm-nhom5/frontend"), path: AnchoredSystemPathBuf("packages/frontend") }}))
+2025-04-10T03:50:28.319411Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("packages/frontend/src/pages/Profile/CurrentOrders.tsx")}
+2025-04-10T03:50:28.319423Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@tkpm-nhom5/frontend"), path: AnchoredSystemPathBuf("packages/frontend") }}))
+2025-04-10T03:50:28.391538Z  WARN turborepo_lib::package_changes_watcher: hashes are the same, no need to rerun
+2025-04-10T04:08:41.706740Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("packages/frontend/src/pages/Cart/components/shopping-cart.tsx")}
+2025-04-10T04:08:41.706749Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@tkpm-nhom5/frontend"), path: AnchoredSystemPathBuf("packages/frontend") }}))
+2025-04-10T04:08:41.906897Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("packages/frontend/src/pages/Cart/components/shopping-cart.tsx")}
+2025-04-10T04:08:41.906910Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@tkpm-nhom5/frontend"), path: AnchoredSystemPathBuf("packages/frontend") }}))
+2025-04-10T04:08:41.965369Z  WARN turborepo_lib::package_changes_watcher: hashes are the same, no need to rerun
+2025-04-10T04:09:10.306081Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("packages/frontend/src/pages/Profile/CurrentOrders.tsx")}
+2025-04-10T04:09:10.306090Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@tkpm-nhom5/frontend"), path: AnchoredSystemPathBuf("packages/frontend") }}))
+2025-04-10T04:09:10.506530Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("packages/frontend/src/pages/Profile/CurrentOrders.tsx")}
+2025-04-10T04:09:10.506539Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@tkpm-nhom5/frontend"), path: AnchoredSystemPathBuf("packages/frontend") }}))
+2025-04-10T04:09:10.506582Z  WARN turborepo_lib::package_changes_watcher: hashes are the same, no need to rerun
+2025-04-10T04:09:28.506547Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("packages/frontend/src/api/order.ts")}
+2025-04-10T04:09:28.506558Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@tkpm-nhom5/frontend"), path: AnchoredSystemPathBuf("packages/frontend") }}))
+2025-04-10T04:09:44.406108Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("packages/frontend/src/api/cart.ts")}
+2025-04-10T04:09:44.406118Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@tkpm-nhom5/frontend"), path: AnchoredSystemPathBuf("packages/frontend") }}))
+2025-04-10T04:09:44.506535Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("packages/frontend/src/api/cart.ts")}
+2025-04-10T04:09:44.506545Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@tkpm-nhom5/frontend"), path: AnchoredSystemPathBuf("packages/frontend") }}))
+2025-04-10T04:09:44.529446Z  WARN turborepo_lib::package_changes_watcher: hashes are the same, no need to rerun
+2025-04-10T04:10:05.505703Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("packages/frontend/src/api/auth.ts")}
+2025-04-10T04:10:05.505725Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@tkpm-nhom5/frontend"), path: AnchoredSystemPathBuf("packages/frontend") }}))
+2025-04-10T04:10:05.606804Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("packages/frontend/src/api/auth.ts")}
+2025-04-10T04:10:05.606814Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@tkpm-nhom5/frontend"), path: AnchoredSystemPathBuf("packages/frontend") }}))
+2025-04-10T04:10:05.660256Z  WARN turborepo_lib::package_changes_watcher: hashes are the same, no need to rerun
+2025-04-10T04:10:33.505527Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("packages/frontend/src/api/user.ts")}
+2025-04-10T04:10:33.505542Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@tkpm-nhom5/frontend"), path: AnchoredSystemPathBuf("packages/frontend") }}))
+2025-04-10T04:10:33.806252Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("packages/frontend/src/api/user.ts")}
+2025-04-10T04:10:33.806263Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@tkpm-nhom5/frontend"), path: AnchoredSystemPathBuf("packages/frontend") }}))
+2025-04-10T04:10:33.827405Z  WARN turborepo_lib::package_changes_watcher: hashes are the same, no need to rerun
+2025-04-10T04:16:22.205898Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("packages/frontend/src/pages/DebugCart.tsx")}
+2025-04-10T04:16:22.205907Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@tkpm-nhom5/frontend"), path: AnchoredSystemPathBuf("packages/frontend") }}))
+2025-04-10T04:16:26.204341Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("packages/frontend/src/pages/DebugCart.tsx")}
+2025-04-10T04:16:26.204353Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@tkpm-nhom5/frontend"), path: AnchoredSystemPathBuf("packages/frontend") }}))
+2025-04-10T04:16:26.404675Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("packages/frontend/src/pages/DebugCart.tsx")}
+2025-04-10T04:16:26.404696Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@tkpm-nhom5/frontend"), path: AnchoredSystemPathBuf("packages/frontend") }}))
+2025-04-10T04:16:26.404843Z  WARN turborepo_lib::package_changes_watcher: hashes are the same, no need to rerun
+2025-04-10T04:16:43.806081Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("packages/frontend/src/App.tsx")}
+2025-04-10T04:16:43.806092Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@tkpm-nhom5/frontend"), path: AnchoredSystemPathBuf("packages/frontend") }}))
+2025-04-10T04:16:45.804853Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("packages/frontend/src/App.tsx")}
+2025-04-10T04:16:45.804864Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@tkpm-nhom5/frontend"), path: AnchoredSystemPathBuf("packages/frontend") }}))
+2025-04-10T04:16:45.827337Z  WARN turborepo_lib::package_changes_watcher: hashes are the same, no need to rerun
+2025-04-10T04:17:37.504981Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("packages/frontend/src/routes/AppRoutes.tsx")}
+2025-04-10T04:17:37.504990Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@tkpm-nhom5/frontend"), path: AnchoredSystemPathBuf("packages/frontend") }}))
+2025-04-10T04:17:37.705457Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("packages/frontend/src/routes/AppRoutes.tsx")}
+2025-04-10T04:17:37.705467Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@tkpm-nhom5/frontend"), path: AnchoredSystemPathBuf("packages/frontend") }}))
+2025-04-10T04:17:37.705506Z  WARN turborepo_lib::package_changes_watcher: hashes are the same, no need to rerun
+2025-04-10T04:18:02.805478Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("packages/frontend/src/pages/Profile/CurrentOrders.tsx")}
+2025-04-10T04:18:02.805488Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@tkpm-nhom5/frontend"), path: AnchoredSystemPathBuf("packages/frontend") }}))
+2025-04-10T04:18:03.805222Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("packages/frontend/src/pages/Profile/CurrentOrders.tsx")}
+2025-04-10T04:18:03.805233Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@tkpm-nhom5/frontend"), path: AnchoredSystemPathBuf("packages/frontend") }}))
+2025-04-10T04:18:03.817182Z  WARN turborepo_lib::package_changes_watcher: hashes are the same, no need to rerun
+2025-04-10T04:18:27.805719Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("packages/frontend/src/pages/Cart/components/shopping-cart.tsx")}
+2025-04-10T04:18:27.805743Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@tkpm-nhom5/frontend"), path: AnchoredSystemPathBuf("packages/frontend") }}))
+2025-04-10T04:18:28.804914Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("packages/frontend/src/pages/Cart/components/shopping-cart.tsx")}
+2025-04-10T04:18:28.804924Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@tkpm-nhom5/frontend"), path: AnchoredSystemPathBuf("packages/frontend") }}))
+2025-04-10T04:18:28.816061Z  WARN turborepo_lib::package_changes_watcher: hashes are the same, no need to rerun
+2025-04-10T04:18:49.802616Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("packages/frontend/src/pages/Profile/CurrentOrders.tsx")}
+2025-04-10T04:18:49.802630Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@tkpm-nhom5/frontend"), path: AnchoredSystemPathBuf("packages/frontend") }}))
+2025-04-10T04:18:49.875881Z  WARN turborepo_lib::package_changes_watcher: hashes are the same, no need to rerun
+2025-04-10T04:18:52.795644Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("packages/frontend/src/pages/Profile/CurrentOrders.tsx")}
+2025-04-10T04:18:52.795663Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@tkpm-nhom5/frontend"), path: AnchoredSystemPathBuf("packages/frontend") }}))
+2025-04-10T04:18:54.791155Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("packages/frontend/src/pages/Profile/CurrentOrders.tsx")}
+2025-04-10T04:18:54.791165Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@tkpm-nhom5/frontend"), path: AnchoredSystemPathBuf("packages/frontend") }}))
+2025-04-10T04:18:54.807905Z  WARN turborepo_lib::package_changes_watcher: hashes are the same, no need to rerun
+2025-04-10T04:19:03.777381Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("packages/frontend/src/pages/Cart/components/shopping-cart.tsx")}
+2025-04-10T04:19:03.777395Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@tkpm-nhom5/frontend"), path: AnchoredSystemPathBuf("packages/frontend") }}))
+2025-04-10T04:19:03.794376Z  WARN turborepo_lib::package_changes_watcher: hashes are the same, no need to rerun
+2025-04-10T04:19:06.775282Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("packages/frontend/src/pages/Cart/components/shopping-cart.tsx")}
+2025-04-10T04:19:06.775308Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@tkpm-nhom5/frontend"), path: AnchoredSystemPathBuf("packages/frontend") }}))
+2025-04-10T04:19:07.774396Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("packages/frontend/src/pages/Cart/components/shopping-cart.tsx")}
+2025-04-10T04:19:07.774407Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@tkpm-nhom5/frontend"), path: AnchoredSystemPathBuf("packages/frontend") }}))
+2025-04-10T04:19:07.799225Z  WARN turborepo_lib::package_changes_watcher: hashes are the same, no need to rerun
+2025-04-10T04:22:53.257866Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("packages/backend/src/modules/order/order.service.ts")}
+2025-04-10T04:22:53.257879Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@tkpm-nhom5/backend"), path: AnchoredSystemPathBuf("packages/backend") }}))
+2025-04-10T04:22:53.457361Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("packages/backend/src/modules/order/order.service.ts")}
+2025-04-10T04:22:53.457370Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@tkpm-nhom5/backend"), path: AnchoredSystemPathBuf("packages/backend") }}))
+2025-04-10T04:22:53.468619Z  WARN turborepo_lib::package_changes_watcher: hashes are the same, no need to rerun
+2025-04-10T04:23:13.457528Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("packages/backend/src/modules/order/order.service.ts")}
+2025-04-10T04:23:13.457537Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@tkpm-nhom5/backend"), path: AnchoredSystemPathBuf("packages/backend") }}))
+2025-04-10T04:23:13.484818Z  WARN turborepo_lib::package_changes_watcher: hashes are the same, no need to rerun
+2025-04-10T04:23:15.458203Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("packages/backend/src/modules/order/order.service.ts")}
+2025-04-10T04:23:15.458213Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@tkpm-nhom5/backend"), path: AnchoredSystemPathBuf("packages/backend") }}))
+2025-04-10T04:23:15.657728Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("packages/backend/src/modules/order/order.service.ts")}
+2025-04-10T04:23:15.657739Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@tkpm-nhom5/backend"), path: AnchoredSystemPathBuf("packages/backend") }}))
+2025-04-10T04:23:15.726696Z  WARN turborepo_lib::package_changes_watcher: hashes are the same, no need to rerun
+2025-04-10T04:23:30.557689Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("packages/frontend/src/api/order.ts")}
+2025-04-10T04:23:30.557699Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@tkpm-nhom5/frontend"), path: AnchoredSystemPathBuf("packages/frontend") }}))
+2025-04-10T04:23:30.758046Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("packages/frontend/src/api/order.ts")}
+2025-04-10T04:23:30.758057Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@tkpm-nhom5/frontend"), path: AnchoredSystemPathBuf("packages/frontend") }}))
+2025-04-10T04:23:30.763609Z  WARN turborepo_lib::package_changes_watcher: hashes are the same, no need to rerun
+2025-04-10T04:23:48.657990Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("packages/frontend/src/pages/Cart/components/shopping-cart.tsx")}
+2025-04-10T04:23:48.658001Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@tkpm-nhom5/frontend"), path: AnchoredSystemPathBuf("packages/frontend") }}))
+2025-04-10T04:23:49.056756Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("packages/frontend/src/pages/Cart/components/shopping-cart.tsx")}
+2025-04-10T04:23:49.056766Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@tkpm-nhom5/frontend"), path: AnchoredSystemPathBuf("packages/frontend") }}))
+2025-04-10T04:23:49.057859Z  WARN turborepo_lib::package_changes_watcher: hashes are the same, no need to rerun
+2025-04-10T04:27:47.254918Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("packages/frontend/vite.config.ts.timestamp-1744259267180-12073d42b49b5.mjs")}
+2025-04-10T04:27:47.254929Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@tkpm-nhom5/frontend"), path: AnchoredSystemPathBuf("packages/frontend") }}))
+2025-04-10T04:27:47.301987Z  WARN turborepo_lib::package_changes_watcher: hashes are the same, no need to rerun
+2025-04-10T04:29:35.953282Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("packages/backend/src/modules/order/order.service.ts")}
+2025-04-10T04:29:35.953292Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@tkpm-nhom5/backend"), path: AnchoredSystemPathBuf("packages/backend") }}))
+2025-04-10T04:29:36.952125Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("packages/frontend/src/api/order.ts")}
+2025-04-10T04:29:36.952137Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@tkpm-nhom5/frontend"), path: AnchoredSystemPathBuf("packages/frontend") }}))
+2025-04-10T04:29:37.952746Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("packages/frontend/src/pages/Cart/components/shopping-cart.tsx")}
+2025-04-10T04:29:37.952756Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@tkpm-nhom5/frontend"), path: AnchoredSystemPathBuf("packages/frontend") }}))
+2025-04-10T04:30:11.652521Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("packages/frontend/src/pages/Profile/CurrentOrders.tsx")}
+2025-04-10T04:30:11.652532Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@tkpm-nhom5/frontend"), path: AnchoredSystemPathBuf("packages/frontend") }}))
+2025-04-10T04:30:12.752945Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("packages/frontend/src/pages/DebugCart.tsx"), AnchoredSystemPathBuf("packages/frontend/src/pages/Cart/components/shopping-cart.tsx")}
+2025-04-10T04:30:12.752971Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@tkpm-nhom5/frontend"), path: AnchoredSystemPathBuf("packages/frontend") }}))
+2025-04-10T04:30:13.852422Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("packages/frontend/src/App.tsx")}
+2025-04-10T04:30:13.852433Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@tkpm-nhom5/frontend"), path: AnchoredSystemPathBuf("packages/frontend") }}))
+2025-04-10T04:30:15.952557Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("packages/frontend/src/routes/AppRoutes.tsx")}
+2025-04-10T04:30:15.952570Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@tkpm-nhom5/frontend"), path: AnchoredSystemPathBuf("packages/frontend") }}))
+2025-04-10T04:30:39.651381Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("packages/backend/dist")}
+2025-04-10T04:30:39.651391Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@tkpm-nhom5/backend"), path: AnchoredSystemPathBuf("packages/backend") }}))
+2025-04-10T04:30:39.733067Z  WARN turborepo_lib::package_changes_watcher: hashes are the same, no need to rerun
+2025-04-10T04:30:41.751418Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("packages/backend/dist")}
+2025-04-10T04:30:41.751428Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@tkpm-nhom5/backend"), path: AnchoredSystemPathBuf("packages/backend") }}))
+2025-04-10T04:30:41.954799Z  WARN turborepo_lib::package_changes_watcher: hashes are the same, no need to rerun
+2025-04-10T04:30:55.890850Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("packages/frontend/src/pages/Profile/CurrentOrders.tsx")}
+2025-04-10T04:30:55.890871Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@tkpm-nhom5/frontend"), path: AnchoredSystemPathBuf("packages/frontend") }}))
+2025-04-10T04:30:56.851972Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("packages/frontend/src/pages/Cart/components/shopping-cart.tsx")}
+2025-04-10T04:30:56.851983Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@tkpm-nhom5/frontend"), path: AnchoredSystemPathBuf("packages/frontend") }}))
+2025-04-10T04:30:56.952351Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("packages/frontend/src/pages/DebugCart.tsx")}
+2025-04-10T04:30:56.952362Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@tkpm-nhom5/frontend"), path: AnchoredSystemPathBuf("packages/frontend") }}))
+2025-04-10T04:30:56.952403Z  WARN turborepo_lib::package_changes_watcher: hashes are the same, no need to rerun
+2025-04-10T04:30:57.952274Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("packages/frontend/src/pages/DebugCart.tsx")}
+2025-04-10T04:30:57.952292Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@tkpm-nhom5/frontend"), path: AnchoredSystemPathBuf("packages/frontend") }}))
+2025-04-10T04:30:58.952158Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("packages/frontend/src/App.tsx")}
+2025-04-10T04:30:58.952168Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@tkpm-nhom5/frontend"), path: AnchoredSystemPathBuf("packages/frontend") }}))
+2025-04-10T04:31:00.051424Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("packages/frontend/src/routes/AppRoutes.tsx")}
+2025-04-10T04:31:00.051433Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@tkpm-nhom5/frontend"), path: AnchoredSystemPathBuf("packages/frontend") }}))
+2025-04-10T04:31:23.751322Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("packages/frontend/src/pages/Profile/CurrentOrders.tsx")}
+2025-04-10T04:31:23.751332Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@tkpm-nhom5/frontend"), path: AnchoredSystemPathBuf("packages/frontend") }}))
+2025-04-10T04:31:24.751348Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("packages/frontend/src/api/cart.ts")}
+2025-04-10T04:31:24.751359Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@tkpm-nhom5/frontend"), path: AnchoredSystemPathBuf("packages/frontend") }}))
+2025-04-10T04:31:25.751383Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("packages/frontend/src/api/order.ts")}
+2025-04-10T04:31:25.751394Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@tkpm-nhom5/frontend"), path: AnchoredSystemPathBuf("packages/frontend") }}))
+2025-04-10T04:31:26.751485Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("packages/frontend/src/pages/Cart/components/shopping-cart.tsx")}
+2025-04-10T04:31:26.751494Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@tkpm-nhom5/frontend"), path: AnchoredSystemPathBuf("packages/frontend") }}))
+2025-04-10T04:31:27.851402Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("packages/frontend/src/api/auth.ts")}
+2025-04-10T04:31:27.851413Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@tkpm-nhom5/frontend"), path: AnchoredSystemPathBuf("packages/frontend") }}))
+2025-04-10T04:31:28.851226Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("packages/frontend/src/api/user.ts")}
+2025-04-10T04:31:28.851237Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@tkpm-nhom5/frontend"), path: AnchoredSystemPathBuf("packages/frontend") }}))
+2025-04-10T04:31:29.852036Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("packages/frontend/src/App.tsx")}
+2025-04-10T04:31:29.852047Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@tkpm-nhom5/frontend"), path: AnchoredSystemPathBuf("packages/frontend") }}))
+2025-04-10T04:31:30.851747Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("packages/frontend/src/pages/DebugCart.tsx"), AnchoredSystemPathBuf("packages/frontend/src/routes/AppRoutes.tsx")}
+2025-04-10T04:31:30.851786Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@tkpm-nhom5/frontend"), path: AnchoredSystemPathBuf("packages/frontend") }}))
+2025-04-10T04:32:53.650418Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("packages/frontend/src/pages/Cart/components/shopping-cart.tsx")}
+2025-04-10T04:32:53.650427Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@tkpm-nhom5/frontend"), path: AnchoredSystemPathBuf("packages/frontend") }}))
+2025-04-10T04:32:54.050254Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("packages/frontend/src/pages/Cart/components/shopping-cart.tsx")}
+2025-04-10T04:32:54.050263Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@tkpm-nhom5/frontend"), path: AnchoredSystemPathBuf("packages/frontend") }}))
+2025-04-10T04:32:54.089269Z  WARN turborepo_lib::package_changes_watcher: hashes are the same, no need to rerun
+2025-04-10T04:33:13.449796Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("packages/frontend/src/pages/Profile/CurrentOrders.tsx")}
+2025-04-10T04:33:13.449806Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@tkpm-nhom5/frontend"), path: AnchoredSystemPathBuf("packages/frontend") }}))
+2025-04-10T04:33:13.550253Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("packages/frontend/src/pages/Profile/CurrentOrders.tsx")}
+2025-04-10T04:33:13.550262Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@tkpm-nhom5/frontend"), path: AnchoredSystemPathBuf("packages/frontend") }}))
+2025-04-10T04:33:13.611946Z  WARN turborepo_lib::package_changes_watcher: hashes are the same, no need to rerun
+2025-04-10T04:33:26.748934Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("packages/frontend/src/api/order.ts")}
+2025-04-10T04:33:26.748960Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@tkpm-nhom5/frontend"), path: AnchoredSystemPathBuf("packages/frontend") }}))
+2025-04-10T04:33:26.949193Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("packages/frontend/src/api/order.ts")}
+2025-04-10T04:33:26.949204Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@tkpm-nhom5/frontend"), path: AnchoredSystemPathBuf("packages/frontend") }}))
+2025-04-10T04:33:26.949338Z  WARN turborepo_lib::package_changes_watcher: hashes are the same, no need to rerun
+2025-04-10T04:38:54.126516Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("packages/frontend/src/pages/Profile/CurrentOrders.tsx")}
+2025-04-10T04:38:54.126527Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@tkpm-nhom5/frontend"), path: AnchoredSystemPathBuf("packages/frontend") }}))
+2025-04-10T04:38:54.226422Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("packages/frontend/src/pages/Profile/CurrentOrders.tsx")}
+2025-04-10T04:38:54.226432Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@tkpm-nhom5/frontend"), path: AnchoredSystemPathBuf("packages/frontend") }}))
+2025-04-10T04:38:54.268790Z  WARN turborepo_lib::package_changes_watcher: hashes are the same, no need to rerun
+2025-04-10T04:39:09.826940Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("packages/frontend/src/api/order.ts")}
+2025-04-10T04:39:09.826950Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@tkpm-nhom5/frontend"), path: AnchoredSystemPathBuf("packages/frontend") }}))
+2025-04-10T04:39:09.926938Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("packages/frontend/src/api/order.ts")}
+2025-04-10T04:39:09.926948Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@tkpm-nhom5/frontend"), path: AnchoredSystemPathBuf("packages/frontend") }}))
+2025-04-10T04:39:09.946935Z  WARN turborepo_lib::package_changes_watcher: hashes are the same, no need to rerun
+2025-04-10T04:43:24.022727Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("packages/backend/src/modules/order/order.service.ts")}
+2025-04-10T04:43:24.022736Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@tkpm-nhom5/backend"), path: AnchoredSystemPathBuf("packages/backend") }}))
+2025-04-10T04:43:24.222020Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("packages/backend/src/modules/order/order.service.ts")}
+2025-04-10T04:43:24.222038Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@tkpm-nhom5/backend"), path: AnchoredSystemPathBuf("packages/backend") }}))
+2025-04-10T04:43:24.222069Z  WARN turborepo_lib::package_changes_watcher: hashes are the same, no need to rerun
+2025-04-10T04:43:50.221933Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("packages/backend/src/modules/order/order.controller.ts")}
+2025-04-10T04:43:50.221941Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@tkpm-nhom5/backend"), path: AnchoredSystemPathBuf("packages/backend") }}))
+2025-04-10T04:43:50.321686Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("packages/backend/src/modules/order/order.controller.ts")}
+2025-04-10T04:43:50.321700Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@tkpm-nhom5/backend"), path: AnchoredSystemPathBuf("packages/backend") }}))
+2025-04-10T04:43:50.324469Z  WARN turborepo_lib::package_changes_watcher: hashes are the same, no need to rerun
+2025-04-10T04:45:10.620496Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("packages/backend/src/modules/order/order.service.ts")}
+2025-04-10T04:45:10.620505Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@tkpm-nhom5/backend"), path: AnchoredSystemPathBuf("packages/backend") }}))
+2025-04-10T04:45:11.620076Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("packages/backend/src/modules/order/order.controller.ts")}
+2025-04-10T04:45:11.620087Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@tkpm-nhom5/backend"), path: AnchoredSystemPathBuf("packages/backend") }}))
+2025-04-10T04:45:12.619905Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("packages/frontend/src/api/auth.ts")}
+2025-04-10T04:45:12.619916Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@tkpm-nhom5/frontend"), path: AnchoredSystemPathBuf("packages/frontend") }}))

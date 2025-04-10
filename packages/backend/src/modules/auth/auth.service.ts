@@ -85,6 +85,7 @@ export class AuthService {
       }
 
       const payload = {
+        userId: adminUser._id,
         username: adminUser.username,
         role: adminUser.role,
       };  
@@ -115,6 +116,7 @@ export class AuthService {
 
     // Generate JWT token
     const payload = { 
+      userId: user._id,
       username: user.username,
       role: user.role 
     };

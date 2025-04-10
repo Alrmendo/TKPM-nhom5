@@ -1,9 +1,12 @@
-import { JSX, useState } from 'react';
+import { JSX, useState, useEffect } from 'react';
 import Header from '../../components/header';
 import ProfileSidebar from './profile/sidebar';
 import { OrderFilterTabs } from './profile/order-filter-tabs';
 import { OrderCard, type OrderItem } from './profile/order-card';
 import Footer from '../../components/footer';
+import { useAuth } from '../../context/AuthContext';
+import { getUserProfile } from '../../api/user';
+import { UserProfile } from '../../api/user';
 // Mock data for orders
 const mockOrders: OrderItem[] = [
   {
@@ -30,16 +33,27 @@ const mockOrders: OrderItem[] = [
   },
 ];
 
-// Mock data for user
-const mockUserData = {
-  firstName: 'Anjela',
-  lastName: 'Mattuew',
-};
-
 type OrderFilterTab = 'current' | 'previous' | 'canceled';
 
 export default function OrderHistory(): JSX.Element {
   const [activeTab, setActiveTab] = useState<OrderFilterTab>('previous');
+  const [userData, setUserData] = useState<UserProfile | null>(null);
+  const { isAuthenticated } = useAuth();
+
+  useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        const data = await getUserProfile();
+        setUserData(data);
+      } catch (err) {
+        console.error('Error fetching profile:', err);
+      }
+    };
+
+    if (isAuthenticated) {
+      fetchUserData();
+    }
+  }, [isAuthenticated]);
 
   // Filter orders based on active tab
   const filteredOrders = mockOrders.filter(order => {
@@ -58,8 +72,9 @@ export default function OrderHistory(): JSX.Element {
           <div className="md:col-span-1">
             <ProfileSidebar
               activeTab="order-history"
-              userName={`${mockUserData.firstName} ${mockUserData.lastName}`}
-              userImage="/placeholder.svg"
+              userName={userData ? userData.username : 'User'}
+              userImage={userData?.profileImageUrl}
+              fullName={userData ? `${userData.firstName} ${userData.lastName}` : undefined}
             />
           </div>
 

@@ -20,6 +20,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   async validate(payload: any) {
     // Trả về dữ liệu user đính kèm vào req.user
     return {
+      userId: payload.userId,
       username: payload.username,
       role: payload.role,
     };

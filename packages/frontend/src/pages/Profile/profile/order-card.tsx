@@ -1,5 +1,6 @@
 import { CheckCircle, XCircle, Clock, Hourglass } from 'lucide-react';
 import { JSX } from 'react';
+import { Link } from 'react-router-dom';
 
 export interface OrderItem {
   id: string;
@@ -11,6 +12,7 @@ export interface OrderItem {
   arrivalDate: string;
   returnDate: string;
   status: 'done' | 'pending' | 'under-review' | 'canceled';
+  isCartItem?: boolean;
 }
 
 interface OrderCardProps {
@@ -38,7 +40,7 @@ export function OrderCard({ order }: OrderCardProps): JSX.Element {
       case 'done':
         return 'Done';
       case 'pending':
-        return 'Pending';
+        return order.isCartItem ? 'In Cart' : 'Pending';
       case 'under-review':
         return 'Under review';
       case 'canceled':
@@ -88,12 +90,21 @@ export function OrderCard({ order }: OrderCardProps): JSX.Element {
             </span>
           </div>
 
-          <a
-            href={`/order-details/${order.id}`}
-            className="px-4 py-1 border rounded-full text-sm text-gray-600 hover:bg-gray-50"
-          >
-            More details
-          </a>
+          {order.isCartItem ? (
+            <Link
+              to="/cart"
+              className="px-4 py-1 border rounded-full text-sm text-amber-600 hover:bg-amber-50 border-amber-200"
+            >
+              Go to Cart
+            </Link>
+          ) : (
+            <a
+              href={`/order-details/${order.id}`}
+              className="px-4 py-1 border rounded-full text-sm text-gray-600 hover:bg-gray-50"
+            >
+              More details
+            </a>
+          )}
         </div>
       </div>
     </div>

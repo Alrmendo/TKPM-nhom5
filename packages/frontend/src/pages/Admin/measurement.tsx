@@ -1,12 +1,14 @@
-import { Input } from './components/input';
-import { Button } from './components/button';
-import { Textarea } from './components/textarea';
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Input } from "./components/input"
+import { Button } from "./components/button"
+import { Textarea } from "./components/textarea"
+import { useState } from "react"
+import { useNavigate } from "react-router-dom"
+import { useAuth } from '../../context/AuthContext'
 
 export default function MeasurementForm() {
-  const navigate = useNavigate();
-
+  const navigate = useNavigate()
+  const { clearCookie } = useAuth()
+  
   // State for active tab
   const [activeTab, setActiveTab] = useState('Basic measurements');
 
@@ -184,6 +186,12 @@ export default function MeasurementForm() {
     'Statistics',
   ];
 
+  // Handle logout
+  const handleLogout = async () => {
+    await clearCookie()
+    navigate("/login")
+  }
+
   return (
     <div className="min-h-screen bg-background flex">
       {/* Sidebar */}
@@ -218,7 +226,10 @@ export default function MeasurementForm() {
         </nav>
 
         <div className="px-4 py-6">
-          <button className="flex items-center text-[#c30000] font-medium hover:text-[#ff0000] transition-colors">
+          <button 
+            className="flex items-center text-[#c30000] font-medium hover:text-[#ff0000] transition-colors"
+            onClick={handleLogout}
+          >
             <span className="w-6 h-6 mr-3">
               <svg
                 xmlns="http://www.w3.org/2000/svg"

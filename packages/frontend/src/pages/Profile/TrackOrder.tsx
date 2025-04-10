@@ -2,16 +2,13 @@ import { OrderProgress } from './profile/progress';
 import { Button } from '../../components/button';
 import { Input } from '../../components/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../components/table';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Header from '../../components/header';
 import ProfileSidebar from './profile/sidebar';
 import Footer from '../../components/footer';
-
-// Mock data for user
-const mockUserData = {
-  firstName: 'Anjela',
-  lastName: 'Mattuew',
-};
+import { useAuth } from '../../context/AuthContext';
+import { getUserProfile } from '../../api/user';
+import { UserProfile } from '../../api/user';
 
 // Mock order data
 const mockOrderData = {
@@ -33,6 +30,23 @@ const mockOrderData = {
 
 const TrackOrderPage: React.FC = () => {
   const [orderCode, setOrderCode] = useState('');
+  const [userData, setUserData] = useState<UserProfile | null>(null);
+  const { isAuthenticated } = useAuth();
+  
+  useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        const data = await getUserProfile();
+        setUserData(data);
+      } catch (err) {
+        console.error('Error fetching profile:', err);
+      }
+    };
+
+    if (isAuthenticated) {
+      fetchUserData();
+    }
+  }, [isAuthenticated]);
 
   const handleTrackOrder = () => {
     console.log('Tracking order:', orderCode);
@@ -48,8 +62,9 @@ const TrackOrderPage: React.FC = () => {
           <div className="md:col-span-1">
             <ProfileSidebar
               activeTab="track-order"
-              userName={`${mockUserData.firstName} ${mockUserData.lastName}`}
-              userImage="/placeholder.svg?height=100&width=100"
+              userName={userData ? userData.username : 'User'}
+              userImage={userData?.profileImageUrl}
+              fullName={userData ? `${userData.firstName} ${userData.lastName}` : undefined}
             />
           </div>
 

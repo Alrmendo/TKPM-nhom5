@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext';
 import {
   getAllDresses,
   createDress,
@@ -29,6 +30,7 @@ const VisuallyHiddenInput = styled('input')({
 
 const DressManager = () => {
   const navigate = useNavigate();
+  const { clearCookie } = useAuth();
   
   // State for dresses
   const [dresses, setDresses] = useState<Dress[]>([]);
@@ -378,6 +380,12 @@ const DressManager = () => {
         </IconButton>
       </Grid>
     );
+  };
+
+  // Handle logout
+  const handleLogout = async () => {
+    await clearCookie();
+    navigate('/login');
   };
 
   return (
