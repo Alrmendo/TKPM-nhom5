@@ -35,6 +35,8 @@ const ForgotPassword = lazy(() => import('../pages/Auth/ForgotPassword'));
 const ResetPassword = lazy(() => import('../pages/Auth/ResetPassword'));
 const Cart = lazy(() => import('../pages/Cart/Cart'));
 const AboutPage = lazy(() => import('../pages/About/About'));
+const Appointments = lazy(() => import('../pages/Admin/appointments'));
+const CustomerList = lazy(() => import('../pages/Admin/customer-list'));
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -142,6 +144,22 @@ const AppRoutes = () => {
       element: (
         <ProtectedRoute requiredRole="admin">
           <Statistics />
+        </ProtectedRoute>
+      ),
+    },
+    {
+      path: '/admin/appointments',
+      element: (
+        <ProtectedRoute requiredRole="admin">
+          <Appointments />
+        </ProtectedRoute>
+      ),
+    },
+    {
+      path: '/admin/customer-list',
+      element: (
+        <ProtectedRoute requiredRole="admin">
+          <CustomerList />
         </ProtectedRoute>
       ),
     },

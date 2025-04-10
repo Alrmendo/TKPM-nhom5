@@ -16,10 +16,31 @@ export default function MeasurementForm() {
   // Handle sidebar item click
   const handleSidebarItemClick = (itemName: string) => {
     setActiveSidebarItem(itemName);
-    if (itemName === 'Statistics') {
-      navigate('/admin/statistics');
+    switch (itemName) {
+      case 'Order':
+        navigate('/admin/measurement');
+        break;
+      case 'Current orders':
+        navigate('/admin/current-orders');
+        break;
+      case 'Calender':
+        navigate('/admin/calendar');
+        break;
+      case 'Customer list':
+        navigate('/admin/customer-list');
+        break;
+      case 'Statistics':
+        navigate('/admin/statistics');
+        break;
+      case 'Settings':
+        navigate('/admin/settings');
+        break;
+      case 'Appointments':
+        navigate('/admin/appointments');
+        break;
+      default:
+        break;
     }
-    // Add other navigation cases here if needed
   };
 
   // Handle tab click
