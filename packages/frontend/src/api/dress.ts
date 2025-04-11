@@ -5,6 +5,41 @@ const API = axios.create({
   withCredentials: true, // Cấu hình gửi cookie kèm theo request
 });
 
+// Thêm interceptor để ghi log các request
+API.interceptors.request.use(
+  config => {
+    console.log('API Request:', {
+      url: config.url,
+      method: config.method,
+      withCredentials: config.withCredentials
+    });
+    return config;
+  },
+  error => {
+    console.error('API Request Error:', error);
+    return Promise.reject(error);
+  }
+);
+
+// Thêm interceptor để ghi log các response
+API.interceptors.response.use(
+  response => {
+    console.log('API Response:', {
+      status: response.status,
+      url: response.config.url
+    });
+    return response;
+  },
+  error => {
+    console.error('API Response Error:', error.response ? {
+      status: error.response.status,
+      data: error.response.data,
+      url: error.config.url
+    } : error);
+    return Promise.reject(error);
+  }
+);
+
 // Define dress type
 export interface DressVariant {
   size: {
@@ -193,6 +228,90 @@ export const removeImage = async (dressId: string, imageUrl: string): Promise<{ 
     throw new Error(response.data.message || 'Failed to remove image');
   } catch (error) {
     console.error(`Error removing image from dress with ID ${dressId}:`, error);
+    throw error;
+  }
+};
+
+// Interface for review submission
+export interface ReviewSubmission {
+  dressId: string;
+  rating: number;
+  reviewText: string;
+  images?: File[];
+}
+
+// Submit a review for dress
+export const submitReview = async (reviewData: ReviewSubmission): Promise<{ success: boolean; message: string }> => {
+  try {
+    const formData = new FormData();
+    formData.append('dressId', reviewData.dressId);
+    
+    // Đảm bảo rating là số từ 1-5
+    const ratingValue = Number(reviewData.rating);
+    if (isNaN(ratingValue) || ratingValue < 1 || ratingValue > 5) {
+      throw new Error('Rating must be a number between 1 and 5');
+    }
+    formData.append('rating', ratingValue.toString());
+    
+    // Đảm bảo reviewText không có ký tự đặc biệt ở đầu/cuối
+    const cleanReviewText = reviewData.reviewText.trim();
+    formData.append('reviewText', cleanReviewText);
+    
+    console.log('Submitting review for dress ID:', reviewData.dressId);
+    console.log('Review data:', {
+      dressId: reviewData.dressId,
+      rating: ratingValue,
+      reviewText: cleanReviewText,
+      hasImages: reviewData.images ? reviewData.images.length > 0 : false
+    });
+    
+    if (reviewData.images && reviewData.images.length > 0) {
+      reviewData.images.forEach(image => {
+        formData.append('images', image);
+      });
+    }
+    
+    const response = await API.post(`/dress/${reviewData.dressId}/review`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+      withCredentials: true, // Đảm bảo gửi cookies để xác thực
+    });
+    
+    if (response.data && response.data.success) {
+      return response.data;
+    }
+    
+    console.error('Server responded with error:', response.data);
+    throw new Error(response.data.message || 'Failed to submit review');
+  } catch (error) {
+    console.error('Error submitting review:', error);
+    if (error.response) {
+      console.error('Error response from server:', error.response.data);
+      throw new Error(error.response.data.message || `Server error: ${error.response.status}`);
+    }
+    throw error;
+  }
+};
+
+// Reply to an existing review
+export const replyToReview = async (
+  dressId: string, 
+  reviewId: string, 
+  replyText: string
+): Promise<{ success: boolean; message: string }> => {
+  try {
+    const response = await API.post(`/dress/${dressId}/review/${reviewId}/reply`, {
+      replyText
+    });
+    
+    if (response.data && response.data.success) {
+      return response.data;
+    }
+    
+    throw new Error(response.data.message || 'Failed to reply to review');
+  } catch (error) {
+    console.error(`Error replying to review:`, error);
     throw error;
   }
 }; 
