@@ -5,6 +5,16 @@ const API = axios.create({
   withCredentials: true,
 });
 
+export interface UserSettings {
+  emailNotifications: boolean;
+  smsNotifications: boolean;
+  orderUpdates: boolean;
+  promotions: boolean;
+  accountActivity: boolean;
+  darkMode: boolean;
+  language: string;
+}
+
 export interface UserProfile {
   _id: string;
   username: string;
@@ -16,6 +26,7 @@ export interface UserProfile {
   role: string;
   isVerified: boolean;
   profileImageUrl?: string;
+  settings?: UserSettings;
   createdAt: string;
   updatedAt: string;
 }
@@ -89,5 +100,15 @@ export const uploadProfileImage = async (formData: FormData): Promise<{ imageUrl
     return response.data;
   } catch (error: any) {
     throw new Error(error.response?.data?.message || 'Failed to upload image');
+  }
+};
+
+// Update user settings
+export const updateUserSettings = async (data: UserSettings): Promise<UserProfile> => {
+  try {
+    const response = await API.put('/user/settings', data);
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to update settings');
   }
 }; 

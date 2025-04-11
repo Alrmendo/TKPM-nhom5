@@ -1,12 +1,4 @@
-export interface PaymentFormData {
-  cardNumber: string;
-  cardholderName: string;
-  expiryDate: string;
-  cvv: string;
-  billingAddress: string;
-}
-
-export interface ShippingFormData {
+export interface Address {
   firstName: string;
   lastName: string;
   company?: string;
@@ -19,19 +11,78 @@ export interface ShippingFormData {
   country: string;
 }
 
+export interface PaymentMethod {
+  id: string;
+  type: 'credit_card' | 'paypal' | 'cash_on_delivery';
+  last4?: string;
+  cardBrand?: string;
+  expiryDate?: string;
+}
+
 export interface OrderItem {
+  dressId: string;
   name: string;
+  image: string;
   size: string;
   color: string;
-  duration: string;
-  price: number;
-  image: string;
+  quantity: number;
+  pricePerDay: number;
 }
 
 export interface OrderSummary {
   subtotal: number;
   tax: number;
-  shipping?: number;
+  shipping: number;
   total: number;
   currency: string;
+}
+
+export interface PaymentFormData {
+  cardNumber: string;
+  cardholderName: string;
+  expiryDate: string;
+  cvv: string;
+  saveCard: boolean;
+}
+
+export enum OrderStatus {
+  PENDING = 'pending',
+  CONFIRMED = 'confirmed',
+  CANCELLED = 'cancelled',
+  DELIVERED = 'delivered',
+  RETURNED = 'returned',
+  UNDER_REVIEW = 'under-review'
+}
+
+export interface Order {
+  _id?: string;
+  userId: string;
+  items: OrderItem[];
+  startDate: Date;
+  endDate: Date;
+  arrivalDate?: Date;
+  returnDate?: Date;
+  status: OrderStatus;
+  totalAmount: number;
+  notes?: string;
+  shippingAddress?: Address;
+  paymentMethod?: PaymentMethod;
+  createdAt?: Date;
+  updatedAt?: Date;
+}
+
+export interface CartItem {
+  dressId: string;
+  name: string;
+  image: string;
+  sizeId: string;
+  sizeName: string;
+  colorId: string;
+  colorName: string;
+  quantity: number;
+  pricePerDay: number;
+  startDate: Date;
+  endDate: Date;
+  arrivalDate?: Date;
+  returnDate?: Date;
 } 

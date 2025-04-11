@@ -14,6 +14,7 @@ const OrderHistory = lazy(() => import('../pages/Profile/OrderHistory'));
 const CurrentOrders = lazy(() => import('../pages/Profile/CurrentOrders'));
 const TrackOrder = lazy(() => import('../pages/Profile/TrackOrder'));
 const Address = lazy(() => import('../pages/Profile/Address'));
+const Settings = lazy(() => import('../pages/Profile/Settings'));
 const OrderDetails = lazy(() => import('../pages/Profile/OrderDetails'));
 const Review = lazy(() => import('../pages/Payment/Review'));
 const Information = lazy(() => import('../pages/Payment/Information'));
@@ -85,6 +86,14 @@ const AppRoutes = () => {
     { path: '/current-orders', element: <CurrentOrders /> },
     { path: '/track-order', element: <TrackOrder /> },
     { path: '/address', element: <Address /> },
+    { 
+      path: '/settings', 
+      element: (
+        <ProtectedRoute requiredRole="user">
+          <Settings />
+        </ProtectedRoute>
+      ) 
+    },
     { path: '/order-details/:id', element: <OrderDetails /> },
     { path: '/payment-review', element: <Review /> },
     { path: '/payment-information', element: <Information /> },

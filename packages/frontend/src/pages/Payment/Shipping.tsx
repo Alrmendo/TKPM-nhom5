@@ -1,236 +1,334 @@
-import { CheckCircle, Truck, CreditCard, ChevronLeft, ChevronRight, HelpCircle } from 'lucide-react';
-import Header from '../../components/header';
-import Footer from '../../components/footer';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
+import { CartItem, OrderSummary, Address } from './types';
+import { calculateOrderSummary, formatCurrency } from './utils/paymentUtils';
+import CheckoutSteps from './components/CheckoutSteps';
+
+interface ShippingOption {
+  id: string;
+  name: string;
+  description: string;
+  price: number;
+  estimatedDelivery: string;
+}
 
 const Shipping: React.FC = () => {
   const navigate = useNavigate();
-
+  const [cartItems, setCartItems] = useState<CartItem[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [summary, setSummary] = useState<OrderSummary>({
+    subtotal: 0,
+    tax: 0,
+    shipping: 0,
+    total: 0,
+    currency: 'USD'
+  });
+  const [shippingAddress, setShippingAddress] = useState<Address | null>(null);
+  const [selectedShippingOption, setSelectedShippingOption] = useState<string>('standard');
+  
+  // Shipping options
+  const shippingOptions: ShippingOption[] = [
+    {
+      id: 'standard',
+      name: 'Standard Shipping',
+      description: 'Delivery in 3-5 business days',
+      price: 0, // Free standard shipping
+      estimatedDelivery: '3-5 business days'
+    },
+    {
+      id: 'express',
+      name: 'Express Shipping',
+      description: 'Delivery in 1-2 business days',
+      price: 15,
+      estimatedDelivery: '1-2 business days'
+    }
+  ];
+  
+  // Fetch cart data and get shipping address from session storage
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setIsLoading(true);
+        
+        // Get shipping address from session storage
+        const savedAddress = sessionStorage.getItem('shippingAddress');
+        if (!savedAddress) {
+          setError('No shipping address found');
+          setTimeout(() => {
+            navigate('/payment-information');
+          }, 2000);
+          return;
+        }
+        
+        setShippingAddress(JSON.parse(savedAddress));
+        
+        // Fetch cart data
+        const cartResponse = await axios.get('http://localhost:3000/cart', { withCredentials: true });
+        
+        if (cartResponse.data.success && cartResponse.data.data) {
+          setCartItems(cartResponse.data.data.items || []);
+          
+          // Calculate order summary if there are items
+          if (cartResponse.data.data.items && cartResponse.data.data.items.length > 0) {
+            const firstItem = cartResponse.data.data.items[0];
+            const calculatedSummary = calculateOrderSummary(
+              cartResponse.data.data.items,
+              new Date(firstItem.startDate),
+              new Date(firstItem.endDate)
+            );
+            setSummary(calculatedSummary);
+          }
+        } else {
+          setError('No items in cart');
+          setTimeout(() => {
+            navigate('/cart');
+          }, 2000);
+          return;
+        }
+      } catch (error) {
+        console.error('Error fetching data:', error);
+        setError('Failed to load required data');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    fetchData();
+  }, [navigate]);
+  
+  const handleShippingOptionChange = (optionId: string) => {
+    setSelectedShippingOption(optionId);
+    
+    // Update summary with selected shipping cost
+    const selectedOption = shippingOptions.find(option => option.id === optionId);
+    if (selectedOption) {
+      setSummary(prevSummary => ({
+        ...prevSummary,
+        shipping: selectedOption.price,
+        total: prevSummary.subtotal + prevSummary.tax + selectedOption.price
+      }));
+    }
+  };
+  
+  const handleContinueToPayment = () => {
+    try {
+      setIsSubmitting(true);
+      
+      // Save selected shipping option to session storage
+      const selectedOption = shippingOptions.find(option => option.id === selectedShippingOption);
+      sessionStorage.setItem('shippingMethod', JSON.stringify(selectedOption));
+      
+      // Update summary in session storage
+      sessionStorage.setItem('orderSummary', JSON.stringify(summary));
+      
+      // Navigate to payment page
+      navigate('/payment-checkout');
+    } catch (error) {
+      console.error('Error processing shipping selection:', error);
+      setError('Failed to save shipping method');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+  
+  const handleBackToInformation = () => {
+    navigate('/payment-information');
+  };
+  
+  if (isLoading) {
+    return (
+      <div className="container mx-auto px-4 py-8 max-w-6xl">
+        <CheckoutSteps currentStep="shipping" completedSteps={['review', 'information']} />
+        <div className="flex justify-center items-center h-64">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#c3937c]"></div>
+        </div>
+      </div>
+    );
+  }
+  
+  if (error && (!cartItems.length || !shippingAddress)) {
+    return (
+      <div className="container mx-auto px-4 py-8 max-w-6xl">
+        <CheckoutSteps currentStep="shipping" completedSteps={['review', 'information']} />
+        <div className="bg-white rounded-lg shadow-md p-8 text-center">
+          <h2 className="text-2xl font-semibold mb-4">Error</h2>
+          <p className="text-gray-600 mb-6">{error}</p>
+          <p className="text-gray-600 mb-6">Redirecting...</p>
+        </div>
+      </div>
+    );
+  }
+  
   return (
-    <div className="min-h-screen bg-white">
-      <Header />
-      {/* Progress Tracker */}
-      <div className="container mx-auto px-4 py-8">
-        <div className="flex flex-wrap justify-between items-center max-w-4xl mx-auto">
-          <div className="flex flex-col items-center mb-4 md:mb-0">
-            <div className="w-12 h-12 rounded-full bg-[#000000] flex items-center justify-center">
-              <CheckCircle className="w-6 h-6 text-white" />
+    <div className="container mx-auto px-4 py-8 max-w-6xl">
+      <CheckoutSteps currentStep="shipping" completedSteps={['review', 'information']} />
+      
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {/* Main Content - Shipping Options */}
+        <div className="lg:col-span-2">
+          {error && (
+            <div className="bg-red-50 border border-red-200 text-red-800 rounded-md p-4 mb-4">
+              {error}
             </div>
-            <span className="mt-2 text-sm font-medium">Reserve a time</span>
-          </div>
-
-          <div className="hidden md:block w-16 h-[1px] bg-[#c3937c]"></div>
-
-          <div className="flex flex-col items-center mb-4 md:mb-0">
-            <div className="w-12 h-12 rounded-full bg-[#000000] flex items-center justify-center">
-              <CheckCircle className="w-6 h-6 text-white" />
-            </div>
-            <span className="mt-2 text-sm font-medium">Order overview</span>
-          </div>
-
-          <div className="hidden md:block w-16 h-[1px] bg-[#cbcbcb]"></div>
-
-          <div className="flex flex-col items-center mb-4 md:mb-0">
-            <div className="w-12 h-12 rounded-full bg-[#000000] flex items-center justify-center">
-              <CheckCircle className="w-6 h-6 text-white" />
-            </div>
-            <span className="mt-2 text-sm font-medium">Information</span>
-          </div>
-
-          <div className="hidden md:block w-16 h-[1px] bg-[#cbcbcb]"></div>
-
-          <div className="flex flex-col items-center mb-4 md:mb-0">
-            <div className="w-12 h-12 rounded-full bg-[#c3937c] flex items-center justify-center">
-              <Truck className="w-6 h-6 text-white" />
-            </div>
-            <span className="mt-2 text-sm text-[#404040]">Shipping</span>
-          </div>
-
-          <div className="hidden md:block w-16 h-[1px] bg-[#cbcbcb]"></div>
-
-          <div className="flex flex-col items-center">
-            <div className="w-12 h-12 rounded-full bg-[#ededed] flex items-center justify-center">
-              <CreditCard className="w-6 h-6 text-[#cbcbcb]" />
-            </div>
-            <span className="mt-2 text-sm text-[#404040]">Payment</span>
-          </div>
-        </div>
-      </div>
-
-      {/* Main Content */}
-      <div className="container mx-auto px-4 py-8">
-        <div className="flex flex-col md:flex-row gap-8 max-w-6xl mx-auto">
-          {/* Left Column - Shipping Information */}
-          <div className="flex-1">
-            {/* Contact Information */}
-            <div className="border border-[#eaeaea] rounded-lg p-4 mb-6">
-              <div className="flex justify-between items-center mb-2">
-                <span className="text-[#868686]">Contact</span>
-                <span className="text-[#0c0c0c]">Shabnam.mn85@gmail.com</span>
-                <button className="text-[#c3937c] text-sm">Change</button>
-              </div>
-              <div className="border-t border-[#eaeaea] my-4"></div>
-              <div className="flex justify-between items-center">
-                <span className="text-[#868686]">Ship to</span>
-                <span className="text-[#0c0c0c]">6 Parisan crescent ,Ontario,L4N0Y9,Canada</span>
-                <button className="text-[#c3937c] text-sm">Change</button>
-              </div>
-            </div>
-
-            {/* Shipping Methods */}
+          )}
+          
+          <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+            <h2 className="text-lg font-semibold mb-4">Shipping Method</h2>
+            
             <div className="mb-6">
-              <h2 className="text-xl font-medium mb-4">Shipping Methods</h2>
-              <div className="space-y-4">
-                <div className="border border-[#eaeaea] bg-[#fbf8f1] rounded-lg p-4">
-                  <div className="flex items-start">
-                    <div className="flex items-center h-5 mt-1">
-                      <input id="express" name="shipping" type="radio" className="h-4 w-4 accent-[#c3937c]" defaultChecked />
-                    </div>
-                    <div className="ml-3 flex-1">
-                      <label htmlFor="express" className="font-medium text-[#c3937c]">
-                        Express Courier (Air)
-                      </label>
-                      <p className="text-sm text-[#868686]">(1 Business day)</p>
-                    </div>
-                    <div className="text-[#c3937c] font-medium">$37.12</div>
-                  </div>
+              <h3 className="text-sm font-medium text-gray-700 mb-2">Shipping to:</h3>
+              {shippingAddress && (
+                <div className="text-sm text-gray-600">
+                  <p>{shippingAddress.firstName} {shippingAddress.lastName}</p>
+                  <p>{shippingAddress.address}</p>
+                  {shippingAddress.apartment && <p>{shippingAddress.apartment}</p>}
+                  <p>
+                    {shippingAddress.city}, {shippingAddress.province}, {shippingAddress.postalCode}
+                  </p>
+                  <p>{shippingAddress.country}</p>
+                  <button 
+                    onClick={handleBackToInformation}
+                    className="text-[#c3937c] hover:text-[#a67c66] font-medium text-xs mt-2"
+                  >
+                    Change
+                  </button>
                 </div>
-
-                <div className="border border-[#eaeaea] rounded-lg p-4">
-                  <div className="flex items-start">
-                    <div className="flex items-center h-5 mt-1">
-                      <input id="normal" name="shipping" type="radio" className="h-4 w-4 accent-[#c3937c]" />
-                    </div>
-                    <div className="ml-3 flex-1">
-                      <label htmlFor="normal" className="font-medium text-[#0c0c0c]">
-                        Normal Shipping
-                      </label>
-                      <p className="text-sm text-[#868686]">(3 to 5 Business days)</p>
-                    </div>
-                    <div className="text-[#0c0c0c] font-medium">Above $500 is free</div>
-                  </div>
-                </div>
-              </div>
+              )}
             </div>
-
-            {/* Duties and Taxes */}
-            <div className="mb-8">
-              <h2 className="text-xl font-medium mb-4">Duties and Taxes</h2>
-              <div className="space-y-4">
-                <div className="border border-[#eaeaea] bg-[#fbf8f1] rounded-lg p-4">
-                  <div className="flex items-start">
-                    <div className="flex items-center h-5 mt-1">
-                      <input id="paynow" name="payment" type="radio" className="h-4 w-4 accent-[#c3937c]" defaultChecked />
-                    </div>
-                    <div className="ml-3">
-                      <label htmlFor="paynow" className="font-medium text-[#c3937c]">
-                        Pay Now
-                      </label>
-                      <p className="text-sm text-[#868686]">No additional fee on delivery</p>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="border border-[#eaeaea] rounded-lg p-4">
-                  <div className="flex items-start">
-                    <div className="flex items-center h-5 mt-1">
-                      <input id="paydelivery" name="payment" type="radio" className="h-4 w-4 accent-[#c3937c]" />
-                    </div>
-                    <div className="ml-3">
-                      <label htmlFor="paydelivery" className="font-medium text-[#0c0c0c]">
-                        Pay on delivery
+            
+            <div className="space-y-4">
+              {shippingOptions.map((option) => (
+                <div 
+                  key={option.id}
+                  className={`border rounded-md p-4 cursor-pointer transition-colors ${
+                    selectedShippingOption === option.id 
+                      ? 'border-[#c3937c] bg-[#faf6f3]' 
+                      : 'border-gray-200 hover:border-gray-300'
+                  }`}
+                  onClick={() => handleShippingOptionChange(option.id)}
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center">
+                      <input
+                        id={option.id}
+                        name="shipping-option"
+                        type="radio"
+                        className="h-4 w-4 accent-[#c3937c]"
+                        checked={selectedShippingOption === option.id}
+                        onChange={() => handleShippingOptionChange(option.id)}
+                      />
+                      <label htmlFor={option.id} className="ml-3 cursor-pointer flex flex-col">
+                        <span className="block text-sm font-medium text-gray-900">{option.name}</span>
+                        <span className="block text-sm text-gray-500">{option.description}</span>
                       </label>
                     </div>
+                    <span className="text-sm font-medium">
+                      {option.price === 0 ? 'Free' : formatCurrency(option.price)}
+                    </span>
                   </div>
                 </div>
-              </div>
+              ))}
             </div>
-
-            {/* Navigation Buttons */}
-            <div className="flex justify-between items-center">
+            
+            <div className="mt-8 flex justify-between">
               <button
-                onClick={() => {
-                  navigate('/payment-information');
-                }}
-                className="flex items-center text-[#c3937c]">
-                <ChevronLeft className="w-4 h-4 mr-1" />
-                Back to information
+                onClick={handleBackToInformation}
+                className="text-[#c3937c] hover:text-[#a67c66] font-medium flex items-center"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4 mr-1">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
+                </svg>
+                Return to information
               </button>
+              
               <button
-                onClick={() => {
-                  navigate('/payment-checkout');
-                }}
-                className="bg-[#c3937c] text-white px-6 py-3 rounded-full flex items-center">
-                Continue to payment
-                <ChevronRight className="w-4 h-4 ml-1" />
+                onClick={handleContinueToPayment}
+                disabled={isSubmitting}
+                className={`rounded-md bg-[#c3937c] px-4 py-2 text-white font-medium shadow-sm hover:bg-[#a67c66] focus:outline-none focus:ring-2 focus:ring-[#c3937c] ${
+                  isSubmitting ? 'opacity-70 cursor-not-allowed' : ''
+                }`}
+              >
+                {isSubmitting ? 'Processing...' : 'Continue to payment'}
               </button>
             </div>
           </div>
-
-          {/* Right Column - Order Summary */}
-          <div className="w-full md:w-[400px] border-l border-[#eaeaea] pl-8">
-            <div className="flex items-start mb-6">
-              <div className="relative w-16 h-20 bg-[#f5f5f5] rounded-md overflow-hidden">
-                <img src="/placeholder.svg?height=80&width=64" alt="Eliza Satin dress" width={64} height={80} className="object-cover" />
-              </div>
-              <div className="ml-4 flex-1">
-                <div className="flex justify-between">
-                  <h3 className="font-medium">Eliza Satin</h3>
-                  <span className="font-medium">$1050</span>
-                </div>
-                <p className="text-sm text-[#868686] mt-1">M / White / 3 Nights</p>
-              </div>
-            </div>
-
-            {/* Discount Code */}
-            <div className="flex mb-6">
-              <input type="text" placeholder="Discount code or gift card" className="flex-1 border border-[#eaeaea] rounded-l-lg px-4 py-3 text-sm" defaultValue="********" />
-              <button className="bg-[#f5f5f5] text-[#868686] px-6 py-3 rounded-r-lg">Apply</button>
-            </div>
-
-            {/* Order Summary */}
-            <div className="space-y-4">
-              <div className="flex justify-between">
-                <span className="text-[#0c0c0c]">Subtotal</span>
-                <span className="font-medium">$1050</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-[#0c0c0c]">TAX %13</span>
-                <span className="font-medium">$136.5</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <div className="flex items-center">
-                  <span className="text-[#0c0c0c]">Shipping</span>
-                  <HelpCircle className="w-4 h-4 ml-1 text-[#868686]" />
-                </div>
-                <span className="text-[#868686]">Enter shipping address</span>
-              </div>
-              <div className="border-t border-[#eaeaea] pt-4">
-                <div className="flex justify-between">
-                  <span className="font-medium text-lg">Total</span>
-                  <div className="text-right">
-                    <span className="text-sm text-[#868686]">CAD</span>
-                    <span className="font-bold text-lg ml-1">1186.5$</span>
+        </div>
+        
+        {/* Order Summary */}
+        <div className="lg:col-span-1">
+          <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+            <h2 className="text-lg font-semibold mb-4">Order Summary</h2>
+            
+            <div className="divide-y divide-gray-200">
+              {cartItems.map((item, index) => {
+                // Calculate days
+                const startDate = new Date(item.startDate);
+                const endDate = new Date(item.endDate);
+                const days = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+                
+                return (
+                  <div key={index} className="py-4 flex items-center">
+                    <div className="h-16 w-16 flex-shrink-0 overflow-hidden rounded-md border border-gray-200 relative">
+                      <img
+                        src={item.image}
+                        alt={item.name}
+                        className="h-full w-full object-cover object-center"
+                      />
+                      <span className="absolute -top-2 -right-2 h-6 w-6 rounded-full bg-[#c3937c] text-white text-xs flex items-center justify-center">
+                        {item.quantity}
+                      </span>
+                    </div>
+                    
+                    <div className="ml-4 flex-1">
+                      <h3 className="text-sm font-medium text-gray-900">{item.name}</h3>
+                      <p className="text-xs text-gray-500">{item.sizeName} · {item.colorName}</p>
+                      <p className="text-xs text-gray-500">{days} days rental</p>
+                    </div>
+                    
+                    <div className="text-right">
+                      <p className="text-sm font-medium text-gray-900">
+                        {formatCurrency(item.pricePerDay * days * item.quantity)}
+                      </p>
+                    </div>
                   </div>
-                </div>
-              </div>
+                );
+              })}
             </div>
-
-            {/* Guarantee */}
-            <div className="bg-[#f5f5f5] rounded-lg p-4 mt-6">
-              <div className="flex items-start">
-                <HelpCircle className="w-5 h-5 text-[#0c0c0c] mt-1" />
-                <div className="ml-3">
-                  <p className="text-sm font-medium">We guarantee no additional charges on delivery.</p>
-                  <p className="text-sm text-[#606060] mt-2">We also send an agreement for you based on our rules and regulations which should be signed on behalf of you.</p>
-                </div>
+            
+            <div className="border-t border-gray-200 pt-4 mt-4">
+              <div className="flex justify-between py-2">
+                <span className="text-sm text-gray-600">Subtotal</span>
+                <span className="text-sm">{formatCurrency(summary.subtotal)}</span>
+              </div>
+              
+              <div className="flex justify-between py-2">
+                <span className="text-sm text-gray-600">Tax</span>
+                <span className="text-sm">{formatCurrency(summary.tax)}</span>
+              </div>
+              
+              <div className="flex justify-between py-2">
+                <span className="text-sm text-gray-600">Shipping</span>
+                <span className="text-sm">
+                  {summary.shipping === 0 
+                    ? 'Free' 
+                    : formatCurrency(summary.shipping)
+                  }
+                </span>
+              </div>
+              
+              <div className="flex justify-between py-2 border-t border-gray-200 mt-2">
+                <span className="font-semibold">Total</span>
+                <span className="font-semibold text-[#c3937c]">
+                  {formatCurrency(summary.total)}
+                </span>
               </div>
             </div>
           </div>
         </div>
       </div>
-      {/* Footer */}
-      <Footer />
     </div>
   );
 };

@@ -20,7 +20,7 @@ export function OrderFilterTabs({ defaultTab = 'current', onTabChange }: OrderFi
       <button
         onClick={() => handleTabChange('current')}
         className={`px-4 py-2 rounded-full text-sm ${
-          activeTab === 'current' ? 'bg-gray-100 text-gray-800' : 'bg-white border text-gray-600 hover:bg-gray-50'
+          activeTab === 'current' ? 'bg-[#c3937c] text-white' : 'bg-white border text-gray-600 hover:bg-gray-50'
         }`}
       >
         Current order
@@ -36,7 +36,7 @@ export function OrderFilterTabs({ defaultTab = 'current', onTabChange }: OrderFi
       <button
         onClick={() => handleTabChange('canceled')}
         className={`px-4 py-2 rounded-full text-sm ${
-          activeTab === 'canceled' ? 'bg-gray-100 text-gray-800' : 'bg-white border text-gray-600 hover:bg-gray-50'
+          activeTab === 'canceled' ? 'bg-[#c3937c] text-white' : 'bg-white border text-gray-600 hover:bg-gray-50'
         }`}
       >
         Canceled order

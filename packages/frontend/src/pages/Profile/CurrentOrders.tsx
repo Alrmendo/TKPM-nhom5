@@ -23,10 +23,14 @@ const mapOrderStatus = (backendStatus: string): 'done' | 'pending' | 'under-revi
     'canceled': 'canceled',
     'delivered': 'done',
     'returned': 'done',
-    'done': 'done'
+    'done': 'done',
+    'paid': 'done'    // Map paid status to done so it shows in previous orders
   };
   
-  console.log(`Mapping backend status "${backendStatus}" to frontend status "${statusMap[backendStatus] || 'pending'}"`);
+  // Log for debugging
+  console.log(`Mapping backend status "${backendStatus}" to frontend status "${statusMap[backendStatus.toLowerCase()] || 'pending'}"`);
+  console.log(`Is this a paid order? ${backendStatus.toLowerCase() === 'paid'}`);
+  
   return statusMap[backendStatus.toLowerCase()] || 'pending'; // Default to pending if status unknown
 };
 
@@ -84,54 +88,59 @@ const CurrentOrdersPage: React.FC = () => {
             const mappedStatus = mapOrderStatus(order.status);
             console.log(`Mapped status from "${order.status}" to "${mappedStatus}"`);
             
-            formattedOrders.push({
-              id: order._id,
-              name: firstItem.name, // Assuming the first item's name as the main order name
-              image: firstItem.image,
-              size: firstItem.size,
-              color: firstItem.color,
-              rentalDuration: `${Math.ceil((new Date(order.endDate).getTime() - new Date(order.startDate).getTime()) / (1000 * 60 * 60 * 24))} Nights`,
-              arrivalDate: new Date(order.arrivalDate || order.startDate).toLocaleDateString(),
-              returnDate: new Date(order.returnDate || order.endDate).toLocaleDateString(),
-              status: mappedStatus,
-            });
+            // Only add non-paid orders to current orders
+            if (order.status.toLowerCase() !== 'paid') {
+              formattedOrders.push({
+                id: order._id,
+                name: firstItem.name, // Assuming the first item's name as the main order name
+                image: firstItem.image,
+                size: firstItem.size,
+                color: firstItem.color,
+                rentalDuration: `${Math.ceil((new Date(order.endDate).getTime() - new Date(order.startDate).getTime()) / (1000 * 60 * 60 * 24))} Nights`,
+                arrivalDate: new Date(order.arrivalDate || order.startDate).toLocaleDateString(),
+                returnDate: new Date(order.returnDate || order.endDate).toLocaleDateString(),
+                status: mappedStatus,
+              });
+            }
           });
         }
         
-        // Always fetch cart items and add them to current orders
-        console.log('Fetching cart items...');
-        try {
-          const cartData = await getCart();
-          
-          if (cartData && cartData.items && cartData.items.length > 0) {
-            console.log('Found items in cart:', cartData.items);
+        // Only fetch cart items if we need them (when viewing current orders)
+        if (activeTab === 'current') {
+          console.log('Fetching cart items...');
+          try {
+            const cartData = await getCart();
             
-            // Add cart items as "pending" orders
-            cartData.items.forEach((item, index) => {
-              const startDate = new Date(item.startDate);
-              const endDate = new Date(item.endDate);
-              const daysCount = differenceInDays(endDate, startDate) + 1;
+            if (cartData && cartData.items && cartData.items.length > 0) {
+              console.log('Found items in cart:', cartData.items);
               
-              formattedOrders.push({
-                id: `cart-item-${index}`,
-                name: typeof item.dress === 'object' ? item.dress.name : item.name || 'Dress',
-                image: typeof item.dress === 'object' && item.dress.images?.length ? 
-                  item.dress.images[0] : item.image || '/placeholder.svg',
-                size: typeof item.size === 'object' ? item.size.name : item.sizeName || 'One Size',
-                color: typeof item.color === 'object' ? item.color.name : item.colorName || 'Standard',
-                rentalDuration: `${daysCount} Nights`,
-                arrivalDate: format(startDate, 'MM/dd/yyyy'),
-                returnDate: format(endDate, 'MM/dd/yyyy'),
-                status: 'pending',
-                isCartItem: true
+              // Add cart items as "pending" orders
+              cartData.items.forEach((item, index) => {
+                const startDate = new Date(item.startDate);
+                const endDate = new Date(item.endDate);
+                const daysCount = differenceInDays(endDate, startDate) + 1;
+                
+                formattedOrders.push({
+                  id: `cart-item-${index}`,
+                  name: typeof item.dress === 'object' ? item.dress.name : item.name || 'Dress',
+                  image: typeof item.dress === 'object' && item.dress.images?.length ? 
+                    item.dress.images[0] : item.image || '/placeholder.svg',
+                  size: typeof item.size === 'object' ? item.size.name : item.sizeName || 'One Size',
+                  color: typeof item.color === 'object' ? item.color.name : item.colorName || 'Standard',
+                  rentalDuration: `${daysCount} Nights`,
+                  arrivalDate: format(startDate, 'MM/dd/yyyy'),
+                  returnDate: format(endDate, 'MM/dd/yyyy'),
+                  status: 'pending',
+                  isCartItem: true
+                });
               });
-            });
+            }
+          } catch (cartErr) {
+            console.error('Error fetching cart:', cartErr);
           }
-        } catch (cartErr) {
-          console.error('Error fetching cart:', cartErr);
         }
         
-        console.log('Formatted orders with cart items:', formattedOrders);
+        console.log('Final formatted orders:', formattedOrders);
         setOrders(formattedOrders);
       } catch (err) {
         console.error('Error fetching orders:', err);
@@ -145,17 +154,15 @@ const CurrentOrdersPage: React.FC = () => {
     };
 
     fetchOrders();
-  }, [isAuthenticated]);
+  }, [isAuthenticated, activeTab]);
 
   // Filter orders based on active tab
   const filteredOrders = orders.filter(order => {
     if (activeTab === 'current') {
-      // Include cart items in current orders tab
-      const isCurrent = order.status === 'pending' || order.status === 'under-review' || order.isCartItem === true;
-      console.log(`Order ${order.id} status: ${order.status}, isCurrent: ${isCurrent}`);
-      return isCurrent;
+      // Only show pending and under-review in current orders
+      return order.status === 'pending' || order.status === 'under-review' || order.isCartItem === true;
     }
-    if (activeTab === 'previous') return order.status === 'done';
+    if (activeTab === 'previous') return order.status === 'done' || order.status === 'confirmed' || order.status === 'paid';
     if (activeTab === 'canceled') return order.status === 'canceled';
     return true;
   });
@@ -167,12 +174,26 @@ const CurrentOrdersPage: React.FC = () => {
   const handleDeleteOrder = async (orderId: string) => {
     try {
       setLoading(true);
-      await cancelOrder(orderId);
-      // Clear the cart since the order is deleted
-      await clearCart();
-      // Remove the canceled order from the list or reload orders
+      
+      // Check if this is a cart item
+      if (orderId.startsWith('cart-item-')) {
+        // Extract the index from the cart-item-X pattern
+        const itemIndex = parseInt(orderId.replace('cart-item-', ''), 10);
+        
+        // For cart items, we use removeFromCart instead of cancelOrder
+        const { removeFromCart } = await import('../../api/cart');
+        await removeFromCart(itemIndex);
+        
+        toast.success('Item removed from cart successfully');
+      } else {
+        // For actual orders, use cancelOrder
+        await cancelOrder(orderId);
+        toast.success('Order canceled successfully');
+      }
+      
+      // Refresh the orders list
       setOrders(prevOrders => prevOrders.filter(order => order.id !== orderId));
-      toast.success('Order deleted successfully');
+      
     } catch (err: any) {
       console.error('Failed to delete order:', err);
       toast.error(err.message || 'Failed to delete order');

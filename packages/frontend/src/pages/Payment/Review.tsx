@@ -1,321 +1,223 @@
-import { useState, useEffect } from 'react';
-import { CheckCircle, Truck, CreditCard, Info, FileText, Calendar, ChevronRight, ChevronLeft } from 'lucide-react';
-import Header from '../../components/header';
-import Footer from '../../components/footer';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getCart } from '../../api/cart';
-import { format, differenceInDays } from 'date-fns';
-import { toast } from 'react-hot-toast';
+import axios from 'axios';
+import { CartItem, OrderSummary } from './types';
+import { calculateOrderSummary, formatCurrency, formatDate } from './utils/paymentUtils';
+import CheckoutSteps from './components/CheckoutSteps';
 
-interface CartItem {
-  _id: string;
-  dress: {
-    _id: string;
-    name: string;
-    dailyRentalPrice?: number;
-    images?: string[];
-  } | string;
-  dressId?: string;
-  name?: string;
-  image?: string;
-  size: {
-    _id: string;
-    name: string;
-  } | string;
-  sizeId?: string;
-  sizeName?: string;
-  color: {
-    _id: string;
-    name: string;
-  } | string;
-  colorId?: string;
-  colorName?: string;
-  quantity: number;
-  pricePerDay?: number;
-  startDate: string;
-  endDate: string;
-}
-
-const Review = () => {
+const Review: React.FC = () => {
   const navigate = useNavigate();
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
+  const [summary, setSummary] = useState<OrderSummary>({
+    subtotal: 0,
+    tax: 0,
+    shipping: 0,
+    total: 0,
+    currency: 'USD'
+  });
+  
+  // Fetch cart data on component mount
   useEffect(() => {
-    const fetchCartData = async () => {
+    const fetchCart = async () => {
       try {
-        setLoading(true);
-        const cartData = await getCart();
-        if (!cartData || !cartData.items || cartData.items.length === 0) {
-          setError('Your cart is empty');
-          navigate('/cart');
-          return;
+        setIsLoading(true);
+        const response = await axios.get('http://localhost:3000/cart', { withCredentials: true });
+        
+        if (response.data.success && response.data.data) {
+          setCartItems(response.data.data.items || []);
+          
+          // Calculate order summary if there are items
+          if (response.data.data.items && response.data.data.items.length > 0) {
+            const firstItem = response.data.data.items[0];
+            const calculatedSummary = calculateOrderSummary(
+              response.data.data.items,
+              new Date(firstItem.startDate),
+              new Date(firstItem.endDate)
+            );
+            setSummary(calculatedSummary);
+          }
+        } else {
+          setError('No items in cart');
         }
-        setCartItems(cartData.items || []);
-      } catch (err: any) {
-        console.error('Failed to fetch cart:', err);
-        setError('Failed to load your cart. Please try again later.');
-        toast.error('Failed to load your cart');
+      } catch (error) {
+        console.error('Error fetching cart:', error);
+        setError('Failed to load cart items');
       } finally {
-        setLoading(false);
+        setIsLoading(false);
       }
     };
-
-    fetchCartData();
-  }, [navigate]);
-
-  // Helper functions for getting cart item properties
-  const getDressName = (item: CartItem): string => {
-    if (typeof item.dress === 'object' && item.dress?.name) {
-      return item.dress.name;
+    
+    fetchCart();
+  }, []);
+  
+  const handleContinueToInformation = () => {
+    if (cartItems.length === 0) {
+      setError('Your cart is empty. Add items to proceed.');
+      return;
     }
-    return item.name || 'Dress';
+    
+    navigate('/payment-information');
   };
   
-  const getDressImage = (item: CartItem): string => {
-    if (typeof item.dress === 'object' && item.dress?.images && item.dress.images.length > 0) {
-      return item.dress.images[0];
-    }
-    return item.image || '/placeholder.svg';
+  const handleBackToCart = () => {
+    navigate('/cart');
   };
   
-  const getSizeName = (item: CartItem): string => {
-    if (typeof item.size === 'object' && item.size?.name) {
-      return item.size.name;
-    }
-    return item.sizeName || 'One Size';
-  };
-  
-  const getColorName = (item: CartItem): string => {
-    if (typeof item.color === 'object' && item.color?.name) {
-      return item.color.name;
-    }
-    return item.colorName || 'Standard';
-  };
-  
-  const getPricePerDay = (item: CartItem): number => {
-    if (typeof item.dress === 'object' && item.dress?.dailyRentalPrice) {
-      return item.dress.dailyRentalPrice;
-    }
-    return item.pricePerDay || 0;
-  };
-
-  // Calculate rental days for an item
-  const getRentalDays = (item: CartItem): number => {
-    try {
-      const start = new Date(item.startDate);
-      const end = new Date(item.endDate);
-      return differenceInDays(end, start) + 1; // Include both start and end dates
-    } catch (err) {
-      console.error('Error calculating rental days:', err);
-      return 1; // Default to 1 day if calculation fails
-    }
-  };
-
-  // Calculate total for a single item
-  const calculateItemTotal = (item: CartItem): number => {
-    try {
-      const rentalDays = getRentalDays(item);
-      const pricePerDay = getPricePerDay(item);
-      return pricePerDay * rentalDays * item.quantity;
-    } catch (err) {
-      console.error('Error calculating item total:', err, item);
-      return 0;
-    }
-  };
-
-  if (loading) {
+  if (isLoading) {
     return (
-      <div className="min-h-screen bg-white">
-        <Header />
-        <main className="container mx-auto px-4 py-8 flex-grow">
-          <div className="text-center py-12">
-            <p>Loading your order details...</p>
-          </div>
-        </main>
-        <Footer />
-      </div>
-    );
-  }
-
-  if (error || cartItems.length === 0) {
-    return (
-      <div className="min-h-screen bg-white">
-        <Header />
-        <main className="container mx-auto px-4 py-8 flex-grow">
-          <div className="text-center py-12">
-            <p className="text-red-500">{error || 'Your cart is empty'}</p>
-            <button 
-              onClick={() => navigate('/cart')}
-              className="mt-4 px-6 py-2 bg-gray-200 rounded-md"
-            >
-              Return to Cart
-            </button>
-          </div>
-        </main>
-        <Footer />
-      </div>
-    );
-  }
-
-  // Get the first item for display
-  const firstItem = cartItems[0];
-  const formattedStartDate = format(new Date(firstItem.startDate), 'dd/MM/yyyy');
-  const formattedEndDate = format(new Date(firstItem.endDate), 'dd/MM/yyyy');
-  const rentalDays = getRentalDays(firstItem);
-  const itemTotal = calculateItemTotal(firstItem);
-
-  return (
-    <div className="min-h-screen bg-white">
-      <Header />
-      {/* Progress Tracker */}
-      <div className="container mx-auto px-4 py-8">
-        <div className="flex flex-wrap justify-between items-center max-w-4xl mx-auto">
-          <div className="flex flex-col items-center mb-4 md:mb-0">
-            <div className="w-12 h-12 rounded-full bg-[#000000] flex items-center justify-center">
-              <CheckCircle className="w-6 h-6 text-white" />
-            </div>
-            <span className="mt-2 text-sm font-medium">Reserve a time</span>
-          </div>
-
-          <div className="hidden md:block w-16 h-[1px] bg-[#c3937c]"></div>
-
-          <div className="flex flex-col items-center mb-4 md:mb-0">
-            <div className="w-12 h-12 rounded-full bg-[#ead9c9] flex items-center justify-center">
-              <FileText className="w-6 h-6 text-white" />
-            </div>
-            <span className="mt-2 text-sm font-medium">Order overview</span>
-          </div>
-
-          <div className="hidden md:block w-16 h-[1px] bg-[#cbcbcb]"></div>
-
-          <div className="flex flex-col items-center mb-4 md:mb-0">
-            <div className="w-12 h-12 rounded-full bg-[#ededed] flex items-center justify-center">
-              <Info className="w-6 h-6 text-[#cbcbcb]" />
-            </div>
-            <span className="mt-2 text-sm text-[#404040]">Information</span>
-          </div>
-
-          <div className="hidden md:block w-16 h-[1px] bg-[#cbcbcb]"></div>
-
-          <div className="flex flex-col items-center mb-4 md:mb-0">
-            <div className="w-12 h-12 rounded-full bg-[#ededed] flex items-center justify-center">
-              <Truck className="w-6 h-6 text-[#cbcbcb]" />
-            </div>
-            <span className="mt-2 text-sm text-[#404040]">Shipping</span>
-          </div>
-
-          <div className="hidden md:block w-16 h-[1px] bg-[#cbcbcb]"></div>
-
-          <div className="flex flex-col items-center">
-            <div className="w-12 h-12 rounded-full bg-[#ededed] flex items-center justify-center">
-              <CreditCard className="w-6 h-6 text-[#cbcbcb]" />
-            </div>
-            <span className="mt-2 text-sm text-[#404040]">Payment</span>
-          </div>
+      <div className="container mx-auto px-4 py-8 max-w-6xl">
+        <CheckoutSteps currentStep="review" />
+        <div className="flex justify-center items-center h-64">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#c3937c]"></div>
         </div>
       </div>
-
-      {/* Main Content */}
-      <main className="container mx-auto px-4 py-6 flex-grow">
-        <div className="max-w-4xl mx-auto bg-white rounded-lg border border-[#ededed] p-6 flex flex-col md:flex-row gap-6">
-          <div className="md:w-1/3 bg-[#f8f0ff] rounded-lg overflow-hidden">
-            <img 
-              src={getDressImage(firstItem)} 
-              alt={getDressName(firstItem)} 
-              width="300" 
-              height="400" 
-              className="w-full h-full object-cover" 
-            />
-          </div>
-
-          <div className="md:w-2/3">
-            <h1 className="text-2xl font-semibold mb-4">{getDressName(firstItem)}</h1>
-
-            <div className="space-y-2 mb-4">
-              <p>
-                <span className="font-medium">Size:</span> {getSizeName(firstItem)}
-              </p>
-              <p>
-                <span className="font-medium">Color:</span> {getColorName(firstItem)}
-              </p>
-              <p>
-                <span className="font-medium">Price:</span> ${getPricePerDay(firstItem)} per night
-              </p>
-              <p>
-                <span className="font-medium">Rental fee for {rentalDays} nights:</span> ${itemTotal.toFixed(2)}
-              </p>
-              <p>
-                <span className="font-medium">Quantity:</span> {firstItem.quantity}
-              </p>
+    );
+  }
+  
+  if (error && cartItems.length === 0) {
+    return (
+      <div className="container mx-auto px-4 py-8 max-w-6xl">
+        <CheckoutSteps currentStep="review" />
+        <div className="bg-white rounded-lg shadow-md p-8 text-center">
+          <h2 className="text-2xl font-semibold mb-4">Your Cart is Empty</h2>
+          <p className="text-gray-600 mb-6">{error}</p>
+          <button
+            onClick={handleBackToCart}
+            className="rounded-md bg-[#c3937c] px-4 py-2 text-white font-medium shadow-sm hover:bg-[#a67c66] focus:outline-none focus:ring-2 focus:ring-[#c3937c]"
+          >
+            Return to Cart
+          </button>
+        </div>
+      </div>
+    );
+  }
+  
+  return (
+    <div className="container mx-auto px-4 py-8 max-w-6xl">
+      <CheckoutSteps currentStep="review" />
+      
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {/* Main Content - Cart Items */}
+        <div className="lg:col-span-2">
+          <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+            <h2 className="text-lg font-semibold mb-4">Review Your Order</h2>
+            
+            {error && (
+              <div className="bg-red-50 border border-red-200 text-red-800 rounded-md p-4 mb-4">
+                {error}
+              </div>
+            )}
+            
+            <div className="space-y-6">
+              {cartItems.map((item, index) => {
+                const startDate = new Date(item.startDate);
+                const endDate = new Date(item.endDate);
+                const days = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+                const itemTotal = item.pricePerDay * days * item.quantity;
+                
+                return (
+                  <div key={index} className="flex border-b border-gray-200 pb-6">
+                    <div className="h-24 w-24 flex-shrink-0 overflow-hidden rounded-md border border-gray-200">
+                      <img
+                        src={item.image}
+                        alt={item.name}
+                        className="h-full w-full object-cover object-center"
+                      />
+                    </div>
+                    
+                    <div className="ml-4 flex flex-1 flex-col">
+                      <div>
+                        <div className="flex justify-between text-base font-medium text-gray-900">
+                          <h3>{item.name}</h3>
+                          <p className="ml-4">{formatCurrency(itemTotal)}</p>
+                        </div>
+                        <p className="mt-1 text-sm text-gray-500">
+                          {item.sizeName} · {item.colorName}
+                        </p>
+                      </div>
+                      
+                      <div className="flex flex-1 items-end justify-between text-sm">
+                        <div>
+                          <p className="text-gray-500">Qty {item.quantity}</p>
+                          <p className="text-gray-500 mt-1">
+                            {formatCurrency(item.pricePerDay)} per day × {days} days
+                          </p>
+                          <p className="text-gray-500 mt-1">
+                            {formatDate(startDate)} - {formatDate(endDate)}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
-
-            <div className="flex justify-between items-center mt-6">
-              <div className="bg-[#ededed] px-4 py-2 rounded-full">
-                <span className="text-sm">
-                  Time left to complete reservation <span className="text-[#c3937c] font-medium">12:32</span>
+          </div>
+        </div>
+        
+        {/* Order Summary */}
+        <div className="lg:col-span-1">
+          <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+            <h2 className="text-lg font-semibold mb-4">Order Summary</h2>
+            
+            <div className="space-y-4 border-b border-gray-200 pb-4">
+              <div className="flex justify-between">
+                <span className="text-gray-600">Subtotal</span>
+                <span>{formatCurrency(summary.subtotal)}</span>
+              </div>
+              
+              <div className="flex justify-between">
+                <span className="text-gray-600">Tax</span>
+                <span>{formatCurrency(summary.tax)}</span>
+              </div>
+              
+              <div className="flex justify-between">
+                <span className="text-gray-600">Shipping</span>
+                <span>
+                  {summary.shipping === 0 
+                    ? 'Free' 
+                    : formatCurrency(summary.shipping)
+                  }
                 </span>
               </div>
-
-              <button 
-                onClick={() => navigate('/cart')}
-                className="px-4 py-2 border border-[#c3937c] text-[#c3937c] rounded-full text-sm hover:bg-[#c3937c] hover:text-white transition-colors"
+            </div>
+            
+            <div className="flex justify-between py-4">
+              <span className="text-lg font-semibold">Total</span>
+              <span className="text-xl font-semibold text-[#c3937c]">
+                {formatCurrency(summary.total)}
+              </span>
+            </div>
+            
+            <div className="mt-6">
+              <button
+                onClick={handleContinueToInformation}
+                disabled={cartItems.length === 0}
+                className={`w-full rounded-md bg-[#c3937c] px-4 py-3 text-white font-medium shadow-sm hover:bg-[#a67c66] focus:outline-none focus:ring-2 focus:ring-[#c3937c] ${
+                  cartItems.length === 0 ? 'opacity-50 cursor-not-allowed' : ''
+                }`}
               >
-                Change details
+                Continue to Information
+              </button>
+              
+              <button
+                onClick={handleBackToCart}
+                className="w-full mt-4 rounded-md border border-gray-300 bg-white px-4 py-3 text-gray-700 font-medium shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-[#c3937c]"
+              >
+                Return to Cart
               </button>
             </div>
           </div>
-        </div>
-
-        {/* Date Selection */}
-        <div className="max-w-4xl mx-auto mt-6 flex flex-col md:flex-row gap-4 justify-between">
-          <div className="flex-1 border border-[#ededed] rounded-full p-4 flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium">Arrives by {formattedStartDate}</p>
-              <p className="text-sm text-[#404040]">Time: 8 to 10 am</p>
-            </div>
-            <Calendar className="w-5 h-5 text-[#404040]" />
-          </div>
-
-          <div className="flex-1 border border-[#ededed] rounded-full p-4 flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium">Returns by {formattedEndDate}</p>
-              <p className="text-sm text-[#404040]">Time: 8 to 10 am</p>
-            </div>
-            <Calendar className="w-5 h-5 text-[#404040]" />
-          </div>
-
-          <button 
-            onClick={() => navigate('/cart')}
-            className="px-6 py-4 border border-[#c3937c] text-[#c3937c] rounded-full text-sm hover:bg-[#c3937c] hover:text-white transition-colors"
-          >
-            Change Date
-          </button>
-        </div>
-
-        {/* Navigation buttons */}
-        <div className="max-w-4xl mx-auto mt-8 flex justify-between">
-          <button
-            onClick={() => navigate('/cart')}
-            className="px-6 py-3 border border-[#c3937c] text-[#c3937c] rounded-full flex items-center gap-2 hover:bg-[#c3937c] hover:text-white transition-colors">
-            <ChevronLeft className="w-4 h-4" />
-            Back to cart
-          </button>
           
-          <button
-            onClick={() => {
-              navigate('/payment-information');
-            }}
-            className="px-6 py-3 bg-[#c3937c] text-white rounded-full flex items-center gap-2 hover:bg-[#b3836c] transition-colors">
-            Complete reservation
-            <ChevronRight className="w-4 h-4" />
-          </button>
+          <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+            <p className="text-sm text-gray-600">
+              By proceeding, you agree to our Terms of Service and Privacy Policy. Your rental is subject to our Rental Agreement terms.
+            </p>
+          </div>
         </div>
-      </main>
-
-      {/* Footer */}
-      <Footer />
+      </div>
     </div>
   );
 };
