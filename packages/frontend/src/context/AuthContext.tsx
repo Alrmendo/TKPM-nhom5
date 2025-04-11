@@ -58,11 +58,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         setIsAuthLoading(true);
         const response = await getRoleAPI(); // Get role from /auth/me
         console.log('AuthContext: Role API response:', response);
-        setRole(response.role);
-        setUserId(response.userId);
-        setUsername(response.username);
-        setIsAuthenticated(true);
-        setLastAuthCheck(Date.now());
+
+        // Handle both userId and id formats for backward compatibility
+        const userIdentifier = response?.userId || response?.id;
+        
+        if (userIdentifier) {
+          setRole(response.role);
+          setUserId(userIdentifier);
+          setUsername(response.username);
+          setIsAuthenticated(true);
+          setLastAuthCheck(Date.now());
+        } else {
+          console.error('AuthContext: No user ID in authentication response', response);
+          setRole(null);
+          setUserId(null);
+          setUsername(null);
+          setIsAuthenticated(false);
+        }
       } catch (error) {
         console.error('AuthContext: Authentication check failed:', error);
         setRole(null);
@@ -108,15 +120,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       const res = await getRoleAPI();
       console.log('AuthContext: Role API result:', res);
       
-      if (res && res.userId) {
-        setUserId(res.userId);
+      // Handle both userId and id formats for backward compatibility
+      const userIdentifier = res?.userId || res?.id;
+      
+      if (res && userIdentifier) {
+        setUserId(userIdentifier);
         setRole(res.role);
         setUsername(res.username);
         setIsAuthenticated(true);
         setLastAuthCheck(Date.now());
         return res.role;
       } else {
-        console.error('AuthContext: No userId in response', res);
+        console.error('AuthContext: No user ID in response', res);
         setRole(null);
         setUserId(null);
         setUsername(null);

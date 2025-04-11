@@ -24,44 +24,48 @@ export class ReviewService {
     images: string[] = [],
   ): Promise<Review> {
     try {
+      // Use userId from DTO if available, fallback to the one provided as parameter
+      const actualUserId = createReviewDto.userId || userId;
+      
       console.log('Review service: Creating review with data:', {
         dressId: createReviewDto.dressId,
-        userId,
+        userId: actualUserId,
+        providedUserId: userId,
+        dtoUserId: createReviewDto.userId,
         rating: createReviewDto.rating,
-        reviewTextLength: createReviewDto.reviewText?.length || 0
+        reviewText: createReviewDto.reviewText
       });
       
       // Check if user already reviewed this dress
       const existingReview = await this.reviewModel.findOne({
         dressId: createReviewDto.dressId,
-        userId,
+        userId: actualUserId,
       }).exec();
 
       if (existingReview) {
         throw new BadRequestException('You have already reviewed this dress');
       }
 
-      // Process reviewText to prevent special characters issues
-      let cleanReviewText = createReviewDto.reviewText || '';
-      cleanReviewText = cleanReviewText.trim();
-      
-      // Đảm bảo rating là số hợp lệ
-      const rating = Number(createReviewDto.rating);
-      if (isNaN(rating) || rating < 1 || rating > 5) {
-        throw new BadRequestException('Rating must be a number between 1 and 5');
-      }
-
+      // Tạo review đơn giản hơn, không xử lý phức tạp
       const review = new this.reviewModel({
         dressId: createReviewDto.dressId,
-        userId,
+        userId: actualUserId,
         username,
-        rating: rating,
-        reviewText: cleanReviewText,
+        rating: createReviewDto.rating,
+        reviewText: createReviewDto.reviewText,
         images,
         date: new Date(),
       });
 
-      return await review.save();
+      const savedReview = await review.save();
+      console.log('Review saved successfully:', {
+        id: savedReview._id,
+        dressId: savedReview.dressId,
+        userId: savedReview.userId,
+        rating: savedReview.rating
+      });
+      
+      return savedReview;
     } catch (error) {
       console.error('Error in review service:', error);
       throw error;
@@ -121,5 +125,12 @@ export class ReviewService {
     }
 
     await this.reviewModel.deleteOne({ _id: reviewId }).exec();
+  }
+
+  async findByUserAndDress(userId: string, dressId: string): Promise<Review | null> {
+    return this.reviewModel.findOne({
+      userId,
+      dressId,
+    }).exec();
   }
 } 

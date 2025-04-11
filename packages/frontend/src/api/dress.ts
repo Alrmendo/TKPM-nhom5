@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const API = axios.create({
-  baseURL: 'http://localhost:3000', // Cập nhật URL backend của bạn
+  baseURL: 'http://localhost:3000',
   withCredentials: true, // Cấu hình gửi cookie kèm theo request
 });
 
@@ -238,46 +238,64 @@ export interface ReviewSubmission {
   rating: number;
   reviewText: string;
   images?: File[];
+  userId?: string;
 }
 
 // Submit a review for dress
 export const submitReview = async (reviewData: ReviewSubmission): Promise<{ success: boolean; message: string }> => {
   try {
     const formData = new FormData();
-    formData.append('dressId', reviewData.dressId);
     
-    // Đảm bảo rating là số từ 1-5
-    const ratingValue = Number(reviewData.rating);
-    if (isNaN(ratingValue) || ratingValue < 1 || ratingValue > 5) {
+    // Chuẩn bị dữ liệu đầu vào
+    const dressId = reviewData.dressId.trim();
+    const rating = Math.max(1, Math.min(5, Number(reviewData.rating) || 0));
+    const reviewText = (reviewData.reviewText || '').trim();
+    
+    // Kiểm tra dữ liệu ở phía client
+    if (!dressId) {
+      throw new Error('Dress ID is required');
+    }
+    
+    if (isNaN(rating) || rating < 1 || rating > 5) {
       throw new Error('Rating must be a number between 1 and 5');
     }
-    formData.append('rating', ratingValue.toString());
     
-    // Đảm bảo reviewText không có ký tự đặc biệt ở đầu/cuối
-    const cleanReviewText = reviewData.reviewText.trim();
-    formData.append('reviewText', cleanReviewText);
+    if (!reviewText) {
+      throw new Error('Review text is required');
+    }
     
-    console.log('Submitting review for dress ID:', reviewData.dressId);
-    console.log('Review data:', {
-      dressId: reviewData.dressId,
-      rating: ratingValue,
-      reviewText: cleanReviewText,
+    // Thêm vào formData
+    formData.append('dressId', dressId);
+    formData.append('rating', rating.toString());
+    formData.append('reviewText', reviewText);
+    if (reviewData.userId) {
+      formData.append('userId', reviewData.userId);
+    }
+    
+    console.log('Submitting review with data:', {
+      dressId,
+      rating,
+      reviewText,
+      userId: reviewData.userId,
       hasImages: reviewData.images ? reviewData.images.length > 0 : false
     });
     
+    // Thêm ảnh nếu có
     if (reviewData.images && reviewData.images.length > 0) {
       reviewData.images.forEach(image => {
         formData.append('images', image);
       });
     }
     
-    const response = await API.post(`/dress/${reviewData.dressId}/review`, formData, {
+    // Gửi request
+    const response = await API.post(`/dress/${dressId}/review`, formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
-      withCredentials: true, // Đảm bảo gửi cookies để xác thực
+      withCredentials: true,
     });
     
+    // Kiểm tra kết quả
     if (response.data && response.data.success) {
       return response.data;
     }
@@ -313,5 +331,19 @@ export const replyToReview = async (
   } catch (error) {
     console.error(`Error replying to review:`, error);
     throw error;
+  }
+};
+
+// Check if user has already reviewed a dress
+export const checkUserReview = async (dressId: string): Promise<boolean> => {
+  try {
+    const response = await API.get(`/dress/${dressId}/review/check`, {
+      withCredentials: true,
+    });
+    
+    return response.data.hasReviewed;
+  } catch (error) {
+    console.error(`Error checking if user has reviewed dress with ID ${dressId}:`, error);
+    return false;
   }
 }; 

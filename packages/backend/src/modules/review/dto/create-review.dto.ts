@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsNumber, IsString, Min, Max, IsMongoId, IsOptional, Transform } from 'class-validator';
+import { IsNotEmpty, IsNumber, IsString, Min, Max, IsMongoId, IsOptional } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 
@@ -30,6 +30,14 @@ export class CreateReviewDto {
   })
   @IsNotEmpty()
   @IsString()
-  @Transform(({ value }) => typeof value === 'string' ? value.trim() : value)
   reviewText: string;
+  
+  @ApiProperty({
+    description: 'User ID for review',
+    example: '60d21b4667d0d8992e610c85',
+    required: false,
+  })
+  @IsOptional()
+  @IsMongoId()
+  userId?: string;
 } 

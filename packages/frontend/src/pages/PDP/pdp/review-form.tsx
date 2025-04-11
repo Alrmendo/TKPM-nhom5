@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { toast } from 'react-hot-toast';
-import { Star, Upload, X } from 'lucide-react';
-import { submitReview, ReviewSubmission } from '../../../api/dress';
+import { Star, Upload, X, AlertCircle } from 'lucide-react';
+import { submitReview, ReviewSubmission, checkUserReview } from '../../../api/dress';
 import { useAuth } from '../../../context/AuthContext';
 
 interface ReviewFormProps {
@@ -10,7 +10,7 @@ interface ReviewFormProps {
 }
 
 export default function ReviewForm({ dressId, onReviewSubmitted }: ReviewFormProps): JSX.Element {
-  const { isAuthenticated, checkAuthStatus } = useAuth();
+  const { isAuthenticated, checkAuthStatus, userId } = useAuth();
   const [rating, setRating] = useState<number | null>(null);
   const [hoverRating, setHoverRating] = useState<number>(0);
   const [reviewText, setReviewText] = useState<string>('');
@@ -18,6 +18,8 @@ export default function ReviewForm({ dressId, onReviewSubmitted }: ReviewFormPro
   const [imagePreviewUrls, setImagePreviewUrls] = useState<string[]>([]);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [isAuthChecked, setIsAuthChecked] = useState<boolean>(false);
+  const [hasAlreadyReviewed, setHasAlreadyReviewed] = useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
 
   // Sử dụng useEffect để kiểm tra xác thực từ đầu
   useEffect(() => {
@@ -25,13 +27,24 @@ export default function ReviewForm({ dressId, onReviewSubmitted }: ReviewFormPro
       if (isAuthenticated) {
         const isAuth = await checkAuthStatus();
         setIsAuthChecked(isAuth);
+        
+        // Check if user has already reviewed this product
+        if (isAuth && userId) {
+          try {
+            const hasReviewed = await checkUserReview(dressId);
+            setHasAlreadyReviewed(hasReviewed);
+          } catch (error) {
+            console.error("Error checking if user has already reviewed:", error);
+          }
+        }
       } else {
         setIsAuthChecked(false);
       }
+      setIsLoading(false);
     };
     
     checkAuth();
-  }, [isAuthenticated, checkAuthStatus]);
+  }, [isAuthenticated, checkAuthStatus, dressId, userId]);
 
   // Handle star rating selection
   const handleSetRating = (value: number) => {
@@ -83,13 +96,19 @@ export default function ReviewForm({ dressId, onReviewSubmitted }: ReviewFormPro
       return;
     }
 
+    if (!userId) {
+      toast.error('User ID is required. Please sign in again.');
+      return;
+    }
+
+    // Xử lý dữ liệu form
     if (rating === null || rating < 1 || rating > 5) {
       toast.error('Please select a valid rating (1-5 stars)');
       return;
     }
 
-    const trimmedReviewText = reviewText.trim();
-    if (trimmedReviewText === '') {
+    const trimmedReviewText = (reviewText || '').trim();
+    if (!trimmedReviewText) {
       toast.error('Please enter a review');
       return;
     }
@@ -97,13 +116,20 @@ export default function ReviewForm({ dressId, onReviewSubmitted }: ReviewFormPro
     try {
       setIsSubmitting(true);
 
+      // Chuẩn bị dữ liệu
+      const validRating = Math.max(1, Math.min(5, rating));
+      
       const reviewData: ReviewSubmission = {
         dressId,
-        rating: rating,
+        rating: validRating,
         reviewText: trimmedReviewText,
         images: images.length > 0 ? images : undefined,
+        userId: userId
       };
 
+      console.log('Submitting review from form:', reviewData);
+      
+      // Gửi yêu cầu
       await submitReview(reviewData);
       
       // Reset form
@@ -116,15 +142,55 @@ export default function ReviewForm({ dressId, onReviewSubmitted }: ReviewFormPro
         return [];
       });
       
+      setHasAlreadyReviewed(true);
       toast.success('Your review has been submitted');
       onReviewSubmitted();
     } catch (error: any) {
       console.error('Error submitting review:', error);
-      toast.error(error.message || 'Failed to submit review');
+      
+      // Check if the error is about already having reviewed the product
+      if (error.message && error.message.includes('already reviewed')) {
+        setHasAlreadyReviewed(true);
+        toast.error('You have already reviewed this product');
+      } else {
+        toast.error(error.message || 'Failed to submit review');
+      }
     } finally {
       setIsSubmitting(false);
     }
   };
+
+  // Loading state
+  if (isLoading) {
+    return (
+      <div className="space-y-4 border border-gray-200 rounded-md p-4">
+        <div className="flex items-center justify-center py-4">
+          <div className="w-6 h-6 border-2 border-gray-300 border-t-[#ead9c9] rounded-full animate-spin"></div>
+          <span className="ml-2 text-gray-500">Checking review status...</span>
+        </div>
+      </div>
+    );
+  }
+
+  // If user has already submitted a review, show a message
+  if (hasAlreadyReviewed) {
+    return (
+      <div className="space-y-4 border border-gray-200 rounded-md p-4">
+        <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-4">
+          <div className="flex items-center">
+            <div className="flex-shrink-0">
+              <AlertCircle className="h-5 w-5 text-yellow-400" aria-hidden="true" />
+            </div>
+            <div className="ml-3">
+              <p className="text-sm text-yellow-700">
+                You have already reviewed this product. Each customer can submit only one review per product.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4 border border-gray-200 rounded-md p-4">
@@ -189,7 +255,7 @@ export default function ReviewForm({ dressId, onReviewSubmitted }: ReviewFormPro
                     onClick={() => removeImage(index)}
                     className="absolute top-0 right-0 bg-red-500 text-white w-5 h-5 rounded-full flex items-center justify-center"
                   >
-                    <X className="w-3 h-3" />
+                    <X className="w-3 h-3" aria-hidden="true" />
                   </button>
                 </div>
               ))}
@@ -199,7 +265,7 @@ export default function ReviewForm({ dressId, onReviewSubmitted }: ReviewFormPro
           {/* File input button */}
           {images.length < 3 && (
             <label className="flex items-center justify-center space-x-2 border border-dashed border-gray-300 rounded-md px-4 py-3 cursor-pointer hover:bg-gray-50">
-              <Upload className="w-5 h-5 text-gray-500" />
+              <Upload className="w-5 h-5 text-gray-500" aria-hidden="true" />
               <span className="text-sm text-gray-500">
                 {images.length === 0 ? 'Click to upload photos' : 'Add more photos'}
               </span>
@@ -212,6 +278,10 @@ export default function ReviewForm({ dressId, onReviewSubmitted }: ReviewFormPro
               />
             </label>
           )}
+        </div>
+
+        <div className="text-xs text-gray-500 italic mt-2">
+          Note: You can only submit one review per product.
         </div>
 
         {/* Submit Button */}

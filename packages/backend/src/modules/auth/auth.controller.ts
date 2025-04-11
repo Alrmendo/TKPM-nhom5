@@ -110,13 +110,17 @@ export class AuthController {
   @UseGuards(JwtAuthGuard)
   async getProfile(@Req() req: RequestWithUser) {
     console.log('/auth/me - User:', req.user);
-    const { userId, role, username } = req.user;
+    
+    // Extract user info, handling both formats (userId from old format, id from new format)
+    const userId = req.user.id;
+    const { role, username } = req.user;
     
     if (!userId) {
       console.error('User ID missing from authenticated request:', req.user);
     }
     
-    return { userId, role, username };
+    // Return both userId and id for backward compatibility
+    return { userId, id: userId, role, username };
   }
 } 
 

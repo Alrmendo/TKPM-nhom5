@@ -10,6 +10,7 @@ import {
   UploadedFiles,
   HttpStatus,
   Query,
+  HttpException,
 } from '@nestjs/common';
 import { FilesInterceptor } from '@nestjs/platform-express';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -38,6 +39,33 @@ export class ReviewController {
     };
   }
 
+  @Get(':dressId/review/check')
+  @UseGuards(JwtAuthGuard)
+  @ApiOperation({ summary: 'Check if the current user has already reviewed this dress' })
+  @ApiResponse({ status: HttpStatus.OK, description: 'Returns whether the user has reviewed the dress' })
+  async checkUserReview(
+    @Param('dressId') dressId: string,
+    @GetUser() user: User & Document,
+  ) {
+    try {
+      const userId = user.id;
+      
+      // Check if user has already reviewed this dress
+      const existingReview = await this.reviewService.findByUserAndDress(userId, dressId);
+      
+      return {
+        success: true,
+        hasReviewed: !!existingReview,
+      };
+    } catch (error) {
+      console.error('Error checking user review:', error);
+      throw new HttpException(
+        error.message || 'Failed to check user review',
+        HttpStatus.BAD_REQUEST
+      );
+    }
+  }
+
   @UseGuards(JwtAuthGuard)
   @Post(':dressId/review')
   @UseInterceptors(FilesInterceptor('images', 3))
@@ -59,13 +87,16 @@ export class ReviewController {
         dressId, 
         dto: {
           dressId: createReviewDto.dressId,
+          userId: createReviewDto.userId,
           rating: createReviewDto.rating,
           reviewText: createReviewDto.reviewText,
           reviewTextLength: createReviewDto.reviewText ? createReviewDto.reviewText.length : 0
         },
-        userId: user?.id,
-        userEmail: user?.email,
-        username: user?.username,
+        user: user ? {
+          id: user.id,
+          email: user.email,
+          username: user.username,
+        } : 'No user object from JWT',
         filesCount: files?.length || 0 
       });
     
@@ -77,18 +108,49 @@ export class ReviewController {
         createReviewDto.dressId = dressId;
       }
       
-      // Ensure rating is a number
-      if (typeof createReviewDto.rating === 'string') {
-        createReviewDto.rating = Number(createReviewDto.rating);
+      // Add userId to DTO if not provided but available in user object
+      if (!createReviewDto.userId && user) {
+        createReviewDto.userId = user.id;
       }
       
-      // Clean up reviewText
-      if (typeof createReviewDto.reviewText === 'string') {
-        createReviewDto.reviewText = createReviewDto.reviewText.trim();
+      // Xử lý dữ liệu trước khi gửi đến service
+      const reviewData = {
+        ...createReviewDto,
+        // Đảm bảo rating là số
+        rating: typeof createReviewDto.rating === 'string' 
+          ? Number(createReviewDto.rating) 
+          : createReviewDto.rating,
+        // Đảm bảo reviewText sạch
+        reviewText: typeof createReviewDto.reviewText === 'string'
+          ? createReviewDto.reviewText.trim()
+          : '',
+      };
+      
+      // Kiểm tra dữ liệu
+      if (isNaN(reviewData.rating) || reviewData.rating < 1 || reviewData.rating > 5) {
+        throw new HttpException(
+          'Rating must be a number between 1 and 5',
+          HttpStatus.BAD_REQUEST
+        );
+      }
+      
+      if (!reviewData.reviewText || reviewData.reviewText.length === 0) {
+        throw new HttpException(
+          'Review text cannot be empty',
+          HttpStatus.BAD_REQUEST
+        );
+      }
+      
+      // Check if we have a valid userId by now
+      if (!reviewData.userId && (!user || !user.id)) {
+        throw new HttpException(
+          'User ID is required to submit a review',
+          HttpStatus.BAD_REQUEST
+        );
       }
       
       const review = await this.reviewService.create(
-        createReviewDto,
+        reviewData,
         user.id,
         user.username || user.email,
         imagePaths,
@@ -101,7 +163,13 @@ export class ReviewController {
       };
     } catch (error) {
       console.error('Error in review controller:', error);
-      throw error;
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      throw new HttpException(
+        error.message || 'Failed to create review',
+        HttpStatus.BAD_REQUEST
+      );
     }
   }
 
