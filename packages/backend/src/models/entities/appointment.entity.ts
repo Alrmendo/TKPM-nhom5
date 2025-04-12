@@ -5,16 +5,16 @@ export type AppointmentDocument = Appointment & Document;
 
 @Schema()
 export class Appointment {
-  @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'User', required: true })
+  @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'User', required: false })
   userId: string;
 
   @Prop({ required: true })
-  name: string;
+  fullName: string;
 
   @Prop({ required: true })
   email: string;
 
-  @Prop({ required: false })
+  @Prop({ required: true })
   phone: string;
 
   @Prop({ type: Date, required: true })
@@ -23,13 +23,27 @@ export class Appointment {
   @Prop({ required: true })
   time: string;
 
-  @Prop({ required: true, enum: ['dress-fitting', 'consultation', 'measurement', 'photography', 'other'] })
-  type: string;
+  @Prop({ 
+    required: true, 
+    enum: [
+      'Wedding Planning',
+      'Photography',
+      'Venue Booking',
+      'Catering Services',
+      'Decoration',
+      'Wedding Cars'
+    ] 
+  })
+  service: string;
 
   @Prop({ required: false })
-  notes: string;
+  message: string;
 
-  @Prop({ required: true, enum: ['pending', 'confirmed', 'cancelled', 'completed'], default: 'pending' })
+  @Prop({ 
+    required: true, 
+    enum: ['pending', 'confirmed', 'cancelled', 'completed'], 
+    default: 'pending' 
+  })
   status: string;
 
   @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'Dress', required: false })

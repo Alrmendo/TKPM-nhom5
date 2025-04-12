@@ -22,12 +22,14 @@ const Shipping = lazy(() => import('../pages/Payment/Shipping'));
 const Checkout = lazy(() => import('../pages/Payment/Checkout'));
 const Successful = lazy(() => import('../pages/Payment/Successful'));
 const SearchOverlay = lazy(() => import('../pages/Search/SearchOverlay'));
+const Appointment = lazy(() => import('../pages/Appointment/Appointment'));
 
 // New Admin Components
 const AdminDashboard = lazy(() => import('../pages/Admin/Dashboard'));
 const AdminProducts = lazy(() => import('../pages/Admin/Products'));
 const AdminCustomers = lazy(() => import('../pages/Admin/Customers'));
 const AdminOrders = lazy(() => import('../pages/Admin/Orders'));
+const AdminAppointments = lazy(() => import('../pages/Admin/Appointments'));
 
 const SignIn = lazy(() => import('../pages/Auth/SignIn'));
 const SignUp = lazy(() => import('../pages/Auth/SignUp'));
@@ -72,6 +74,7 @@ const AppRoutes = () => {
     { path: '/pdp/:id', element: <PDP /> },
     { path: '/product/:id', element: <PDP /> },
     { path: '/pcp', element: <PCP /> },
+    { path: '/appointment', element: <Appointment /> },
     {
       path: '/profile',
       element: (
@@ -129,6 +132,14 @@ const AppRoutes = () => {
       element: (
         <ProtectedRoute requiredRole="admin">
           <AdminOrders />
+        </ProtectedRoute>
+      ),
+    },
+    {
+      path: '/admin/appointments',
+      element: (
+        <ProtectedRoute requiredRole="admin">
+          <AdminAppointments />
         </ProtectedRoute>
       ),
     },
