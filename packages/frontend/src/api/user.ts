@@ -3,6 +3,9 @@ import axios from 'axios';
 const API = axios.create({
   baseURL: 'http://localhost:3000',
   withCredentials: true,
+  headers: {
+    'Content-Type': 'application/json',
+  }
 });
 
 export interface UserSettings {
@@ -52,8 +55,8 @@ export interface UpdateUsernameData {
 // Get user profile
 export const getUserProfile = async (): Promise<UserProfile> => {
   try {
-    const response = await API.get('/user/profile');
-    return response.data;
+    const response = await API.get('/users/profile');
+    return response.data.data;
   } catch (error: any) {
     throw new Error(error.response?.data?.message || 'Failed to fetch profile');
   }
@@ -62,8 +65,8 @@ export const getUserProfile = async (): Promise<UserProfile> => {
 // Update user profile
 export const updateProfile = async (data: UpdateProfileData): Promise<UserProfile> => {
   try {
-    const response = await API.put('/user/profile', data);
-    return response.data;
+    const response = await API.put('/users/profile', data);
+    return response.data.data;
   } catch (error: any) {
     throw new Error(error.response?.data?.message || 'Failed to update profile');
   }
@@ -72,8 +75,8 @@ export const updateProfile = async (data: UpdateProfileData): Promise<UserProfil
 // Update password
 export const updatePassword = async (data: UpdatePasswordData): Promise<{ message: string }> => {
   try {
-    const response = await API.put('/user/password', data);
-    return response.data;
+    const response = await API.put('/users/password', data);
+    return response.data.data;
   } catch (error: any) {
     throw new Error(error.response?.data?.message || 'Failed to update password');
   }
@@ -82,8 +85,8 @@ export const updatePassword = async (data: UpdatePasswordData): Promise<{ messag
 // Update username
 export const updateUsername = async (data: UpdateUsernameData): Promise<UserProfile> => {
   try {
-    const response = await API.put('/user/username', data);
-    return response.data;
+    const response = await API.put('/users/username', data);
+    return response.data.data;
   } catch (error: any) {
     throw new Error(error.response?.data?.message || 'Failed to update username');
   }
@@ -92,7 +95,7 @@ export const updateUsername = async (data: UpdateUsernameData): Promise<UserProf
 // Upload profile image
 export const uploadProfileImage = async (formData: FormData): Promise<{ imageUrl: string }> => {
   try {
-    const response = await API.post('/user/profile/image', formData, {
+    const response = await API.post('/users/profile/image', formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
@@ -106,8 +109,8 @@ export const uploadProfileImage = async (formData: FormData): Promise<{ imageUrl
 // Update user settings
 export const updateUserSettings = async (data: UserSettings): Promise<UserProfile> => {
   try {
-    const response = await API.put('/user/settings', data);
-    return response.data;
+    const response = await API.put('/users/settings', data);
+    return response.data.data;
   } catch (error: any) {
     throw new Error(error.response?.data?.message || 'Failed to update settings');
   }

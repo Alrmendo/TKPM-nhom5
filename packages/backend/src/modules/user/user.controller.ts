@@ -1,21 +1,17 @@
-import { Controller, Get, Put, Post, Body, UseGuards, Req, BadRequestException, Res, UploadedFile, UseInterceptors, Param, NotFoundException } from '@nestjs/common';
+import { Controller, Get, Put, Post, Body, UseGuards, Req, BadRequestException, Res, UploadedFile, UseInterceptors, Param, NotFoundException, UnauthorizedException, Delete } from '@nestjs/common';
 import { UserService } from './user.service';
-import { JwtAuthGuard } from '../../guards/jwt-auth.guard';
-import { UpdateProfileDto, UpdatePasswordDto, UpdateUsernameDto } from './dto/update-profile.dto';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { UpdateProfileDto, UpdatePasswordDto, UpdateUsernameDto, AddAddressDto, UpdateAddressDto, DeleteAddressDto, SetDefaultAddressDto } from './dto/update-profile.dto';
 import { JwtService } from '@nestjs/jwt';
 import { Response } from 'express';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { CloudinaryService } from '../cloudinary/cloudinary.service';
 
 interface RequestWithUser extends Request {
-  user: {
-    username: string;
-    // other properties as needed
-  };
+  user: { username: string; role: string };
 }
 
-@Controller('user')
-@UseGuards(JwtAuthGuard)
+@Controller('users')
 export class UserController {
   constructor(
     private readonly userService: UserService,
@@ -26,26 +22,57 @@ export class UserController {
   @Get('profile')
   @UseGuards(JwtAuthGuard)
   async getProfile(@Req() req: RequestWithUser) {
-    return this.userService.getProfile(req.user.username);
+    try {
+      const userProfile = await this.userService.getProfile(req.user.username);
+      return { success: true, data: userProfile };
+    } catch (error) {
+      if (error instanceof NotFoundException) {
+        return { success: false, message: error.message };
+      }
+      throw error;
+    }
   }
 
   @Put('profile')
   @UseGuards(JwtAuthGuard)
   async updateProfile(@Req() req: RequestWithUser, @Body() updateProfileDto: UpdateProfileDto) {
-    return this.userService.updateProfile(req.user.username, updateProfileDto);
+    try {
+      const updatedProfile = await this.userService.updateProfile(req.user.username, updateProfileDto);
+      return { success: true, data: updatedProfile };
+    } catch (error) {
+      if (error instanceof NotFoundException) {
+        return { success: false, message: error.message };
+      }
+      throw error;
+    }
   }
 
   @Put('password')
   @UseGuards(JwtAuthGuard)
   async updatePassword(@Req() req: RequestWithUser, @Body() updatePasswordDto: UpdatePasswordDto) {
-    return this.userService.updatePassword(req.user.username, updatePasswordDto);
+    try {
+      const result = await this.userService.updatePassword(req.user.username, updatePasswordDto);
+      return { success: true, data: result };
+    } catch (error) {
+      if (error instanceof NotFoundException || error instanceof UnauthorizedException || error instanceof BadRequestException) {
+        return { success: false, message: error.message };
+      }
+      throw error;
+    }
   }
 
   @Put('username')
   @UseGuards(JwtAuthGuard)
   async updateUsername(@Req() req: RequestWithUser, @Body() updateUsernameDto: UpdateUsernameDto) {
-    const user = await this.userService.updateUsername(req.user.username, updateUsernameDto);
-    return user;
+    try {
+      const updatedProfile = await this.userService.updateUsername(req.user.username, updateUsernameDto);
+      return { success: true, data: updatedProfile };
+    } catch (error) {
+      if (error instanceof NotFoundException || error instanceof UnauthorizedException || error instanceof BadRequestException) {
+        return { success: false, message: error.message };
+      }
+      throw error;
+    }
   }
   
   @Post('profile/image')
@@ -84,21 +111,87 @@ export class UserController {
     }
   }
 
-  // Add new endpoint for getting public profile by username
   @Get('profile/:username')
-  async getPublicProfile(@Req() req, @Param('username') username: string) {
+  async getPublicProfile(@Param('username') username: string) {
     try {
-      // Get the public profile (limited information)
       const profile = await this.userService.getPublicProfile(username);
-      return {
-        success: true,
-        data: profile
-      };
+      return { success: true, data: profile };
     } catch (error) {
       if (error instanceof NotFoundException) {
-        throw new NotFoundException('User not found');
+        return { success: false, message: error.message };
       }
-      throw new BadRequestException(error.message || 'Failed to get user profile');
+      throw error;
+    }
+  }
+
+  // Address management endpoints
+  @Get('addresses')
+  @UseGuards(JwtAuthGuard)
+  async getAddresses(@Req() req: RequestWithUser) {
+    try {
+      const addresses = await this.userService.getAddresses(req.user.username);
+      return { success: true, data: addresses };
+    } catch (error) {
+      if (error instanceof NotFoundException) {
+        return { success: false, message: error.message };
+      }
+      throw error;
+    }
+  }
+
+  @Post('addresses')
+  @UseGuards(JwtAuthGuard)
+  async addAddress(@Req() req: RequestWithUser, @Body() addAddressDto: AddAddressDto) {
+    try {
+      const updatedProfile = await this.userService.addAddress(req.user.username, addAddressDto);
+      return { success: true, data: updatedProfile };
+    } catch (error) {
+      if (error instanceof NotFoundException || error instanceof BadRequestException) {
+        return { success: false, message: error.message };
+      }
+      throw error;
+    }
+  }
+
+  @Put('addresses')
+  @UseGuards(JwtAuthGuard)
+  async updateAddress(@Req() req: RequestWithUser, @Body() updateAddressDto: UpdateAddressDto) {
+    try {
+      const updatedProfile = await this.userService.updateAddress(req.user.username, updateAddressDto);
+      return { success: true, data: updatedProfile };
+    } catch (error) {
+      if (error instanceof NotFoundException || error instanceof BadRequestException) {
+        return { success: false, message: error.message };
+      }
+      throw error;
+    }
+  }
+
+  @Delete('addresses')
+  @UseGuards(JwtAuthGuard)
+  async deleteAddress(@Req() req: RequestWithUser, @Body() deleteAddressDto: DeleteAddressDto) {
+    try {
+      const updatedProfile = await this.userService.deleteAddress(req.user.username, deleteAddressDto);
+      return { success: true, data: updatedProfile };
+    } catch (error) {
+      if (error instanceof NotFoundException) {
+        return { success: false, message: error.message };
+      }
+      throw error;
+    }
+  }
+
+  @Put('addresses/default')
+  @UseGuards(JwtAuthGuard)
+  async setDefaultAddress(@Req() req: RequestWithUser, @Body() setDefaultAddressDto: SetDefaultAddressDto) {
+    try {
+      const updatedProfile = await this.userService.setDefaultAddress(req.user.username, setDefaultAddressDto);
+      return { success: true, data: updatedProfile };
+    } catch (error) {
+      if (error instanceof NotFoundException) {
+        return { success: false, message: error.message };
+      }
+      throw error;
     }
   }
 } 

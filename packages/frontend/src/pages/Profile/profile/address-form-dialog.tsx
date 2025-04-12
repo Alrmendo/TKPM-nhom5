@@ -8,8 +8,8 @@ import type { AddressData } from './address-card';
 interface AddressFormDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSave: (address: Omit<AddressData, 'id' | 'mapImage'>) => void;
-  initialData?: Omit<AddressData, 'id' | 'mapImage'>;
+  onSave: (address: Omit<AddressData, 'id'>) => void;
+  initialData?: Omit<AddressData, 'id'>;
   title?: string;
 }
 
@@ -20,19 +20,22 @@ export const AddressFormDialog: React.FC<AddressFormDialogProps> = ({
   initialData,
   title = 'Add New Address',
 }) => {
-  const [formData, setFormData] = useState<Omit<AddressData, 'id' | 'mapImage'>>(
+  const [formData, setFormData] = useState<Omit<AddressData, 'id'>>(
     initialData || {
-      street: '',
+      firstName: '',
+      lastName: '',
+      company: '',
+      address: '',
+      apartment: '',
       city: '',
       province: '',
-      country: '',
       postalCode: '',
-      mobile: '',
-      receiver: '',
+      phone: '',
+      country: '',
     }
   );
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
   };
@@ -45,15 +48,36 @@ export const AddressFormDialog: React.FC<AddressFormDialogProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-[425px] bg-white">
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit}>
           <div className="grid gap-4 py-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="grid gap-2">
+                <Label htmlFor="firstName">First Name</Label>
+                <Input id="firstName" name="firstName" value={formData.firstName} onChange={handleChange} required />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="lastName">Last Name</Label>
+                <Input id="lastName" name="lastName" value={formData.lastName} onChange={handleChange} required />
+              </div>
+            </div>
+            
             <div className="grid gap-2">
-              <Label htmlFor="street">Street Address</Label>
-              <Input id="street" name="street" value={formData.street} onChange={handleChange} required />
+              <Label htmlFor="company">Company (Optional)</Label>
+              <Input id="company" name="company" value={formData.company} onChange={handleChange} />
+            </div>
+
+            <div className="grid gap-2">
+              <Label htmlFor="address">Address</Label>
+              <Input id="address" name="address" value={formData.address} onChange={handleChange} required />
+            </div>
+
+            <div className="grid gap-2">
+              <Label htmlFor="apartment">Apartment, suite, etc. (Optional)</Label>
+              <Input id="apartment" name="apartment" value={formData.apartment} onChange={handleChange} />
             </div>
 
             <div className="grid grid-cols-2 gap-4">
@@ -69,23 +93,32 @@ export const AddressFormDialog: React.FC<AddressFormDialogProps> = ({
 
             <div className="grid grid-cols-2 gap-4">
               <div className="grid gap-2">
-                <Label htmlFor="country">Country</Label>
-                <Input id="country" name="country" value={formData.country} onChange={handleChange} required />
-              </div>
-              <div className="grid gap-2">
                 <Label htmlFor="postalCode">Postal Code</Label>
                 <Input id="postalCode" name="postalCode" value={formData.postalCode} onChange={handleChange} required />
               </div>
+              <div className="grid gap-2">
+                <Label htmlFor="phone">Phone Number</Label>
+                <Input id="phone" name="phone" value={formData.phone} onChange={handleChange} required />
+              </div>
             </div>
 
             <div className="grid gap-2">
-              <Label htmlFor="mobile">Mobile Number</Label>
-              <Input id="mobile" name="mobile" value={formData.mobile} onChange={handleChange} required />
-            </div>
-
-            <div className="grid gap-2">
-              <Label htmlFor="receiver">Receiver Name</Label>
-              <Input id="receiver" name="receiver" value={formData.receiver} onChange={handleChange} required />
+              <Label htmlFor="country">Country</Label>
+              <select
+                id="country"
+                name="country"
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                value={formData.country}
+                onChange={handleChange}
+                required
+              >
+                <option value="">Select a country</option>
+                <option value="US">United States</option>
+                <option value="CA">Canada</option>
+                <option value="VN">Vietnam</option>
+                <option value="UK">United Kingdom</option>
+                <option value="AU">Australia</option>
+              </select>
             </div>
           </div>
           <DialogFooter>

@@ -5,6 +5,7 @@ import { CartItem, OrderSummary, Address } from './types';
 import { calculateOrderSummary, formatCurrency } from './utils/paymentUtils';
 import CheckoutSteps from './components/CheckoutSteps';
 import AddressForm from './components/AddressForm';
+import { useToast } from '../../hooks/use-toast';
 
 const Information: React.FC = () => {
   const navigate = useNavigate();
@@ -19,9 +20,13 @@ const Information: React.FC = () => {
     total: 0,
     currency: 'USD'
   });
-  const [savedAddress, setSavedAddress] = useState<Partial<Address> | null>(null);
+  const [savedAddresses, setSavedAddresses] = useState<any[]>([]);
+  const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null);
+  const [defaultAddressId, setDefaultAddressId] = useState<string | null>(null);
+  const [showAddressForm, setShowAddressForm] = useState(true);
+  const { toast } = useToast();
   
-  // Fetch cart data and user info on component mount
+  // Fetch cart data, user addresses, and profile info on component mount
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -51,16 +56,45 @@ const Information: React.FC = () => {
           return;
         }
         
-        // Fetch user profile to get saved address if any
+        // Fetch user addresses
+        try {
+          const addressesResponse = await axios.get('http://localhost:3000/users/addresses', { withCredentials: true });
+          
+          if (addressesResponse.data.success && addressesResponse.data.data) {
+            const addressData = addressesResponse.data.data;
+            setSavedAddresses(addressData.addresses || []);
+            setDefaultAddressId(addressData.defaultAddressId || null);
+            
+            // Show address form if no saved addresses
+            if (!addressData.addresses || addressData.addresses.length === 0) {
+              setShowAddressForm(true);
+            } else {
+              // Just show the saved addresses without selecting any by default
+              setSelectedAddressId(null);
+              setShowAddressForm(false);
+            }
+          }
+        } catch (error) {
+          console.error('Error fetching user addresses:', error);
+          // Non-critical, continue without saved addresses
+        }
+        
+        // Fetch user profile
         try {
           const profileResponse = await axios.get('http://localhost:3000/users/profile', { withCredentials: true });
           
-          if (profileResponse.data.success && profileResponse.data.data?.address) {
-            setSavedAddress(profileResponse.data.data.address);
+          if (profileResponse.data.success && profileResponse.data.data) {
+            // Store profile data for pre-filling forms if needed
+            const userData = profileResponse.data.data;
+            
+            // If we have profile data but no addresses, pre-set the form with name and contact info
+            if (savedAddresses.length === 0 && userData) {
+              setShowAddressForm(true);
+            }
           }
         } catch (error) {
           console.error('Error fetching user profile:', error);
-          // Non-critical, continue without saved address
+          // Non-critical, continue without profile data
         }
       } catch (error) {
         console.error('Error fetching data:', error);
@@ -71,7 +105,17 @@ const Information: React.FC = () => {
     };
     
     fetchData();
-  }, [navigate]);
+  }, [navigate, savedAddresses.length]);
+  
+  const handleSelectAddress = (addressId: string) => {
+    setSelectedAddressId(addressId);
+    setShowAddressForm(false);
+  };
+  
+  const handleUseNewAddress = () => {
+    setSelectedAddressId(null);
+    setShowAddressForm(true);
+  };
   
   const handleAddressSubmit = async (addressData: Address) => {
     try {
@@ -80,15 +124,25 @@ const Information: React.FC = () => {
       // Save address to session storage for use in later steps
       sessionStorage.setItem('shippingAddress', JSON.stringify(addressData));
       
-      // Optionally save to user profile
-      try {
-        await axios.put('http://localhost:3000/users/profile', 
-          { address: addressData }, 
-          { withCredentials: true }
-        );
-      } catch (error) {
-        console.error('Error saving address to profile:', error);
-        // Non-critical, continue to next step anyway
+      // If this is a new address and user opted to save it, add it to their profile
+      if (showAddressForm) {
+        try {
+          await axios.post('http://localhost:3000/users/addresses', 
+            { 
+              address: addressData,
+              setAsDefault: savedAddresses.length === 0 // Set as default if it's the first address
+            }, 
+            { withCredentials: true }
+          );
+          
+          toast({
+            title: 'Address saved',
+            description: 'Your address has been saved to your profile'
+          });
+        } catch (error) {
+          console.error('Error saving address to profile:', error);
+          // Non-critical, continue to next step anyway
+        }
       }
       
       // Navigate to next step
@@ -102,7 +156,56 @@ const Information: React.FC = () => {
   };
   
   const handleBackToReview = () => {
-    navigate('/payment-review');
+    navigate('/cart');
+  };
+  
+  // Handle using a selected saved address
+  const handleUseSavedAddress = async () => {
+    if (!selectedAddressId) {
+      toast({
+        title: 'Please select an address',
+        description: 'You must select a delivery address to continue',
+        variant: 'destructive'
+      });
+      return;
+    }
+    
+    try {
+      setIsSubmitting(true);
+      
+      // Find the selected address
+      const selectedAddress = savedAddresses.find(addr => addr.id === selectedAddressId);
+      if (!selectedAddress) {
+        setError('Selected address not found');
+        setIsSubmitting(false);
+        return;
+      }
+      
+      // Convert to the format expected by the checkout process
+      const addressForCheckout: Address = {
+        firstName: selectedAddress.firstName,
+        lastName: selectedAddress.lastName,
+        company: selectedAddress.company || '',
+        address: selectedAddress.address,
+        apartment: selectedAddress.apartment || '',
+        city: selectedAddress.city,
+        province: selectedAddress.province,
+        postalCode: selectedAddress.postalCode,
+        phone: selectedAddress.phone,
+        country: selectedAddress.country
+      };
+      
+      // Save to session storage for use in later steps
+      sessionStorage.setItem('shippingAddress', JSON.stringify(addressForCheckout));
+      
+      // Navigate to next step
+      navigate('/payment-shipping');
+    } catch (error) {
+      console.error('Error processing saved address:', error);
+      setError('Failed to process address information');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
   
   if (isLoading) {
@@ -142,12 +245,90 @@ const Information: React.FC = () => {
             </div>
           )}
           
-          <AddressForm 
-            onSubmit={handleAddressSubmit}
-            initialAddress={savedAddress || undefined}
-            isLoading={isSubmitting}
-            submitLabel="Continue to Shipping"
-          />
+          {/* Saved Addresses Section */}
+          {savedAddresses.length > 0 && (
+            <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+              <h2 className="text-lg font-semibold mb-2">Saved Addresses</h2>
+              <p className="text-sm text-gray-600 mb-4">Please select an address for delivery</p>
+              
+              <div className="space-y-4">
+                {savedAddresses.map((address) => (
+                  <div 
+                    key={address.id}
+                    className={`border rounded-md p-4 cursor-pointer transition-colors ${
+                      selectedAddressId === address.id 
+                        ? 'border-[#c3937c] bg-[#f9f5f2]' 
+                        : 'border-gray-200 hover:border-[#c3937c]'
+                    }`}
+                    onClick={() => handleSelectAddress(address.id)}
+                  >
+                    <div className="flex items-start gap-4">
+                      <div className="flex items-center h-6 mt-1">
+                        <div className={`w-5 h-5 rounded-full border ${selectedAddressId === address.id ? 'border-[#c3937c]' : 'border-gray-300'} flex items-center justify-center`}>
+                          {selectedAddressId === address.id && (
+                            <div className="w-3 h-3 rounded-full bg-[#c3937c]"></div>
+                          )}
+                        </div>
+                      </div>
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-1">
+                          <h3 className="font-medium">
+                            {address.firstName} {address.lastName}
+                          </h3>
+                          {address.id === defaultAddressId && (
+                            <span className="text-xs bg-green-100 text-green-800 px-2 py-0.5 rounded-full">
+                              Default
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-sm text-gray-600">
+                          {address.address}
+                          {address.apartment && `, ${address.apartment}`}
+                        </p>
+                        <p className="text-sm text-gray-600">
+                          {address.city}, {address.province}, {address.country}
+                        </p>
+                        <p className="text-sm text-gray-600">{address.postalCode}</p>
+                        <p className="text-sm text-gray-600">{address.phone}</p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+                
+                <button
+                  type="button"
+                  className="text-[#c3937c] hover:text-[#a67c66] font-medium text-sm mt-2 flex items-center"
+                  onClick={handleUseNewAddress}
+                >
+                  + Add a new address
+                </button>
+              </div>
+              
+              {!showAddressForm && (
+                <div className="mt-6">
+                  <button
+                    type="button"
+                    onClick={handleUseSavedAddress}
+                    disabled={isSubmitting || !selectedAddressId}
+                    className={`w-full rounded-md px-4 py-2 text-white font-medium shadow-sm focus:outline-none focus:ring-2 focus:ring-[#c3937c] ${
+                      selectedAddressId ? 'bg-[#c3937c] hover:bg-[#a67c66]' : 'bg-gray-400 cursor-not-allowed'
+                    } ${isSubmitting ? 'opacity-70 cursor-not-allowed' : ''}`}
+                  >
+                    {isSubmitting ? 'Processing...' : selectedAddressId ? 'Deliver to this address' : 'Please select an address'}
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+          
+          {/* Show Address Form if needed */}
+          {showAddressForm && (
+            <AddressForm 
+              onSubmit={handleAddressSubmit}
+              isLoading={isSubmitting}
+              submitLabel="Continue to Shipping"
+            />
+          )}
           
           <div className="mt-6">
             <button
@@ -204,31 +385,23 @@ const Information: React.FC = () => {
             </div>
             
             <div className="border-t border-gray-200 pt-4 mt-4">
-              <div className="flex justify-between py-2">
-                <span className="text-sm text-gray-600">Subtotal</span>
-                <span className="text-sm">{formatCurrency(summary.subtotal)}</span>
+              <div className="flex justify-between text-sm mb-2">
+                <span className="text-gray-600">Subtotal</span>
+                <span className="font-medium">{formatCurrency(summary.subtotal)}</span>
               </div>
-              
-              <div className="flex justify-between py-2">
-                <span className="text-sm text-gray-600">Tax</span>
-                <span className="text-sm">{formatCurrency(summary.tax)}</span>
+              <div className="flex justify-between text-sm mb-2">
+                <span className="text-gray-600">Tax</span>
+                <span className="font-medium">{formatCurrency(summary.tax)}</span>
               </div>
-              
-              <div className="flex justify-between py-2">
-                <span className="text-sm text-gray-600">Shipping</span>
-                <span className="text-sm">
-                  {summary.shipping === 0 
-                    ? 'Free' 
-                    : formatCurrency(summary.shipping)
-                  }
+              <div className="flex justify-between text-sm mb-4">
+                <span className="text-gray-600">Shipping</span>
+                <span className="font-medium">
+                  {summary.shipping === 0 ? 'Free' : formatCurrency(summary.shipping)}
                 </span>
               </div>
-              
-              <div className="flex justify-between py-2 border-t border-gray-200 mt-2">
-                <span className="font-semibold">Total</span>
-                <span className="font-semibold text-[#c3937c]">
-                  {formatCurrency(summary.total)}
-                </span>
+              <div className="flex justify-between font-medium text-lg">
+                <span>Total</span>
+                <span className="text-[#c3937c]">{formatCurrency(summary.total)}</span>
               </div>
             </div>
           </div>

@@ -49,7 +49,7 @@ const getUserAvatar = async (username: string): Promise<string | null> => {
   
   try {
     // Try to fetch the user profile to get the avatar
-    const response = await axios.get(`${BACKEND_URL}/user/profile/${username}`, {
+    const response = await axios.get(`${BACKEND_URL}/users/profile/${username}`, {
       withCredentials: true
     });
     
