@@ -12,8 +12,27 @@ const api = axios.create({
 export const PaymentApi = {
   // Create a new order from cart items
   createOrder: async (): Promise<Order> => {
-    const response = await api.post('/orders/create');
-    return response.data.data;
+    try {
+      const response = await api.post('/orders/create');
+      return response.data.data;
+    } catch (error) {
+      console.error('Error creating order:', error);
+      if (error.response) {
+        // The request was made and the server responded with a status code
+        // that falls out of the range of 2xx
+        console.error('Response data:', error.response.data);
+        console.error('Response status:', error.response.status);
+        throw new Error(
+          error.response.data?.message || 'Failed to create order. Please try again later.'
+        );
+      } else if (error.request) {
+        // The request was made but no response was received
+        throw new Error('No response received from server. Please check your internet connection.');
+      } else {
+        // Something happened in setting up the request that triggered an Error
+        throw new Error('Error creating order: ' + error.message);
+      }
+    }
   },
 
   // Get order details by ID
@@ -42,8 +61,27 @@ export const PaymentApi = {
   
   // Process payment for an order
   processPayment: async (orderId: string, paymentMethod: PaymentMethod): Promise<Order> => {
-    const response = await api.post(`/orders/${orderId}/payment`, { paymentMethod });
-    return response.data.data;
+    try {
+      const response = await api.post(`/orders/${orderId}/payment`, { paymentMethod });
+      return response.data.data;
+    } catch (error) {
+      console.error('Error processing payment:', error);
+      if (error.response) {
+        // The request was made and the server responded with a status code
+        // that falls out of the range of 2xx
+        console.error('Response data:', error.response.data);
+        console.error('Response status:', error.response.status);
+        throw new Error(
+          error.response.data?.message || 'Server error during payment processing. Please try again later.'
+        );
+      } else if (error.request) {
+        // The request was made but no response was received
+        throw new Error('No response received from server. Please check your internet connection.');
+      } else {
+        // Something happened in setting up the request that triggered an Error
+        throw new Error('Error processing payment: ' + error.message);
+      }
+    }
   }
 };
 

@@ -16,27 +16,60 @@ interface ShippingOption {
   estimatedDelivery: string;
 }
 
+// Componente para modal de error
+const ErrorModal = ({ isOpen, onClose, message, onRetry }: { 
+  isOpen: boolean; 
+  onClose: () => void; 
+  message: string;
+  onRetry: () => void;
+}) => {
+  if (!isOpen) return null;
+  
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+      <div className="bg-white rounded-lg shadow-xl p-6 max-w-md w-full">
+        <div className="mb-4 flex items-center justify-center">
+          <div className="w-14 h-14 rounded-full bg-red-100 flex items-center justify-center">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-8 h-8 text-red-500">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </div>
+        </div>
+        <h3 className="text-xl font-semibold text-center mb-2">Payment Unsuccessful</h3>
+        <p className="text-gray-600 text-center mb-6">{message}</p>
+        <div className="flex flex-col gap-2">
+          <button
+            onClick={onRetry}
+            className="w-full py-2 bg-[#c3937c] hover:bg-[#a67c66] text-white font-medium rounded-lg"
+          >
+            Try Again
+          </button>
+          <button
+            onClick={onClose}
+            className="w-full py-2 border border-gray-300 text-gray-700 font-medium rounded-lg"
+          >
+            Change Payment Method
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const Checkout: React.FC = () => {
   const navigate = useNavigate();
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isProcessingPayment, setIsProcessingPayment] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [summary, setSummary] = useState<OrderSummary>({
-    subtotal: 0,
-    tax: 0,
-    shipping: 0,
-    total: 0,
-    currency: 'USD'
-  });
   const [shippingAddress, setShippingAddress] = useState<Address | null>(null);
   const [shippingMethod, setShippingMethod] = useState<ShippingOption | null>(null);
-  const [showErrorModal, setShowErrorModal] = useState(false);
-  const [errorMessage, setErrorMessage] = useState('');
-  
-  // Ref để ngăn chặn vòng lặp vô hạn khi có lỗi
+  const [summary, setSummary] = useState<OrderSummary | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [isProcessingPayment, setIsProcessingPayment] = useState(false);
   const hasError = useRef(false);
   const apiCallAttempted = useRef(false);
+  const [showErrorModal, setShowErrorModal] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
+  const [paymentFormData, setPaymentFormData] = useState<PaymentFormData | null>(null);
   
   // Fetch cart data and get info from session storage
   useEffect(() => {
@@ -168,6 +201,9 @@ const Checkout: React.FC = () => {
       setIsProcessingPayment(true);
       setError(null);
       
+      // Save form data for retry
+      setPaymentFormData(formData);
+      
       // Create a formatted payment method
       const paymentMethod: PaymentMethod = {
         id: 'card_' + Date.now().toString(),
@@ -177,9 +213,11 @@ const Checkout: React.FC = () => {
         expiryDate: formData.expiryDate
       };
       
+      let newOrder;
+      
       try {
         // Create order from cart
-        const newOrder = await PaymentApi.createOrder();
+        newOrder = await PaymentApi.createOrder();
         
         if (!newOrder || !newOrder._id) {
           throw new Error('Failed to create order');
@@ -202,7 +240,15 @@ const Checkout: React.FC = () => {
         navigate('/payment-successful');
       } catch (apiError) {
         console.error('API error during payment processing:', apiError);
-        throw new Error('Server error during payment processing. Please try again later.');
+        // If we created an order but payment failed, we should cancel that order
+        if (newOrder && newOrder._id) {
+          try {
+            await PaymentApi.cancelOrder(newOrder._id);
+          } catch (cancelError) {
+            console.error('Failed to cancel order after payment error:', cancelError);
+          }
+        }
+        throw new Error(apiError.message || 'Server error during payment processing. Please try again later.');
       }
     } catch (error) {
       console.error('Payment processing error:', error);
@@ -211,6 +257,17 @@ const Checkout: React.FC = () => {
     } finally {
       setIsProcessingPayment(false);
     }
+  };
+  
+  const handleRetryPayment = () => {
+    if (paymentFormData) {
+      handlePaymentSubmit(paymentFormData);
+    }
+    setShowErrorModal(false);
+  };
+  
+  const handleCloseErrorModal = () => {
+    setShowErrorModal(false);
   };
   
   const handleBackToShipping = () => {
@@ -280,6 +337,14 @@ const Checkout: React.FC = () => {
       <CheckoutSteps currentStep="payment" completedSteps={['review', 'information', 'shipping']} />
       
       {renderServerConnectionError()}
+      
+      {/* Error Modal */}
+      <ErrorModal 
+        isOpen={showErrorModal} 
+        onClose={handleCloseErrorModal}
+        message={errorMessage}
+        onRetry={handleRetryPayment}
+      />
       
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Main Content - Payment Form */}
@@ -392,20 +457,20 @@ const Checkout: React.FC = () => {
             <div className="border-t border-gray-200 pt-4 mt-4">
               <div className="flex justify-between py-2">
                 <span className="text-sm text-gray-600">Tạm tính</span>
-                <span className="text-sm">{formatCurrency(summary.subtotal)}</span>
+                <span className="text-sm">{formatCurrency(summary?.subtotal || 0)}</span>
               </div>
               
               <div className="flex justify-between py-2">
                 <span className="text-sm text-gray-600">Thuế</span>
-                <span className="text-sm">{formatCurrency(summary.tax)}</span>
+                <span className="text-sm">{formatCurrency(summary?.tax || 0)}</span>
               </div>
               
               <div className="flex justify-between py-2">
                 <span className="text-sm text-gray-600">Phí vận chuyển</span>
                 <span className="text-sm">
-                  {summary.shipping === 0 
+                  {summary?.shipping === 0 
                     ? 'Miễn phí' 
-                    : formatCurrency(summary.shipping)
+                    : formatCurrency(summary?.shipping || 0)
                   }
                 </span>
               </div>
@@ -413,7 +478,7 @@ const Checkout: React.FC = () => {
               <div className="flex justify-between py-2 border-t border-gray-200 mt-2">
                 <span className="font-semibold">Tổng cộng</span>
                 <span className="font-semibold text-[#c3937c]">
-                  {formatCurrency(summary.total)}
+                  {formatCurrency(summary?.total || 0)}
                 </span>
               </div>
             </div>
@@ -426,14 +491,6 @@ const Checkout: React.FC = () => {
           </div>
         </div>
       </div>
-      
-      {/* Payment Error Modal */}
-      {showErrorModal && (
-        <PaymentErrorModal 
-          onClose={() => setShowErrorModal(false)}
-          errorMessage={errorMessage}
-        />
-      )}
     </div>
   );
 };

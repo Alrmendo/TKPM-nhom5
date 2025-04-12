@@ -22,13 +22,13 @@ const Shipping = lazy(() => import('../pages/Payment/Shipping'));
 const Checkout = lazy(() => import('../pages/Payment/Checkout'));
 const Successful = lazy(() => import('../pages/Payment/Successful'));
 const SearchOverlay = lazy(() => import('../pages/Search/SearchOverlay'));
-const Measurement = lazy(() => import('../pages/Admin/measurement'));
-const Style = lazy(() => import('../pages/Admin/style'));
-const Photography = lazy(() => import('../pages/Admin/photography'));
-const Deliver = lazy(() => import('../pages/Admin/deliver'));
-const ContactAdmin = lazy(() => import('../pages/Admin/contact_admin'));
-const DressManager = lazy(() => import('../pages/Admin/dress-manager'));
-const Statistics = lazy(() => import('../pages/Admin/statistic'));
+
+// New Admin Components
+const AdminDashboard = lazy(() => import('../pages/Admin/Dashboard'));
+const AdminProducts = lazy(() => import('../pages/Admin/Products'));
+const AdminCustomers = lazy(() => import('../pages/Admin/Customers'));
+const AdminOrders = lazy(() => import('../pages/Admin/Orders'));
+
 const SignIn = lazy(() => import('../pages/Auth/SignIn'));
 const SignUp = lazy(() => import('../pages/Auth/SignUp'));
 const VerifyEmail = lazy(() => import('../pages/Auth/VerifyEmail'));
@@ -36,8 +36,6 @@ const ForgotPassword = lazy(() => import('../pages/Auth/ForgotPassword'));
 const ResetPassword = lazy(() => import('../pages/Auth/ResetPassword'));
 const Cart = lazy(() => import('../pages/Cart/Cart'));
 const AboutPage = lazy(() => import('../pages/About/About'));
-const Appointments = lazy(() => import('../pages/Admin/appointments'));
-const CustomerList = lazy(() => import('../pages/Admin/customer-list'));
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -100,86 +98,72 @@ const AppRoutes = () => {
     { path: '/payment-shipping', element: <Shipping /> },
     { path: '/payment-checkout', element: <Checkout /> },
     { path: '/payment-successful', element: <Successful /> },
+    
+    // Admin Routes
+    {
+      path: '/admin/dashboard',
+      element: (
+        <ProtectedRoute requiredRole="admin">
+          <AdminDashboard />
+        </ProtectedRoute>
+      ),
+    },
+    {
+      path: '/admin/products',
+      element: (
+        <ProtectedRoute requiredRole="admin">
+          <AdminProducts />
+        </ProtectedRoute>
+      ),
+    },
+    {
+      path: '/admin/customers',
+      element: (
+        <ProtectedRoute requiredRole="admin">
+          <AdminCustomers />
+        </ProtectedRoute>
+      ),
+    },
+    {
+      path: '/admin/orders',
+      element: (
+        <ProtectedRoute requiredRole="admin">
+          <AdminOrders />
+        </ProtectedRoute>
+      ),
+    },
+    
+    // Redirect old admin routes to new admin dashboard
     {
       path: '/admin/measurement',
       element: (
         <ProtectedRoute requiredRole="admin">
-          <Measurement />
+          <Navigate to="/admin/dashboard" replace />
         </ProtectedRoute>
       ),
     },
     {
-      path: '/admin/style',
+      path: '/admin/*',
       element: (
         <ProtectedRoute requiredRole="admin">
-          <Style />
+          <Navigate to="/admin/dashboard" replace />
         </ProtectedRoute>
       ),
     },
-    {
-      path: '/admin/photography',
-      element: (
-        <ProtectedRoute requiredRole="admin">
-          <Photography />
-        </ProtectedRoute>
-      ),
-    },
-    {
-      path: '/admin/deliver',
-      element: (
-        <ProtectedRoute requiredRole="admin">
-          <Deliver />
-        </ProtectedRoute>
-      ),
-    },
-    {
-      path: '/admin/contact',
-      element: (
-        <ProtectedRoute requiredRole="admin">
-          <ContactAdmin />
-        </ProtectedRoute>
-      ),
-    },
-    {
-      path: '/admin/dresses',
-      element: (
-        <ProtectedRoute requiredRole="admin">
-          <DressManager />
-        </ProtectedRoute>
-      ),
-    },
-    {
-      path: '/admin/statistics',
-      element: (
-        <ProtectedRoute requiredRole="admin">
-          <Statistics />
-        </ProtectedRoute>
-      ),
-    },
-    {
-      path: '/admin/appointments',
-      element: (
-        <ProtectedRoute requiredRole="admin">
-          <Appointments />
-        </ProtectedRoute>
-      ),
-    },
-    {
-      path: '/admin/customer-list',
-      element: (
-        <ProtectedRoute requiredRole="admin">
-          <CustomerList />
-        </ProtectedRoute>
-      ),
-    },
+    
+    // Auth Routes
     { path: '/signin', element: <SignIn /> },
     { path: '/signup', element: <SignUp /> },
     { path: '/verify-email', element: <VerifyEmail /> },
     { path: '/forgot-password', element: <ForgotPassword /> },
     { path: '/reset-password', element: <ResetPassword /> },
+    
+    // Other Routes
     { path: '/cart', element: <Cart /> },
     { path: '/about', element: <AboutPage /> },
     { path: '/search', element: <SearchOverlay /> },
+    
+    // Fallback Route
     { path: '*', element: <NotFoundPage /> },
   ];
 

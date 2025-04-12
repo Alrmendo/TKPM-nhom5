@@ -85,6 +85,16 @@ export class OrderService {
       .exec();
   }
 
+  async getAllOrders(): Promise<Order[]> {
+    return this.orderModel.find()
+      .populate({
+        path: 'userId',
+        select: 'name email'
+      })
+      .sort({ createdAt: -1 })
+      .exec();
+  }
+
   async getOrderById(orderId: string): Promise<Order> {
     const order = await this.orderModel.findById(orderId);
     
@@ -148,5 +158,25 @@ export class OrderService {
     
     console.log(`Order ${orderId} status updated to confirmed after payment processing`);
     return updatedOrder;
+  }
+
+  async updateOrderStatus(orderId: string, status: OrderStatus): Promise<Order> {
+    const order = await this.getOrderById(orderId);
+    
+    // Perform status-specific operations if needed
+    if (status === OrderStatus.DELIVERED) {
+      // Handle delivery logic - could update inventory, notify user, etc.
+      console.log(`Order ${orderId} marked as delivered`);
+    } else if (status === OrderStatus.RETURNED) {
+      // Handle return logic - could update inventory, initiate refund, etc.
+      console.log(`Order ${orderId} marked as returned`);
+    }
+    
+    // Update the order status
+    return await this.orderModel.findByIdAndUpdate(
+      orderId,
+      { status: status },
+      { new: true }
+    );
   }
 } 

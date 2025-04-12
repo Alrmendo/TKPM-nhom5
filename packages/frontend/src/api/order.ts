@@ -9,7 +9,7 @@ const API = axios.create({
 export const getUserOrders = async () => {
   try {
     console.log('Making API request to fetch user orders');
-    const response = await API.get('/orders');
+    const response = await API.get('/orders/user');
     console.log('Orders API response status:', response.status);
     console.log('Orders API response headers:', response.headers);
     

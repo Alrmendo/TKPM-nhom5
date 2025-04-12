@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Put, Delete, Param, UseGuards, Request, HttpException, HttpStatus, ForbiddenException, Body } from '@nestjs/common';
+import { Controller, Get, Post, Put, Delete, Param, UseGuards, Request, HttpException, HttpStatus, ForbiddenException, Body, NotFoundException } from '@nestjs/common';
 import { OrderService } from './order.service';
 import { JwtAuthGuard } from '../../guards/jwt-auth.guard';
 import { OrderStatus } from '../../models/entities/order.entity';
@@ -8,15 +8,22 @@ import { OrderStatus } from '../../models/entities/order.entity';
 export class OrderController {
   constructor(private readonly orderService: OrderService) {}
 
-  @Get()
+  @Get('user')
   async getUserOrders(@Request() req) {
     try {
-      const orders = await this.orderService.getUserOrders(req.user.userId);
+      console.log('Getting orders for user:', req.user);
+      if (!req.user || !req.user.id) {
+        throw new Error('User authentication problem - invalid user ID');
+      }
+      
+      const orders = await this.orderService.getUserOrders(req.user.id);
+      
       return {
         success: true,
         data: orders
       };
     } catch (error) {
+      console.error('Error fetching user orders:', error);
       throw new HttpException({
         success: false,
         message: error.message || 'Failed to fetch orders'
@@ -24,13 +31,45 @@ export class OrderController {
     }
   }
 
+  @Get('admin')
+  async getAllOrders(@Request() req) {
+    try {
+      // Check if user has admin role
+      if (req.user.role !== 'admin') {
+        throw new ForbiddenException('You do not have permission to view all orders');
+      }
+      
+      const orders = await this.orderService.getAllOrders();
+      
+      return {
+        success: true,
+        data: orders
+      };
+    } catch (error) {
+      console.error('Error fetching all orders:', error);
+      const status = error instanceof ForbiddenException 
+        ? HttpStatus.FORBIDDEN 
+        : HttpStatus.INTERNAL_SERVER_ERROR;
+        
+      throw new HttpException({
+        success: false,
+        message: error.message || 'Failed to fetch orders'
+      }, status);
+    }
+  }
+
   @Get(':id')
   async getOrderById(@Request() req, @Param('id') orderId: string) {
     try {
+      console.log(`Getting order ${orderId} for user:`, req.user);
+      if (!req.user || !req.user.id) {
+        throw new Error('User authentication problem - invalid user ID');
+      }
+      
       const order = await this.orderService.getOrderById(orderId);
       
-      // Ensure user owns the order
-      if (order.userId.toString() !== req.user.userId) {
+      // Ensure user owns the order or has admin permissions
+      if (order.userId.toString() !== req.user.id && req.user.role !== 'admin') {
         throw new ForbiddenException('You do not have permission to view this order');
       }
       
@@ -39,9 +78,12 @@ export class OrderController {
         data: order
       };
     } catch (error) {
+      console.error(`Error fetching order ${orderId}:`, error);
       const status = error instanceof ForbiddenException 
         ? HttpStatus.FORBIDDEN 
-        : HttpStatus.INTERNAL_SERVER_ERROR;
+        : error instanceof NotFoundException
+          ? HttpStatus.NOT_FOUND
+          : HttpStatus.INTERNAL_SERVER_ERROR;
         
       throw new HttpException({
         success: false,
@@ -53,12 +95,21 @@ export class OrderController {
   @Post('create')
   async createOrder(@Request() req) {
     try {
-      const order = await this.orderService.createOrder(req.user.userId);
+      // Use req.user.id instead of req.user.userId to match the JWT strategy's user object
+      console.log('Creating order - User object:', req.user);
+      
+      // Check if we have a valid user ID
+      if (!req.user || !req.user.id) {
+        throw new Error('User authentication problem - invalid user ID');
+      }
+      
+      const order = await this.orderService.createOrder(req.user.id);
       return {
         success: true,
         data: order
       };
     } catch (error) {
+      console.error('Order creation error:', error);
       throw new HttpException({
         success: false,
         message: error.message || 'Failed to create order'
@@ -71,7 +122,7 @@ export class OrderController {
     try {
       // Verify user owns the order
       const order = await this.orderService.getOrderById(orderId);
-      if (order.userId.toString() !== req.user.userId) {
+      if (order.userId.toString() !== req.user.id) {
         throw new ForbiddenException('You do not have permission to cancel this order');
       }
       
@@ -105,7 +156,7 @@ export class OrderController {
     try {
       // Verify user owns the order
       const order = await this.orderService.getOrderById(orderId);
-      if (order.userId.toString() !== req.user.userId) {
+      if (order.userId.toString() !== req.user.id) {
         throw new ForbiddenException('You do not have permission to update this order');
       }
       
@@ -139,7 +190,7 @@ export class OrderController {
     try {
       // Verify user owns the order
       const order = await this.orderService.getOrderById(orderId);
-      if (order.userId.toString() !== req.user.userId) {
+      if (order.userId.toString() !== req.user.id) {
         throw new ForbiddenException('You do not have permission to update this order');
       }
       
@@ -165,6 +216,42 @@ export class OrderController {
       throw new HttpException({
         success: false,
         message: error.message || 'Failed to process payment'
+      }, status);
+    }
+  }
+
+  @Put(':id/status')
+  async updateOrderStatus(@Request() req, @Param('id') orderId: string, @Body() body: { status: OrderStatus }) {
+    try {
+      // Only admin users can update order status
+      if (req.user.role !== 'admin') {
+        throw new ForbiddenException('You do not have permission to update order status');
+      }
+      
+      // Validate the status
+      if (!Object.values(OrderStatus).includes(body.status)) {
+        throw new HttpException({
+          success: false,
+          message: 'Invalid order status'
+        }, HttpStatus.BAD_REQUEST);
+      }
+      
+      // Update order status
+      const updatedOrder = await this.orderService.updateOrderStatus(orderId, body.status);
+      return {
+        success: true,
+        data: updatedOrder
+      };
+    } catch (error) {
+      const status = error instanceof ForbiddenException 
+        ? HttpStatus.FORBIDDEN 
+        : error instanceof NotFoundException
+          ? HttpStatus.NOT_FOUND
+          : HttpStatus.BAD_REQUEST;
+        
+      throw new HttpException({
+        success: false,
+        message: error.message || 'Failed to update order status'
       }, status);
     }
   }
