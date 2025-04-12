@@ -11,6 +11,7 @@ import { CartModule } from './modules/cart/cart.module';
 import { OrderModule } from './modules/order/order.module';
 import { ReviewModule } from './modules/review/review.module';
 import { AppointmentModule } from './modules/appointment/appointment.module';
+import { ContactModule } from './modules/contact/contact.module';
 
 // Thêm vào để chạy seed
 import { Color, ColorSchema } from './models/entities/color.entity';
@@ -35,6 +36,7 @@ import { MongooseModule } from '@nestjs/mongoose';
     OrderModule,
     ReviewModule,
     AppointmentModule,
+    ContactModule,
 
     MongooseModule.forRoot('mongodb+srv://enchanted:2zlpDUeMpcTvv4X7@enchanted.ss8ztcz.mongodb.net/enchanted'),
     MongooseModule.forFeature([

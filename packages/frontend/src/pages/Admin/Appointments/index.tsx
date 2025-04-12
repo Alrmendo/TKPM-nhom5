@@ -1,6 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import AdminLayout from "../AdminLayout";
 import { Calendar, Clock, CheckCircle, XCircle, UserCheck, AlertCircle } from 'lucide-react';
+import axios from 'axios';
+
+// Create an API instance with credentials
+const API = axios.create({
+  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:3000',
+  withCredentials: true,
+});
 
 interface Appointment {
   _id: string;
@@ -30,26 +37,10 @@ const AdminAppointments: React.FC = () => {
       setLoading(true);
       console.log('API URL:', import.meta.env.VITE_API_URL);
       
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/appointment`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json'
-        },
-        credentials: 'include',
-      });
-
+      const response = await API.get('/appointment');
       console.log('Response status:', response.status);
       
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('Error response text:', errorText);
-        throw new Error(`Failed to fetch appointments: ${response.status} ${response.statusText}`);
-      }
-
-      const data = await response.json();
-      console.log('Appointments data:', data);
-      setAppointments(data);
+      setAppointments(response.data);
       setError(null);
     } catch (err) {
       console.error('Fetch error details:', err);
@@ -61,25 +52,10 @@ const AdminAppointments: React.FC = () => {
 
   const updateAppointmentStatus = async (id: string, status: string) => {
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/appointment/${id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json'
-        },
-        body: JSON.stringify({ status }),
-        credentials: 'include',
-      });
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('Error response text:', errorText);
-        throw new Error(`Failed to update appointment: ${response.status} ${response.statusText}`);
-      }
+      const response = await API.put(`/appointment/${id}`, { status });
       
       // If response is successful, update the appointment in state
-      const updatedAppointment = await response.json();
-      console.log('Updated appointment:', updatedAppointment);
+      console.log('Updated appointment:', response.data);
 
       // Update local state after successful API update
       setAppointments(

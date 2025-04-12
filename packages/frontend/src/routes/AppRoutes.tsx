@@ -30,6 +30,7 @@ const AdminProducts = lazy(() => import('../pages/Admin/Products'));
 const AdminCustomers = lazy(() => import('../pages/Admin/Customers'));
 const AdminOrders = lazy(() => import('../pages/Admin/Orders'));
 const AdminAppointments = lazy(() => import('../pages/Admin/Appointments'));
+const AdminContacts = lazy(() => import('../pages/Admin/Contacts'));
 
 const SignIn = lazy(() => import('../pages/Auth/SignIn'));
 const SignUp = lazy(() => import('../pages/Auth/SignUp'));
@@ -140,6 +141,14 @@ const AppRoutes = () => {
       element: (
         <ProtectedRoute requiredRole="admin">
           <AdminAppointments />
+        </ProtectedRoute>
+      ),
+    },
+    {
+      path: '/admin/contacts',
+      element: (
+        <ProtectedRoute requiredRole="admin">
+          <AdminContacts />
         </ProtectedRoute>
       ),
     },

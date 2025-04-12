@@ -11,6 +11,7 @@ import { User } from '../../models/entities/user.entity';
 import { Order } from '../../models/entities/order.entity';
 import { Dress } from '../../models/entities/dress.entity';
 import { Appointment } from '../../models/entities/appointment.entity';
+import { Contact } from '../../models/entities/contact.entity';
 import * as moment from 'moment';
 
 @Controller('admin')
@@ -23,6 +24,7 @@ export class AdminController {
     @InjectModel(Order.name) private orderModel: Model<Order>,
     @InjectModel(Dress.name) private dressModel: Model<Dress>,
     @InjectModel(Appointment.name) private appointmentModel: Model<Appointment>,
+    @InjectModel(Contact.name) private contactModel: Model<Contact>,
   ) {}
 
   @Get('style')
@@ -267,8 +269,9 @@ export class AdminController {
         createdAt: { $gte: startDate.toDate(), $lte: endDate.toDate() }
       });
 
+      // Count upcoming appointments (only the pending ones)
       const upcomingAppointments = await this.appointmentModel.countDocuments({
-        date: { $gte: new Date(), $lte: moment().add(7, 'days').toDate() }
+        status: 'pending'
       });
 
       const orderRevenue = await this.orderModel.aggregate([
@@ -295,11 +298,13 @@ export class AdminController {
         createdAt: { $gte: previousStartDate.toDate(), $lte: previousEndDate.toDate() }
       });
 
+      // Count previous period's pending appointments
       const previousAppointments = await this.appointmentModel.countDocuments({
-        date: { 
+        createdAt: { 
           $gte: moment().subtract(14, 'days').toDate(), 
           $lte: moment().subtract(7, 'days').toDate() 
-        }
+        },
+        status: 'pending'
       });
 
       const previousRevenue = await this.orderModel.aggregate([

@@ -199,4 +199,106 @@ export const getTopProducts = async (limit: number = 5): Promise<TopProduct[]> =
     console.error('Error fetching top products:', error);
     throw error;
   }
+};
+
+// Contact API functions
+export const getAllContacts = async () => {
+  try {
+    const response = await API.get('/contacts');
+    
+    if (response.data) {
+      return response.data;
+    }
+    
+    throw new Error('Failed to fetch contacts');
+  } catch (error) {
+    console.error('Error fetching contacts:', error);
+    throw error;
+  }
+};
+
+export const getContactById = async (id) => {
+  try {
+    const response = await API.get(`/contacts/${id}`);
+    
+    if (response.data) {
+      return response.data;
+    }
+    
+    throw new Error('Failed to fetch contact');
+  } catch (error) {
+    console.error('Error fetching contact:', error);
+    throw error;
+  }
+};
+
+export const createContact = async (contactData) => {
+  try {
+    const response = await API.post('/contacts', contactData);
+    
+    if (response.data) {
+      return response.data;
+    }
+    
+    throw new Error('Failed to create contact');
+  } catch (error) {
+    console.error('Error creating contact:', error);
+    throw error;
+  }
+};
+
+export const updateContact = async (id, contactData) => {
+  try {
+    const response = await API.patch(`/contacts/${id}`, contactData);
+    
+    if (response.data) {
+      return response.data;
+    }
+    
+    throw new Error('Failed to update contact');
+  } catch (error) {
+    console.error('Error updating contact:', error);
+    throw error;
+  }
+};
+
+export const deleteContact = async (id) => {
+  try {
+    const response = await API.delete(`/contacts/${id}`);
+    
+    return { success: true };
+  } catch (error) {
+    console.error('Error deleting contact:', error);
+    throw error;
+  }
+};
+
+export const markContactAsContacted = async (id) => {
+  try {
+    const response = await API.patch(`/contacts/${id}/mark-contacted`);
+    
+    if (response.data) {
+      return response.data;
+    }
+    
+    throw new Error('Failed to mark contact as contacted');
+  } catch (error) {
+    console.error('Error marking contact as contacted:', error);
+    throw error;
+  }
+};
+
+export const updateContactStatus = async (id, status) => {
+  try {
+    const response = await API.patch(`/contacts/${id}/status`, { status });
+    
+    if (response.data) {
+      return response.data;
+    }
+    
+    throw new Error('Failed to update contact status');
+  } catch (error) {
+    console.error('Error updating contact status:', error);
+    throw error;
+  }
 }; 
