@@ -20,6 +20,7 @@ export default function ReviewForm({ dressId, onReviewSubmitted }: ReviewFormPro
   const [isAuthChecked, setIsAuthChecked] = useState<boolean>(false);
   const [hasAlreadyReviewed, setHasAlreadyReviewed] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [showRatingError, setShowRatingError] = useState<boolean>(false);
 
   // Sử dụng useEffect để kiểm tra xác thực từ đầu
   useEffect(() => {
@@ -46,9 +47,17 @@ export default function ReviewForm({ dressId, onReviewSubmitted }: ReviewFormPro
     checkAuth();
   }, [isAuthenticated, checkAuthStatus, dressId, userId]);
 
+  // Reset rating error when user selects a rating
+  useEffect(() => {
+    if (rating !== null) {
+      setShowRatingError(false);
+    }
+  }, [rating]);
+
   // Handle star rating selection
   const handleSetRating = (value: number) => {
     setRating(value);
+    setShowRatingError(false);
   };
 
   // Handle star hover
@@ -60,6 +69,8 @@ export default function ReviewForm({ dressId, onReviewSubmitted }: ReviewFormPro
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
       const selectedFiles = Array.from(e.target.files);
+      console.log('Selected files:', selectedFiles.map(f => ({ name: f.name, type: f.type, size: f.size })));
+      
       if (images.length + selectedFiles.length > 3) {
         toast.error('You can upload up to 3 images');
         return;
@@ -67,6 +78,7 @@ export default function ReviewForm({ dressId, onReviewSubmitted }: ReviewFormPro
 
       // Create object URLs for preview
       const newPreviewUrls = selectedFiles.map(file => URL.createObjectURL(file));
+      console.log('Created URL previews for', newPreviewUrls.length, 'images');
       
       setImages(prevImages => [...prevImages, ...selectedFiles]);
       setImagePreviewUrls(prevUrls => [...prevUrls, ...newPreviewUrls]);
@@ -103,6 +115,7 @@ export default function ReviewForm({ dressId, onReviewSubmitted }: ReviewFormPro
 
     // Xử lý dữ liệu form
     if (rating === null || rating < 1 || rating > 5) {
+      setShowRatingError(true);
       toast.error('Please select a valid rating (1-5 stars)');
       return;
     }
@@ -127,10 +140,18 @@ export default function ReviewForm({ dressId, onReviewSubmitted }: ReviewFormPro
         userId: userId
       };
 
-      console.log('Submitting review from form:', reviewData);
+      console.log('Submitting review from form:', {
+        dressId,
+        rating: validRating,
+        reviewText: trimmedReviewText.substring(0, 30) + (trimmedReviewText.length > 30 ? '...' : ''),
+        imageCount: images.length,
+        imageTypes: images.map(img => img.type),
+        imageSizes: images.map(img => Math.round(img.size / 1024) + 'KB')
+      });
       
       // Gửi yêu cầu
-      await submitReview(reviewData);
+      const result = await submitReview(reviewData);
+      console.log('Review submission successful:', result);
       
       // Reset form
       setRating(null);
@@ -138,7 +159,13 @@ export default function ReviewForm({ dressId, onReviewSubmitted }: ReviewFormPro
       setImages([]);
       setImagePreviewUrls(prevUrls => {
         // Release all object URLs
-        prevUrls.forEach(url => URL.revokeObjectURL(url));
+        prevUrls.forEach(url => {
+          try {
+            URL.revokeObjectURL(url);
+          } catch (err) {
+            console.error('Error revoking URL:', err);
+          }
+        });
         return [];
       });
       
@@ -224,6 +251,12 @@ export default function ReviewForm({ dressId, onReviewSubmitted }: ReviewFormPro
               </button>
             ))}
           </div>
+          {showRatingError && (
+            <div className="text-sm text-red-500 mt-1 flex items-center">
+              <AlertCircle className="h-4 w-4 mr-1" />
+              Vui lòng đánh giá từ 1 đến 5 sao trước khi gửi
+            </div>
+          )}
         </div>
 
         {/* Review Text */}
@@ -248,47 +281,52 @@ export default function ReviewForm({ dressId, onReviewSubmitted }: ReviewFormPro
           {imagePreviewUrls.length > 0 && (
             <div className="flex flex-wrap gap-2">
               {imagePreviewUrls.map((url, index) => (
-                <div key={index} className="relative w-20 h-20 rounded-md overflow-hidden">
+                <div key={index} className="relative group w-16 h-16 rounded-md overflow-hidden border border-gray-300">
                   <img src={url} alt={`Upload preview ${index + 1}`} className="w-full h-full object-cover" />
                   <button
                     type="button"
                     onClick={() => removeImage(index)}
-                    className="absolute top-0 right-0 bg-red-500 text-white w-5 h-5 rounded-full flex items-center justify-center"
+                    className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
                   >
-                    <X className="w-3 h-3" aria-hidden="true" />
+                    <X className="h-4 w-4 text-white" />
                   </button>
                 </div>
               ))}
             </div>
           )}
           
-          {/* File input button */}
-          {images.length < 3 && (
-            <label className="flex items-center justify-center space-x-2 border border-dashed border-gray-300 rounded-md px-4 py-3 cursor-pointer hover:bg-gray-50">
-              <Upload className="w-5 h-5 text-gray-500" aria-hidden="true" />
-              <span className="text-sm text-gray-500">
-                {images.length === 0 ? 'Click to upload photos' : 'Add more photos'}
-              </span>
+          {/* Upload button */}
+          {imagePreviewUrls.length < 3 && (
+            <div className="flex justify-center items-center border-2 border-dashed border-gray-300 rounded-md p-4 hover:bg-gray-50 cursor-pointer">
               <input
                 type="file"
                 accept="image/*"
                 multiple
                 onChange={handleImageChange}
                 className="hidden"
+                id="photo-upload"
+                disabled={isSubmitting}
               />
-            </label>
+              <label htmlFor="photo-upload" className="cursor-pointer flex flex-col items-center justify-center">
+                <Upload className="h-6 w-6 text-gray-400" />
+                <span className="mt-2 text-sm text-gray-500">Click to upload photos</span>
+              </label>
+            </div>
           )}
+          
+          <p className="text-xs text-gray-500">
+            Upload photos (max 3) in JPG, PNG format. Maximum file size: 5MB.
+          </p>
         </div>
 
-        <div className="text-xs text-gray-500 italic mt-2">
+        <div className="text-xs text-gray-500 italic">
           Note: You can only submit one review per product.
         </div>
 
-        {/* Submit Button */}
         <button
           type="submit"
           disabled={isSubmitting}
-          className={`w-full py-2 rounded-md text-center ${
+          className={`w-full py-3 rounded-md flex items-center justify-center ${
             isSubmitting
               ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
               : 'bg-[#ead9c9] text-[#333333] hover:bg-[#e0cbb9]'

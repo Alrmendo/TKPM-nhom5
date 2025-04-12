@@ -1,4 +1,4 @@
-import { Controller, Get, Put, Post, Body, UseGuards, Req, BadRequestException, Res, UploadedFile, UseInterceptors } from '@nestjs/common';
+import { Controller, Get, Put, Post, Body, UseGuards, Req, BadRequestException, Res, UploadedFile, UseInterceptors, Param, NotFoundException } from '@nestjs/common';
 import { UserService } from './user.service';
 import { JwtAuthGuard } from '../../guards/jwt-auth.guard';
 import { UpdateProfileDto, UpdatePasswordDto, UpdateUsernameDto } from './dto/update-profile.dto';
@@ -81,6 +81,24 @@ export class UserController {
       return { imageUrl };
     } catch (error) {
       throw new BadRequestException('Failed to upload image: ' + error.message);
+    }
+  }
+
+  // Add new endpoint for getting public profile by username
+  @Get('profile/:username')
+  async getPublicProfile(@Req() req, @Param('username') username: string) {
+    try {
+      // Get the public profile (limited information)
+      const profile = await this.userService.getPublicProfile(username);
+      return {
+        success: true,
+        data: profile
+      };
+    } catch (error) {
+      if (error instanceof NotFoundException) {
+        throw new NotFoundException('User not found');
+      }
+      throw new BadRequestException(error.message || 'Failed to get user profile');
     }
   }
 } 

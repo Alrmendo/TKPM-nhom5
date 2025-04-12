@@ -1,8 +1,16 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { toast } from 'react-hot-toast';
 import { DressReview } from '../../../api/dress';
 import { useAuth } from '../../../context/AuthContext';
 import { replyToReview } from '../../../api/dress';
+import { User } from 'lucide-react';
+import axios from 'axios';
+
+// Backend URL for serving static files
+const BACKEND_URL = 'http://localhost:3000';
+
+// Map to cache user avatars to avoid redundant API calls
+const userAvatarCache = new Map();
 
 interface ReviewListProps {
   dressId: string;
@@ -16,6 +24,53 @@ interface ReplyFormState {
   isSubmitting: boolean;
 }
 
+// Function to ensure image URLs are properly formatted
+const getFullImageUrl = (imageUrl: string) => {
+  if (!imageUrl) return null;
+  
+  // If already an absolute URL, return as is
+  if (imageUrl.startsWith('http') || imageUrl.startsWith('https')) {
+    return imageUrl;
+  }
+  
+  // If image path doesn't start with /uploads, add it
+  const path = imageUrl.startsWith('/uploads') ? imageUrl : `/uploads${imageUrl.startsWith('/') ? '' : '/'}${imageUrl}`;
+  
+  // Return the full URL
+  return `${BACKEND_URL}${path}`;
+};
+
+// Function to get user avatar by username
+const getUserAvatar = async (username: string): Promise<string | null> => {
+  // Return from cache if available
+  if (userAvatarCache.has(username)) {
+    return userAvatarCache.get(username);
+  }
+  
+  try {
+    // Try to fetch the user profile to get the avatar
+    const response = await axios.get(`${BACKEND_URL}/user/profile/${username}`, {
+      withCredentials: true
+    });
+    
+    if (response.data?.success && response.data?.data) {
+      // Try both property names since different API endpoints might use different names
+      const avatarUrl = response.data.data.profileImage || response.data.data.profileImageUrl || null;
+      if (avatarUrl) {
+        userAvatarCache.set(username, avatarUrl);
+        return avatarUrl;
+      }
+    }
+    
+    // If no avatar found, cache null to avoid repeated requests
+    userAvatarCache.set(username, null);
+    return null;
+  } catch (error) {
+    console.error('Error fetching user avatar:', error);
+    return null;
+  }
+};
+
 export default function ReviewList({ dressId, reviews, onRefresh }: ReviewListProps): JSX.Element {
   const { isAuthenticated } = useAuth();
   const [replyForm, setReplyForm] = useState<ReplyFormState>({
@@ -24,6 +79,51 @@ export default function ReviewList({ dressId, reviews, onRefresh }: ReviewListPr
     isSubmitting: false,
   });
   const [showAllReviews, setShowAllReviews] = useState<boolean>(false);
+  const [userAvatars, setUserAvatars] = useState<{[username: string]: string | null}>({});
+
+  // Fetch avatars for all users in the reviews
+  useEffect(() => {
+    const fetchAvatars = async () => {
+      const avatarPromises = reviews.map(async (review) => {
+        // Skip if we already have this user's avatar
+        if (userAvatars[review.username]) return;
+        
+        // Try to get avatar from the user's profile or from review.icon
+        const avatarUrl = review.icon ? getFullImageUrl(review.icon) : await getUserAvatar(review.username);
+        
+        // Update the avatar in state
+        if (avatarUrl) {
+          setUserAvatars(prev => ({
+            ...prev,
+            [review.username]: avatarUrl
+          }));
+        }
+      });
+
+      // Also fetch for reply authors
+      reviews.forEach(review => {
+        if (review.replies && review.replies.length > 0) {
+          review.replies.forEach(async (reply: any) => {
+            if (userAvatars[reply.username]) return;
+            
+            const avatarUrl = reply.icon ? getFullImageUrl(reply.icon) : await getUserAvatar(reply.username);
+            
+            if (avatarUrl) {
+              setUserAvatars(prev => ({
+                ...prev,
+                [reply.username]: avatarUrl
+              }));
+            }
+          });
+        }
+      });
+
+      // Wait for all avatar fetches to complete
+      await Promise.all(avatarPromises);
+    };
+
+    fetchAvatars();
+  }, [reviews]);
 
   // Toggle reply form
   const toggleReplyForm = (reviewId: string | null) => {
@@ -100,12 +200,24 @@ export default function ReviewList({ dressId, reviews, onRefresh }: ReviewListPr
           <div className="flex space-x-4">
             {/* Avatar */}
             <div className="flex-shrink-0">
-              <div className="w-10 h-10 rounded-full bg-[#f2f2f2] overflow-hidden">
-                <img 
-                  src={review.icon || "/placeholder.svg?height=40&width=40"} 
-                  alt={review.username} 
-                  className="object-cover w-full h-full" 
-                />
+              <div className="w-10 h-10 rounded-full bg-[#f2f2f2] overflow-hidden flex items-center justify-center">
+                {userAvatars[review.username] || review.icon ? (
+                  <img 
+                    src={userAvatars[review.username] || getFullImageUrl(review.icon)} 
+                    alt={review.username} 
+                    className="object-cover w-full h-full"
+                    onError={(e) => {
+                      // Replace with user icon if image fails to load
+                      (e.target as HTMLImageElement).style.display = 'none';
+                      e.currentTarget.parentElement!.classList.add('flex', 'items-center', 'justify-center');
+                      const icon = document.createElement('div');
+                      icon.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-6 h-6 text-gray-400"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>';
+                      e.currentTarget.parentElement!.appendChild(icon);
+                    }}
+                  />
+                ) : (
+                  <User className="w-6 h-6 text-gray-400" />
+                )}
               </div>
             </div>
 
@@ -139,8 +251,16 @@ export default function ReviewList({ dressId, reviews, onRefresh }: ReviewListPr
               {review.images && review.images.length > 0 && (
                 <div className="flex flex-wrap gap-2 mt-2">
                   {review.images.map((image: string, imgIndex: number) => (
-                    <div key={imgIndex} className="w-16 h-16 rounded-md overflow-hidden">
-                      <img src={image} alt={`Review image ${imgIndex + 1}`} className="w-full h-full object-cover" />
+                    <div key={imgIndex} className="w-16 h-16 rounded-md overflow-hidden border border-gray-200">
+                      <img 
+                        src={getFullImageUrl(image)} 
+                        alt={`Review image ${imgIndex + 1}`} 
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          // Show placeholder if image fails to load
+                          (e.target as HTMLImageElement).src = '/placeholder.svg?height=64&width=64';
+                        }}
+                      />
                     </div>
                   ))}
                 </div>
@@ -184,12 +304,24 @@ export default function ReviewList({ dressId, reviews, onRefresh }: ReviewListPr
                   {review.replies.map((reply: any, replyIndex: number) => (
                     <div key={replyIndex} className="flex space-x-3">
                       <div className="flex-shrink-0">
-                        <div className="w-8 h-8 rounded-full bg-[#f2f2f2] overflow-hidden">
-                          <img 
-                            src={reply.icon || "/placeholder.svg?height=32&width=32"} 
-                            alt={reply.username} 
-                            className="object-cover w-full h-full" 
-                          />
+                        <div className="w-8 h-8 rounded-full bg-[#f2f2f2] overflow-hidden flex items-center justify-center">
+                          {userAvatars[reply.username] || reply.icon ? (
+                            <img 
+                              src={userAvatars[reply.username] || getFullImageUrl(reply.icon)} 
+                              alt={reply.username} 
+                              className="object-cover w-full h-full"
+                              onError={(e) => {
+                                // Replace with user icon if image fails to load
+                                (e.target as HTMLImageElement).style.display = 'none';
+                                e.currentTarget.parentElement!.classList.add('flex', 'items-center', 'justify-center');
+                                const icon = document.createElement('div');
+                                icon.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 text-gray-400"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>';
+                                e.currentTarget.parentElement!.appendChild(icon);
+                              }}
+                            />
+                          ) : (
+                            <User className="w-4 h-4 text-gray-400" />
+                          )}
                         </div>
                       </div>
                       <div className="flex-1">

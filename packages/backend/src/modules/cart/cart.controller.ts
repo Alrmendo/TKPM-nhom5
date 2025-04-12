@@ -12,7 +12,7 @@ export class CartController {
     try {
       console.log('GET /cart - User:', req.user);
       
-      if (!req.user || !req.user.userId) {
+      if (!req.user || !req.user.id) {
         console.error('User or userId is missing from request:', req.user);
         throw new HttpException({
           success: false,
@@ -20,7 +20,7 @@ export class CartController {
         }, HttpStatus.UNAUTHORIZED);
       }
       
-      const cart = await this.cartService.getCart(req.user.userId);
+      const cart = await this.cartService.getCart(req.user.id);
       return {
         success: true,
         data: cart
@@ -49,7 +49,7 @@ export class CartController {
     try {
       console.log('POST /cart/add - User:', req.user);
       
-      if (!req.user || !req.user.userId) {
+      if (!req.user || !req.user.id) {
         console.error('User or userId is missing from request:', req.user);
         throw new HttpException({
           success: false,
@@ -75,7 +75,7 @@ export class CartController {
         throw new Error('Start date cannot be in the past');
       }
 
-      const cart = await this.cartService.addToCart(req.user.userId, {
+      const cart = await this.cartService.addToCart(req.user.id, {
         ...itemData,
         startDate,
         endDate
@@ -96,7 +96,7 @@ export class CartController {
   @Delete('remove/:index')
   async removeFromCart(@Request() req, @Param('index') index: number) {
     try {
-      const cart = await this.cartService.removeFromCart(req.user.userId, index);
+      const cart = await this.cartService.removeFromCart(req.user.id, index);
       return {
         success: true,
         data: cart
@@ -135,7 +135,7 @@ export class CartController {
       }
 
       const cart = await this.cartService.updateCartItemDates(
-        req.user.userId,
+        req.user.id,
         index,
         startDate,
         endDate
@@ -156,7 +156,7 @@ export class CartController {
   @Delete('clear')
   async clearCart(@Request() req) {
     try {
-      await this.cartService.clearCart(req.user.userId);
+      await this.cartService.clearCart(req.user.id);
       return {
         success: true,
         message: 'Cart cleared successfully'

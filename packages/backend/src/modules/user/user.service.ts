@@ -25,6 +25,23 @@ export class UserService {
     return userProfile;
   }
 
+  // Get only public profile information for a user by username
+  async getPublicProfile(username: string): Promise<any> {
+    const user = await this.findByUsername(username);
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+    
+    // Return only public fields
+    return {
+      username: user.username,
+      firstName: user.firstName || '',
+      lastName: user.lastName || '',
+      profileImage: user.profileImageUrl || null,
+      role: user.role
+    };
+  }
+
   async updateProfile(username: string, updateProfileDto: UpdateProfileDto): Promise<any> {
     const user = await this.findByUsername(username);
     
