@@ -16,6 +16,47 @@ export interface Color {
   hexCode: string;
 }
 
+export interface CustomerUser {
+  _id: string;
+  username: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  phone: string;
+  dateOfBirth: string;
+  profileImageUrl?: string;
+  createdAt: string;
+  updatedAt: string;
+  isVerified: boolean;
+  role: 'user' | 'admin';
+  status?: 'active' | 'inactive' | 'blocked';
+}
+
+export interface DashboardStats {
+  totalOrders: number;
+  totalCustomers: number;
+  upcomingAppointments: number;
+  totalRevenue: number;
+  percentChange: {
+    orders: number;
+    customers: number;
+    appointments: number;
+    revenue: number;
+  };
+}
+
+export interface MonthlySales {
+  month: string;
+  sales: number;
+  profit: number;
+  orders: number;
+}
+
+export interface TopProduct {
+  name: string;
+  value: number;
+}
+
 // Get all sizes
 export const getAllSizes = async (): Promise<Size[]> => {
   try {
@@ -44,6 +85,118 @@ export const getAllColors = async (): Promise<Color[]> => {
     throw new Error(response.data.message || 'Failed to fetch colors');
   } catch (error) {
     console.error('Error fetching colors:', error);
+    throw error;
+  }
+};
+
+// Get all customers
+export const getAllCustomers = async (): Promise<CustomerUser[]> => {
+  try {
+    const response = await API.get('/admin/customers');
+    
+    if (response.data && response.data.success) {
+      return response.data.data;
+    }
+    
+    throw new Error(response.data.message || 'Failed to fetch customers');
+  } catch (error) {
+    console.error('Error fetching customers:', error);
+    throw error;
+  }
+};
+
+// Get customer by ID
+export const getCustomerById = async (id: string): Promise<CustomerUser> => {
+  try {
+    const response = await API.get(`/admin/customers/${id}`);
+    
+    if (response.data && response.data.success) {
+      return response.data.data;
+    }
+    
+    throw new Error(response.data.message || 'Failed to fetch customer');
+  } catch (error) {
+    console.error(`Error fetching customer ${id}:`, error);
+    throw error;
+  }
+};
+
+// Update customer status
+export const updateCustomerStatus = async (id: string, status: 'active' | 'inactive' | 'blocked'): Promise<CustomerUser> => {
+  try {
+    const response = await API.put(`/admin/customers/${id}/status`, { status });
+    
+    if (response.data && response.data.success) {
+      return response.data.data;
+    }
+    
+    throw new Error(response.data.message || 'Failed to update customer status');
+  } catch (error) {
+    console.error(`Error updating customer ${id} status:`, error);
+    throw error;
+  }
+};
+
+// Delete customer
+export const deleteCustomer = async (id: string): Promise<{ success: boolean; message: string }> => {
+  try {
+    const response = await API.delete(`/admin/customers/${id}`);
+    
+    if (response.data && response.data.success) {
+      return response.data;
+    }
+    
+    throw new Error(response.data.message || 'Failed to delete customer');
+  } catch (error) {
+    console.error(`Error deleting customer ${id}:`, error);
+    throw error;
+  }
+};
+
+// Get dashboard statistics
+export const getDashboardStats = async (period: string = '30days'): Promise<DashboardStats> => {
+  try {
+    const response = await API.get(`/admin/dashboard/stats?period=${period}`);
+    
+    if (response.data && response.data.success) {
+      return response.data.data;
+    }
+    
+    throw new Error(response.data.message || 'Failed to fetch dashboard statistics');
+  } catch (error) {
+    console.error('Error fetching dashboard statistics:', error);
+    throw error;
+  }
+};
+
+// Get monthly sales data
+export const getMonthlySales = async (year: number = new Date().getFullYear()): Promise<MonthlySales[]> => {
+  try {
+    const response = await API.get(`/admin/dashboard/sales?year=${year}`);
+    
+    if (response.data && response.data.success) {
+      return response.data.data;
+    }
+    
+    throw new Error(response.data.message || 'Failed to fetch monthly sales data');
+  } catch (error) {
+    console.error('Error fetching monthly sales data:', error);
+    throw error;
+  }
+};
+
+// Get top selling products
+export const getTopProducts = async (limit: number = 5): Promise<TopProduct[]> => {
+  try {
+    const response = await API.get(`/admin/dashboard/products/top?limit=${limit}`);
+    
+    if (response.data && response.data.success) {
+      return response.data.data;
+    }
+    
+    throw new Error(response.data.message || 'Failed to fetch top products');
+  } catch (error) {
+    console.error('Error fetching top products:', error);
     throw error;
   }
 }; 

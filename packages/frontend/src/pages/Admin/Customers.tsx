@@ -30,6 +30,8 @@ import {
   InputLabel,
   Select,
   MenuItem,
+  Alert,
+  Snackbar,
 } from '@mui/material';
 import {
   Search,
@@ -42,32 +44,22 @@ import {
   MoreVert,
   AccountCircle,
 } from '@mui/icons-material';
+import { CustomerUser, getAllCustomers, getCustomerById, updateCustomerStatus, deleteCustomer } from '../../api/admin';
 
-// Mock data - replace with actual API calls
+// Map data from API to component's data model
 interface Customer {
   _id: string;
   name: string;
   email: string;
   phone: string;
-  address: string;
+  address?: string;
   createdAt: string;
   lastLogin: string;
   totalOrders: number;
   status: 'active' | 'inactive' | 'blocked';
   avatar?: string;
+  username: string;
 }
-
-const mockCustomers: Customer[] = Array.from({ length: 50 }, (_, index) => ({
-  _id: `cust-${index + 1}`,
-  name: `User ${index + 1}`,
-  email: `user${index + 1}@example.com`,
-  phone: `+1 555-${String(index).padStart(3, '0')}-${String(index + 1000).slice(1)}`,
-  address: `${index + 100} Main St, City ${index % 10}, State ${index % 5}`,
-  createdAt: new Date(Date.now() - index * 24 * 60 * 60 * 1000).toISOString(),
-  lastLogin: new Date(Date.now() - index * 12 * 60 * 60 * 1000).toISOString(),
-  totalOrders: Math.floor(Math.random() * 20),
-  status: (['active', 'inactive', 'blocked'] as const)[Math.floor(Math.random() * 3)],
-}));
 
 const Customers = () => {
   const [loading, setLoading] = useState(true);
@@ -76,6 +68,13 @@ const Customers = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
   const [statusFilter, setStatusFilter] = useState<string>('all');
+  
+  // Alerts
+  const [alert, setAlert] = useState<{show: boolean, message: string, severity: 'success' | 'error' | 'info' | 'warning'}>({
+    show: false,
+    message: '',
+    severity: 'info'
+  });
   
   // Dialogs
   const [detailDialogOpen, setDetailDialogOpen] = useState(false);
@@ -87,17 +86,40 @@ const Customers = () => {
   const [rowsPerPage, setRowsPerPage] = useState(10);
   
   useEffect(() => {
-    // Simulate API fetch
+    // Fetch customers from API
     const fetchCustomers = async () => {
       try {
         setLoading(true);
-        // In a real app, replace this with an actual API call
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        setCustomers(mockCustomers);
-        setFilteredCustomers(mockCustomers);
+        // Real API call to fetch customers
+        const customersData = await getAllCustomers();
+        
+        // Transform API data to match component's data model
+        const mappedCustomers: Customer[] = customersData.map(customer => ({
+          _id: customer._id,
+          name: customer.name || `${customer.firstName || ''} ${customer.lastName || ''}`.trim() || customer.username,
+          email: customer.email,
+          phone: customer.phone || 'No phone',
+          address: customer.addresses && customer.addresses.length > 0 
+            ? `${customer.addresses[0].address}, ${customer.addresses[0].city}`
+            : 'No address',
+          createdAt: customer.createdAt,
+          lastLogin: customer.lastLogin || customer.updatedAt || customer.createdAt,
+          totalOrders: customer.totalOrders || 0,
+          status: customer.status || (customer.isVerified ? 'active' : 'inactive'),
+          avatar: customer.profileImageUrl,
+          username: customer.username,
+        }));
+        
+        setCustomers(mappedCustomers);
+        setFilteredCustomers(mappedCustomers);
         setLoading(false);
       } catch (error) {
         console.error('Error fetching customers:', error);
+        setAlert({
+          show: true,
+          message: 'Failed to load customers. Please try again.',
+          severity: 'error'
+        });
         setLoading(false);
       }
     };
@@ -141,7 +163,7 @@ const Customers = () => {
     setSearchTerm(event.target.value);
   };
   
-  const handleStatusFilterChange = (event: React.ChangeEvent<{ value: unknown }>) => {
+  const handleStatusFilterChange = (event: any) => {
     setStatusFilter(event.target.value as string);
   };
   
@@ -164,19 +186,78 @@ const Customers = () => {
     
     try {
       setLoading(true);
-      // In a real app, replace with actual delete API call
-      await new Promise(resolve => setTimeout(resolve, 500));
+      // Real API call to delete customer
+      const result = await deleteCustomer(customerToDelete);
       
-      // Remove the customer from the list
-      setCustomers(prev => prev.filter(c => c._id !== customerToDelete));
+      if (result.success) {
+        // Remove the customer from the list
+        setCustomers(prev => prev.filter(c => c._id !== customerToDelete));
+        setAlert({
+          show: true,
+          message: 'Customer deleted successfully',
+          severity: 'success'
+        });
+      } else {
+        throw new Error(result.message);
+      }
       
       setDeleteDialogOpen(false);
       setCustomerToDelete(null);
       setLoading(false);
     } catch (error) {
       console.error('Error deleting customer:', error);
+      setAlert({
+        show: true,
+        message: error.message || 'Failed to delete customer',
+        severity: 'error'
+      });
       setLoading(false);
     }
+  };
+  
+  const handleUpdateStatus = async (customerId: string, newStatus: 'active' | 'inactive' | 'blocked') => {
+    try {
+      setLoading(true);
+      // Real API call to update status
+      const updatedCustomer = await updateCustomerStatus(customerId, newStatus);
+      
+      // Update the customer in the list
+      setCustomers(prev => prev.map(c => {
+        if (c._id === customerId) {
+          return {
+            ...c,
+            status: newStatus
+          };
+        }
+        return c;
+      }));
+      
+      if (selectedCustomer && selectedCustomer._id === customerId) {
+        setSelectedCustomer({
+          ...selectedCustomer,
+          status: newStatus
+        });
+      }
+      
+      setAlert({
+        show: true,
+        message: `Customer status updated to ${newStatus}`,
+        severity: 'success'
+      });
+      setLoading(false);
+    } catch (error) {
+      console.error('Error updating customer status:', error);
+      setAlert({
+        show: true,
+        message: 'Failed to update customer status',
+        severity: 'error'
+      });
+      setLoading(false);
+    }
+  };
+  
+  const handleCloseAlert = () => {
+    setAlert({...alert, show: false});
   };
   
   const getStatusColor = (status: string) => {
@@ -218,6 +299,17 @@ const Customers = () => {
           View and manage your customer database
         </Typography>
       </Box>
+      
+      <Snackbar 
+        open={alert.show} 
+        autoHideDuration={6000} 
+        onClose={handleCloseAlert}
+        anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+      >
+        <Alert onClose={handleCloseAlert} severity={alert.severity}>
+          {alert.message}
+        </Alert>
+      </Snackbar>
       
       <Box sx={{ mb: 4, display: 'flex', gap: 2, flexWrap: 'wrap' }}>
         <Card sx={{ flexGrow: 1, minWidth: 200 }}>
@@ -304,7 +396,7 @@ const Customers = () => {
                 <TableRow key={customer._id}>
                   <TableCell>
                     <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                      <Avatar sx={{ mr: 2 }}>
+                      <Avatar sx={{ mr: 2 }} src={customer.avatar}>
                         {customer.name.charAt(0)}
                       </Avatar>
                       {customer.name}
@@ -371,16 +463,26 @@ const Customers = () => {
             <DialogTitle>Customer Details</DialogTitle>
             <DialogContent dividers>
               <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', mb: 3 }}>
-                <Avatar sx={{ width: 80, height: 80, mb: 2 }}>
+                <Avatar sx={{ width: 80, height: 80, mb: 2 }} src={selectedCustomer.avatar}>
                   {selectedCustomer.name.charAt(0)}
                 </Avatar>
                 <Typography variant="h6">{selectedCustomer.name}</Typography>
-                <Chip 
-                  label={selectedCustomer.status.charAt(0).toUpperCase() + selectedCustomer.status.slice(1)} 
-                  color={getStatusColor(selectedCustomer.status) as "success" | "warning" | "error" | "default"}
-                  size="small"
-                  sx={{ mt: 1 }}
-                />
+                <Typography variant="body2" color="text.secondary" gutterBottom>
+                  @{selectedCustomer.username}
+                </Typography>
+                <Box sx={{ mt: 1, display: 'flex', gap: 1 }}>
+                  <Chip 
+                    label={selectedCustomer.status.charAt(0).toUpperCase() + selectedCustomer.status.slice(1)} 
+                    color={getStatusColor(selectedCustomer.status) as "success" | "warning" | "error" | "default"}
+                    size="small"
+                  />
+                  <Chip 
+                    label={`${selectedCustomer.totalOrders} Orders`} 
+                    color="primary" 
+                    variant="outlined"
+                    size="small"
+                  />
+                </Box>
               </Box>
               
               <Stack spacing={2}>
@@ -392,10 +494,12 @@ const Customers = () => {
                   <Phone sx={{ color: 'text.secondary', mr: 2 }} />
                   <Typography>{selectedCustomer.phone}</Typography>
                 </Box>
-                <Box sx={{ display: 'flex', alignItems: 'flex-start' }}>
-                  <LocationOn sx={{ color: 'text.secondary', mr: 2, mt: 0.5 }} />
-                  <Typography>{selectedCustomer.address}</Typography>
-                </Box>
+                {selectedCustomer.address && (
+                  <Box sx={{ display: 'flex', alignItems: 'flex-start' }}>
+                    <LocationOn sx={{ color: 'text.secondary', mr: 2, mt: 0.5 }} />
+                    <Typography>{selectedCustomer.address}</Typography>
+                  </Box>
+                )}
                 
                 <Divider />
                 
@@ -416,32 +520,49 @@ const Customers = () => {
                       {formatDate(selectedCustomer.lastLogin)}
                     </Typography>
                   </Grid>
-                  <Grid item xs={6}>
-                    <Typography variant="body2" color="text.secondary">
-                      Total Orders
-                    </Typography>
-                    <Typography variant="body1">
-                      {selectedCustomer.totalOrders}
-                    </Typography>
-                  </Grid>
                 </Grid>
+                
+                <Divider />
+                
+                <Typography variant="subtitle2" color="text.secondary">
+                  Change Status
+                </Typography>
+                <Box sx={{ display: 'flex', gap: 1 }}>
+                  <Button 
+                    variant={selectedCustomer.status === 'active' ? 'contained' : 'outlined'}
+                    color="success"
+                    size="small"
+                    onClick={() => handleUpdateStatus(selectedCustomer._id, 'active')}
+                  >
+                    Active
+                  </Button>
+                  <Button 
+                    variant={selectedCustomer.status === 'inactive' ? 'contained' : 'outlined'}
+                    color="warning"
+                    size="small"
+                    onClick={() => handleUpdateStatus(selectedCustomer._id, 'inactive')}
+                  >
+                    Inactive
+                  </Button>
+                  <Button 
+                    variant={selectedCustomer.status === 'blocked' ? 'contained' : 'outlined'}
+                    color="error"
+                    size="small"
+                    onClick={() => handleUpdateStatus(selectedCustomer._id, 'blocked')}
+                  >
+                    Blocked
+                  </Button>
+                </Box>
               </Stack>
             </DialogContent>
             <DialogActions>
               <Button onClick={handleCloseDetailDialog}>Close</Button>
-              <Button 
-                variant="contained" 
-                color="primary" 
-                startIcon={<Edit />}
-              >
-                Edit
-              </Button>
             </DialogActions>
           </>
         )}
       </Dialog>
       
-      {/* Confirmation Dialog */}
+      {/* Delete Confirmation Dialog */}
       <Dialog
         open={deleteDialogOpen}
         onClose={() => setDeleteDialogOpen(false)}
@@ -454,7 +575,7 @@ const Customers = () => {
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setDeleteDialogOpen(false)}>Cancel</Button>
-          <Button onClick={handleConfirmDelete} color="error" variant="contained">
+          <Button onClick={handleConfirmDelete} color="error" autoFocus>
             Delete
           </Button>
         </DialogActions>

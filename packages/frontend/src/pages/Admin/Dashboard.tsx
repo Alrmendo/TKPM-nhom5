@@ -20,6 +20,8 @@ import {
   Tab,
   Tabs,
   LinearProgress,
+  Alert,
+  Snackbar,
 } from '@mui/material';
 import {
   BarChart,
@@ -54,24 +56,7 @@ import {
   Storefront,
   DateRange,
 } from '@mui/icons-material';
-
-// Mock data (replace with actual API calls)
-const salesData = [
-  { month: 'Jan', sales: 4000, profit: 2400, orders: 80 },
-  { month: 'Feb', sales: 3000, profit: 1398, orders: 65 },
-  { month: 'Mar', sales: 2000, profit: 9800, orders: 45 },
-  { month: 'Apr', sales: 2780, profit: 3908, orders: 60 },
-  { month: 'May', sales: 1890, profit: 4800, orders: 40 },
-  { month: 'Jun', sales: 2390, profit: 3800, orders: 50 },
-];
-
-const topProducts = [
-  { name: 'Classic White Dress', value: 35 },
-  { name: 'Mermaid Style', value: 25 },
-  { name: 'Princess Cut', value: 20 },
-  { name: 'A-Line Dress', value: 15 },
-  { name: 'Ball Gown', value: 5 },
-];
+import { getDashboardStats, getMonthlySales, getTopProducts } from '../../api/admin';
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8'];
 
@@ -153,18 +138,101 @@ const StatCard: React.FC<StatCardProps> = ({ title, value, icon, color, percentC
 const Dashboard = () => {
   const [loading, setLoading] = useState(true);
   const [tabValue, setTabValue] = useState(0);
+  const [statsLoading, setStatsLoading] = useState(false);
+  const [period, setPeriod] = useState('30days');
+  const [error, setError] = useState<{ show: boolean; message: string }>({
+    show: false,
+    message: '',
+  });
+
+  // State for dashboard data
+  const [dashboardStats, setDashboardStats] = useState({
+    totalOrders: 0,
+    totalCustomers: 0,
+    upcomingAppointments: 0,
+    totalRevenue: 0,
+    percentChange: {
+      orders: 0,
+      customers: 0,
+      appointments: 0,
+      revenue: 0
+    }
+  });
+  const [salesData, setSalesData] = useState<any[]>([]);
+  const [topProducts, setTopProducts] = useState<any[]>([]);
+
   const theme = useTheme();
 
   const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
     setTabValue(newValue);
   };
 
+  const handleRefresh = async () => {
+    setStatsLoading(true);
+    try {
+      await fetchDashboardData(period);
+    } catch (error) {
+      setError({
+        show: true,
+        message: 'Failed to refresh data. Please try again.',
+      });
+    } finally {
+      setStatsLoading(false);
+    }
+  };
+
+  const handlePeriodChange = (newPeriod: string) => {
+    setPeriod(newPeriod);
+    fetchDashboardData(newPeriod);
+  };
+
+  const fetchDashboardData = async (selectedPeriod: string) => {
+    try {
+      setStatsLoading(true);
+      
+      // Fetch dashboard statistics
+      const stats = await getDashboardStats(selectedPeriod);
+      setDashboardStats(stats);
+      
+      // Fetch monthly sales data
+      const sales = await getMonthlySales();
+      setSalesData(sales);
+      
+      // Fetch top products
+      const products = await getTopProducts();
+      setTopProducts(products);
+      
+      setStatsLoading(false);
+    } catch (error) {
+      console.error('Error fetching dashboard data:', error);
+      setError({
+        show: true,
+        message: 'Failed to load data. Please try again.',
+      });
+      setStatsLoading(false);
+    }
+  };
+
+  const handleCloseError = () => {
+    setError({ ...error, show: false });
+  };
+
   useEffect(() => {
-    // Simulate data fetching
-    const timer = setTimeout(() => {
-      setLoading(false);
-    }, 1000);
-    return () => clearTimeout(timer);
+    const loadDashboardData = async () => {
+      try {
+        await fetchDashboardData(period);
+        setLoading(false);
+      } catch (error) {
+        console.error('Error loading dashboard data:', error);
+        setError({
+          show: true,
+          message: 'Failed to load dashboard data. Please try again.',
+        });
+        setLoading(false);
+      }
+    };
+    
+    loadDashboardData();
   }, []);
 
   if (loading) {
@@ -195,10 +263,11 @@ const Dashboard = () => {
             </Box>
             <Box sx={{ display: 'flex', gap: 2 }}>
               <Button 
-                variant="outlined" 
+                variant={period === '30days' ? 'contained' : 'outlined'} 
                 color="primary" 
                 startIcon={<DateRange />}
                 sx={{ borderRadius: 2 }}
+                onClick={() => handlePeriodChange('30days')}
               >
                 Last 30 Days
               </Button>
@@ -206,51 +275,70 @@ const Dashboard = () => {
                 variant="contained" 
                 startIcon={<Refresh />}
                 sx={{ borderRadius: 2 }}
+                onClick={handleRefresh}
+                disabled={statsLoading}
               >
-                Refresh
+                {statsLoading ? 'Refreshing...' : 'Refresh'}
               </Button>
             </Box>
           </Box>
+
+          <Snackbar
+            open={error.show}
+            autoHideDuration={6000}
+            onClose={handleCloseError}
+            anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+          >
+            <Alert onClose={handleCloseError} severity="error">
+              {error.message}
+            </Alert>
+          </Snackbar>
+
+          {statsLoading && (
+            <Box sx={{ width: '100%', mb: 2 }}>
+              <LinearProgress />
+            </Box>
+          )}
 
           <Grid container spacing={3} mb={4}>
             <Grid item xs={12} sm={6} lg={3}>
               <StatCard
                 title="Total Orders"
-                value="258"
+                value={dashboardStats.totalOrders.toString()}
                 subtitle="Orders this month"
                 icon={<ShoppingBag />}
                 color={theme.palette.primary.main}
-                percentChange={12.5}
+                percentChange={dashboardStats.percentChange.orders}
               />
             </Grid>
             <Grid item xs={12} sm={6} lg={3}>
               <StatCard
                 title="Total Customers"
-                value="458"
+                value={dashboardStats.totalCustomers.toString()}
                 subtitle="Active clients"
                 icon={<People />}
                 color={theme.palette.error.main}
-                percentChange={5.8}
+                percentChange={dashboardStats.percentChange.customers}
               />
             </Grid>
             <Grid item xs={12} sm={6} lg={3}>
               <StatCard
                 title="Upcoming Appointments"
-                value="28"
+                value={dashboardStats.upcomingAppointments.toString()}
                 subtitle="Next 7 days"
                 icon={<CalendarToday />}
                 color={theme.palette.warning.main}
-                percentChange={-2.7}
+                percentChange={dashboardStats.percentChange.appointments}
               />
             </Grid>
             <Grid item xs={12} sm={6} lg={3}>
               <StatCard
                 title="Total Revenue"
-                value="$23,532"
+                value={`$${dashboardStats.totalRevenue.toLocaleString()}`}
                 subtitle="This month"
                 icon={<AttachMoney />}
                 color={theme.palette.success.main}
-                percentChange={8.3}
+                percentChange={dashboardStats.percentChange.revenue}
               />
             </Grid>
           </Grid>
@@ -331,7 +419,7 @@ const Dashboard = () => {
                           boxShadow: theme.shadows[3],
                           border: 'none'
                         }}
-                        formatter={(value) => [`${value}`, '']}
+                        formatter={(value) => [`$${value}`, '']}
                       />
                       <Legend 
                         verticalAlign="top"
@@ -424,43 +512,6 @@ const Dashboard = () => {
                       </PieChart>
                     </ResponsiveContainer>
                   </Box>
-                  <Stack spacing={2} mt={2}>
-                    {topProducts.map((product, index) => (
-                      <Box key={index}>
-                        <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
-                          <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                            <Box 
-                              sx={{ 
-                                width: 10, 
-                                height: 10, 
-                                borderRadius: '50%', 
-                                bgcolor: COLORS[index % COLORS.length],
-                                mr: 1.5,
-                              }} 
-                            />
-                            <Typography variant="body2" fontWeight="medium">
-                              {product.name}
-                            </Typography>
-                          </Box>
-                          <Typography variant="body2" fontWeight="bold">
-                            {product.value}%
-                          </Typography>
-                        </Box>
-                        <LinearProgress 
-                          variant="determinate" 
-                          value={product.value} 
-                          sx={{ 
-                            height: 5, 
-                            borderRadius: 5,
-                            bgcolor: alpha(COLORS[index % COLORS.length], 0.2),
-                            '& .MuiLinearProgress-bar': {
-                              bgcolor: COLORS[index % COLORS.length]
-                            }
-                          }} 
-                        />
-                      </Box>
-                    ))}
-                  </Stack>
                 </Paper>
               </Grid>
             </Grid>
@@ -485,111 +536,46 @@ const Dashboard = () => {
                     </Button>
                   </Box>
                   <Stack spacing={2.5}>
-                    {[1, 2, 3, 4].map((order) => (
-                      <Box key={order} sx={{ 
-                        p: 2, 
-                        borderRadius: 3, 
-                        bgcolor: alpha(theme.palette.primary.main, 0.05),
-                        '&:hover': {
-                          bgcolor: alpha(theme.palette.primary.main, 0.08),
-                        }
-                      }}>
-                        <Box display="flex" justifyContent="space-between" alignItems="center">
-                          <Box display="flex" alignItems="center">
-                            <Avatar 
-                              sx={{ 
-                                bgcolor: alpha(theme.palette.primary.main, 0.15), 
-                                color: theme.palette.primary.main,
-                                mr: 2, 
-                              }}
-                            >
-                              <ShoppingBag fontSize="small" />
-                            </Avatar>
-                            <Box>
-                              <Typography variant="subtitle1" fontWeight="medium">
-                                Order #{1000 + order}
-                              </Typography>
-                              <Typography variant="body2" color="text.secondary">
-                                Customer: Jane Doe
-                              </Typography>
-                            </Box>
-                          </Box>
-                          <Box textAlign="right">
-                            <Typography variant="subtitle1" fontWeight="bold">
-                              ${(Math.random() * 1000).toFixed(2)}
-                            </Typography>
-                            <Box display="flex" alignItems="center">
-                              <CheckCircle fontSize="small" color="success" sx={{ mr: 0.5 }} />
-                              <Typography variant="body2" fontWeight="medium" color="success.main">
-                                Completed
-                              </Typography>
-                            </Box>
-                          </Box>
-                        </Box>
-                      </Box>
-                    ))}
+                    {salesData.length > 0 ? (
+                      <Typography>
+                        Order data is available in the orders section
+                      </Typography>
+                    ) : (
+                      <Typography color="text.secondary">
+                        No recent orders found
+                      </Typography>
+                    )}
                   </Stack>
                 </Paper>
               </Grid>
               <Grid item xs={12} lg={6}>
                 <Paper sx={{ 
                   p: 3, 
-                  boxShadow: 2,
+                  boxShadow: 2, 
                   borderRadius: 4,
                 }}>
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
                     <Typography variant="h6" fontWeight="bold">
-                      Upcoming Appointments
+                      New Customers
                     </Typography>
                     <Button 
                       variant="text" 
-                      size="small"
+                      size="small" 
                       sx={{ fontWeight: 'medium' }}
                     >
                       View All
                     </Button>
                   </Box>
                   <Stack spacing={2.5}>
-                    {[1, 2, 3, 4].map((appointment) => (
-                      <Box key={appointment} sx={{ 
-                        p: 2, 
-                        borderRadius: 3, 
-                        bgcolor: alpha(theme.palette.warning.main, 0.05),
-                        '&:hover': {
-                          bgcolor: alpha(theme.palette.warning.main, 0.08),
-                        }
-                      }}>
-                        <Box display="flex" justifyContent="space-between" alignItems="center">
-                          <Box display="flex" alignItems="center">
-                            <Avatar 
-                              sx={{ 
-                                bgcolor: alpha(theme.palette.warning.main, 0.15), 
-                                color: theme.palette.warning.main,
-                                mr: 2,
-                              }}
-                            >
-                              <CalendarToday fontSize="small" />
-                            </Avatar>
-                            <Box>
-                              <Typography variant="subtitle1" fontWeight="medium">
-                                Wedding Dress Fitting
-                              </Typography>
-                              <Typography variant="body2" color="text.secondary">
-                                Customer: Jane Smith
-                              </Typography>
-                            </Box>
-                          </Box>
-                          <Box textAlign="right">
-                            <Typography variant="subtitle1" fontWeight="bold">
-                              {`${new Date().getMonth() + 1}/${new Date().getDate() + appointment}/${new Date().getFullYear()}`}
-                            </Typography>
-                            <Typography variant="body2" color="text.secondary" fontWeight="medium">
-                              {`${10 + appointment}:00 AM`}
-                            </Typography>
-                          </Box>
-                        </Box>
-                      </Box>
-                    ))}
+                    {dashboardStats.totalCustomers > 0 ? (
+                      <Typography>
+                        Customer data is available in the customers section
+                      </Typography>
+                    ) : (
+                      <Typography color="text.secondary">
+                        No new customers found
+                      </Typography>
+                    )}
                   </Stack>
                 </Paper>
               </Grid>
