@@ -8,6 +8,7 @@ import { Order, OrderSchema } from '../../models/entities/order.entity';
 import { Dress, DressSchema } from '../../models/entities/dress.entity';
 import { Appointment, AppointmentSchema } from '../../models/entities/appointment.entity';
 import { Contact, ContactSchema } from '../../models/entities/contact.entity';
+import { CustomerFitting, CustomerFittingSchema } from '../../models/entities/customer-fitting.entity';
 
 @Module({
   imports: [
@@ -19,6 +20,7 @@ import { Contact, ContactSchema } from '../../models/entities/contact.entity';
       { name: Dress.name, schema: DressSchema },
       { name: Appointment.name, schema: AppointmentSchema },
       { name: Contact.name, schema: ContactSchema },
+      { name: CustomerFitting.name, schema: CustomerFittingSchema },
     ]),
   ],
   controllers: [AdminController]

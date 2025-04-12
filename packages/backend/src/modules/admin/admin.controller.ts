@@ -1,5 +1,5 @@
 // src/modules/admin/admin.controller.ts
-import { Controller, Get, UseGuards, Param, Put, Delete, Body, NotFoundException, HttpException, HttpStatus, Query } from '@nestjs/common';
+import { Controller, Get, UseGuards, Param, Put, Delete, Body, NotFoundException, HttpException, HttpStatus, Query, Post, UseInterceptors } from '@nestjs/common';
 import { JwtAuthGuard } from '../../guards/jwt-auth.guard'; 
 import { Roles } from '../../decorators/role.decorators';
 import { RolesGuard } from '../../guards/roles.guard';
@@ -13,6 +13,9 @@ import { Dress } from '../../models/entities/dress.entity';
 import { Appointment } from '../../models/entities/appointment.entity';
 import { Contact } from '../../models/entities/contact.entity';
 import * as moment from 'moment';
+import { CustomerFitting } from '../../models/entities/customer-fitting.entity';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { UploadedFile } from '@nestjs/common';
 
 @Controller('admin')
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -25,6 +28,7 @@ export class AdminController {
     @InjectModel(Dress.name) private dressModel: Model<Dress>,
     @InjectModel(Appointment.name) private appointmentModel: Model<Appointment>,
     @InjectModel(Contact.name) private contactModel: Model<Contact>,
+    @InjectModel(CustomerFitting.name) private customerFittingModel: Model<CustomerFitting>,
   ) {}
 
   @Get('style')
@@ -449,6 +453,199 @@ export class AdminController {
         success: false,
         message: error.message || 'Failed to fetch top products'
       };
+    }
+  }
+
+  // Customer Fitting endpoints
+  @Get('customer-fittings')
+  async getAllCustomerFittings() {
+    try {
+      const fittings = await this.customerFittingModel.find()
+        .sort({ createdAt: -1 })
+        .exec();
+      
+      return fittings;
+    } catch (error) {
+      throw new HttpException(
+        'Error fetching customer fittings',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  @Get('customer-fittings/:id')
+  async getCustomerFittingById(@Param('id') id: string) {
+    try {
+      const fitting = await this.customerFittingModel.findById(id).exec();
+      
+      if (!fitting) {
+        throw new HttpException(
+          'Customer fitting not found',
+          HttpStatus.NOT_FOUND,
+        );
+      }
+      
+      return fitting;
+    } catch (error) {
+      throw new HttpException(
+        error.message || 'Error fetching customer fitting',
+        error.status || HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  @Post('customer-fittings')
+  async createCustomerFitting(@Body() createFittingDto: any) {
+    try {
+      console.log('Creating customer fitting with data:', JSON.stringify(createFittingDto, null, 2));
+      
+      // Validate required fields explicitly
+      if (!createFittingDto.userId) {
+        throw new HttpException('userId is required', HttpStatus.BAD_REQUEST);
+      }
+      
+      if (!createFittingDto.customerName) {
+        throw new HttpException('customerName is required', HttpStatus.BAD_REQUEST);
+      }
+      
+      if (!createFittingDto.email) {
+        throw new HttpException('email is required', HttpStatus.BAD_REQUEST);
+      }
+      
+      if (!createFittingDto.phone) {
+        throw new HttpException('phone is required', HttpStatus.BAD_REQUEST);
+      }
+      
+      if (!createFittingDto.measurements) {
+        throw new HttpException('measurements are required', HttpStatus.BAD_REQUEST);
+      }
+      
+      if (!createFittingDto.photographyConcept || createFittingDto.photographyConcept.trim() === '') {
+        throw new HttpException('Photography concept is required', HttpStatus.BAD_REQUEST);
+      }
+      
+      // Make sure preferredStyles is an array
+      if (!Array.isArray(createFittingDto.preferredStyles)) {
+        createFittingDto.preferredStyles = [];
+      }
+      
+      // Make sure photoReferenceUrls is an array
+      if (!Array.isArray(createFittingDto.photoReferenceUrls)) {
+        createFittingDto.photoReferenceUrls = [];
+      }
+      
+      // Set default status if not provided
+      if (!createFittingDto.status) {
+        createFittingDto.status = 'pending';
+      }
+      
+      const newFitting = new this.customerFittingModel(createFittingDto);
+      const savedFitting = await newFitting.save();
+      
+      return savedFitting;
+    } catch (error) {
+      console.error('Error creating customer fitting:', error);
+      if (error instanceof HttpException) {
+        throw error;
+      } else if (error.name === 'ValidationError') {
+        // Mongoose validation error
+        const validationErrors = Object.keys(error.errors).map(field => {
+          return `${field}: ${error.errors[field].message}`;
+        });
+        throw new HttpException(
+          `Validation error: ${validationErrors.join(', ')}`,
+          HttpStatus.BAD_REQUEST
+        );
+      } else {
+        throw new HttpException(
+          error.message || 'Error creating customer fitting',
+          HttpStatus.INTERNAL_SERVER_ERROR,
+        );
+      }
+    }
+  }
+
+  @Put('customer-fittings/:id')
+  async updateCustomerFitting(
+    @Param('id') id: string,
+    @Body() updateFittingDto: any,
+  ) {
+    try {
+      const updatedFitting = await this.customerFittingModel
+        .findByIdAndUpdate(id, updateFittingDto, { new: true })
+        .exec();
+      
+      if (!updatedFitting) {
+        throw new HttpException(
+          'Customer fitting not found',
+          HttpStatus.NOT_FOUND,
+        );
+      }
+      
+      return updatedFitting;
+    } catch (error) {
+      throw new HttpException(
+        error.message || 'Error updating customer fitting',
+        error.status || HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  @Delete('customer-fittings/:id')
+  async deleteCustomerFitting(@Param('id') id: string) {
+    try {
+      const result = await this.customerFittingModel
+        .findByIdAndDelete(id)
+        .exec();
+      
+      if (!result) {
+        throw new HttpException(
+          'Customer fitting not found',
+          HttpStatus.NOT_FOUND,
+        );
+      }
+      
+      return { success: true, message: 'Customer fitting deleted successfully' };
+    } catch (error) {
+      throw new HttpException(
+        error.message || 'Error deleting customer fitting',
+        error.status || HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  @Post('customer-fittings/:id/upload-photo')
+  @UseInterceptors(FileInterceptor('file'))
+  async uploadPhotoReference(
+    @Param('id') id: string,
+    @UploadedFile() file: Express.Multer.File,
+  ) {
+    try {
+      // Here you would upload the file to your storage (like Cloudinary)
+      // and get back a URL
+      
+      // For now, we'll just create a mock URL
+      const photoUrl = `https://example.com/photos/${file.originalname}`;
+      
+      // Add the photo URL to the customer fitting's photoReferenceUrls array
+      const fitting = await this.customerFittingModel.findById(id).exec();
+      
+      if (!fitting) {
+        throw new HttpException(
+          'Customer fitting not found',
+          HttpStatus.NOT_FOUND,
+        );
+      }
+      
+      fitting.photoReferenceUrls.push(photoUrl);
+      await fitting.save();
+      
+      return { url: photoUrl };
+    } catch (error) {
+      throw new HttpException(
+        error.message || 'Error uploading photo reference',
+        error.status || HttpStatus.INTERNAL_SERVER_ERROR,
+      );
     }
   }
 }

@@ -38,7 +38,6 @@ import { MongooseModule } from '@nestjs/mongoose';
     AppointmentModule,
     ContactModule,
 
-    MongooseModule.forRoot('mongodb+srv://enchanted:2zlpDUeMpcTvv4X7@enchanted.ss8ztcz.mongodb.net/enchanted'),
     MongooseModule.forFeature([
       { name: Color.name, schema: ColorSchema },
       { name: Size.name, schema: SizeSchema },
