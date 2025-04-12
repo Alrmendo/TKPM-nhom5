@@ -57,7 +57,7 @@ import {
 
 // Define Contact interface
 interface Contact {
-  id: string;
+  _id: string;
   name: string;
   phoneNumber: string;
   email?: string;
@@ -191,7 +191,7 @@ const Contacts = () => {
       await deleteContact(contactToDelete);
       
       // Remove the contact from the list
-      setContacts(prev => prev.filter(c => c.id !== contactToDelete));
+      setContacts(prev => prev.filter(c => c._id !== contactToDelete));
       setAlert({
         show: true,
         message: 'Contact deleted successfully',
@@ -224,7 +224,7 @@ const Contacts = () => {
       // Update contact in the list
       setContacts(prev => 
         prev.map(contact => 
-          contact.id === contactId ? updatedContact : contact
+          contact._id === contactId ? updatedContact : contact
         )
       );
       
@@ -253,7 +253,7 @@ const Contacts = () => {
       // Update contact in the list
       setContacts(prev => 
         prev.map(contact => 
-          contact.id === contactId ? updatedContact : contact
+          contact._id === contactId ? updatedContact : contact
         )
       );
       
@@ -276,7 +276,7 @@ const Contacts = () => {
   
   const handleEditContact = (contact: Contact) => {
     setFormContact({
-      id: contact.id,
+      _id: contact._id,
       name: contact.name,
       phoneNumber: contact.phoneNumber,
       email: contact.email || '',
@@ -329,12 +329,12 @@ const Contacts = () => {
       
       let result;
       
-      if (formContact.id) {
+      if (formContact._id) {
         // Update existing contact
-        result = await updateContact(formContact.id, formContact);
+        result = await updateContact(formContact._id, formContact);
         setContacts(prev => 
           prev.map(contact => 
-            contact.id === formContact.id ? result : contact
+            contact._id === formContact._id ? result : contact
           )
         );
         setAlert({
@@ -477,7 +477,7 @@ const Contacts = () => {
                   filteredContacts
                     .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
                     .map((contact) => (
-                      <TableRow key={contact.id} hover>
+                      <TableRow key={contact._id} hover>
                         <TableCell>
                           <Box
                             sx={{
@@ -541,7 +541,7 @@ const Contacts = () => {
                             <Tooltip title="Mark as Contacted">
                               <IconButton 
                                 color="primary" 
-                                onClick={() => handleMarkAsContacted(contact.id)}
+                                onClick={() => handleMarkAsContacted(contact._id)}
                                 disabled={contact.isContacted}
                               >
                                 <Check />
@@ -560,7 +560,7 @@ const Contacts = () => {
                             <Tooltip title="Delete">
                               <IconButton 
                                 color="error" 
-                                onClick={() => handleDeleteConfirm(contact.id)}
+                                onClick={() => handleDeleteConfirm(contact._id)}
                               >
                                 <Delete />
                               </IconButton>
@@ -685,7 +685,7 @@ const Contacts = () => {
               <Button onClick={handleCloseDetailDialog}>Close</Button>
               <Button 
                 color="primary" 
-                onClick={() => handleMarkAsContacted(selectedContact.id)}
+                onClick={() => handleMarkAsContacted(selectedContact._id)}
                 disabled={selectedContact.isContacted}
               >
                 Mark as Contacted
@@ -733,7 +733,7 @@ const Contacts = () => {
         fullWidth
       >
         <DialogTitle>
-          {formContact.id ? 'Edit Contact' : 'Add New Contact'}
+          {formContact._id ? 'Edit Contact' : 'Add New Contact'}
         </DialogTitle>
         
         <DialogContent>
