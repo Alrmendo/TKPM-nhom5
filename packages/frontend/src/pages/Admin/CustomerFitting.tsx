@@ -57,7 +57,11 @@ import {
   Email,
   Phone,
   Event,
-  Notes
+  Notes,
+  Error,
+  CheckCircle,
+  Timelapse,
+  Schedule
 } from '@mui/icons-material';
 import { styled } from '@mui/material/styles';
 import { 
@@ -162,6 +166,7 @@ const CustomerFitting = () => {
   const [imagePreviewUrls, setImagePreviewUrls] = useState<string[]>([]);
   const [generalNotes, setGeneralNotes] = useState('');
   const [appointmentDate, setAppointmentDate] = useState<Date | null>(null);
+  const [status, setStatus] = useState<'pending' | 'in-progress' | 'completed'>('pending');
 
   // Available styles (dresses)
   const [dresses, setDresses] = useState<Dress[]>([]);
@@ -186,6 +191,11 @@ const CustomerFitting = () => {
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
   const [snackbarSeverity, setSnackbarSeverity] = useState<'success' | 'error'>('success');
+
+  // Add this new state for tracking tabs with errors
+  const [tabsWithErrors, setTabsWithErrors] = useState<number[]>([]);
+  // Add state to track whether fields have been touched (for error display)
+  const [formTouched, setFormTouched] = useState(false);
 
   // Load data
   useEffect(() => {
@@ -251,6 +261,7 @@ const CustomerFitting = () => {
       setPhotoReferenceUrls(fitting.photoReferenceUrls);
       setGeneralNotes(fitting.notes || '');
       setAppointmentDate(fitting.appointmentDate ? new Date(fitting.appointmentDate) : null);
+      setStatus(fitting.status as 'pending' | 'in-progress' | 'completed');
     } else {
       // Add mode
       setEditMode(false);
@@ -266,6 +277,8 @@ const CustomerFitting = () => {
     resetForm();
     setFormErrors({});
     setTabValue(0);
+    setTabsWithErrors([]);
+    setFormTouched(false);
   };
 
   const resetForm = () => {
@@ -287,9 +300,10 @@ const CustomerFitting = () => {
     setImagePreviewUrls([]);
     setGeneralNotes('');
     setAppointmentDate(null);
+    setStatus('pending');
   };
 
-  // Validation
+  // Update the validateForm function to use simpler error messages
   const validateForm = () => {
     const errors: {
       customerName?: string;
@@ -302,35 +316,65 @@ const CustomerFitting = () => {
       photographyConcept?: string;
     } = {};
 
-    if (!customerName) errors.customerName = 'Customer name is required';
-    if (!email) {
-      errors.email = 'Email is required';
-    } else if (!/\S+@\S+\.\S+/.test(email)) {
-      errors.email = 'Email is invalid';
-    }
-    if (!phone) errors.phone = 'Phone number is required';
+    const tabsWithErrorsTemp: number[] = [];
 
-    if (bust === null) errors.bust = 'Bust measurement is required';
-    if (waist === null) errors.waist = 'Waist measurement is required';
-    if (hips === null) errors.hips = 'Hips measurement is required';
-    if (height === null) errors.height = 'Height measurement is required';
+    if (!customerName) {
+      errors.customerName = 'Required';
+      if (!tabsWithErrorsTemp.includes(0)) tabsWithErrorsTemp.push(0);
+    }
     
-    if (!photographyConcept) errors.photographyConcept = 'Photography concept is required';
+    if (!email) {
+      errors.email = 'Required';
+      if (!tabsWithErrorsTemp.includes(0)) tabsWithErrorsTemp.push(0);
+    } else if (!/\S+@\S+\.\S+/.test(email)) {
+      errors.email = 'Invalid format';
+      if (!tabsWithErrorsTemp.includes(0)) tabsWithErrorsTemp.push(0);
+    }
+    
+    if (!phone) {
+      errors.phone = 'Required';
+      if (!tabsWithErrorsTemp.includes(0)) tabsWithErrorsTemp.push(0);
+    }
+
+    if (bust === null) {
+      errors.bust = 'Required';
+      if (!tabsWithErrorsTemp.includes(1)) tabsWithErrorsTemp.push(1);
+    }
+    
+    if (waist === null) {
+      errors.waist = 'Required';
+      if (!tabsWithErrorsTemp.includes(1)) tabsWithErrorsTemp.push(1);
+    }
+    
+    if (hips === null) {
+      errors.hips = 'Required';
+      if (!tabsWithErrorsTemp.includes(1)) tabsWithErrorsTemp.push(1);
+    }
+    
+    if (height === null) {
+      errors.height = 'Required';
+      if (!tabsWithErrorsTemp.includes(1)) tabsWithErrorsTemp.push(1);
+    }
+    
+    if (!photographyConcept) {
+      errors.photographyConcept = 'Required';
+      if (!tabsWithErrorsTemp.includes(3)) tabsWithErrorsTemp.push(3);
+    }
 
     setFormErrors(errors);
+    setTabsWithErrors(tabsWithErrorsTemp);
     return Object.keys(errors).length === 0;
   };
 
   // Form submission
   const handleSubmitFitting = async () => {
+    // Mark all fields as touched to show all validation errors
+    setFormTouched(true);
+    
     if (!validateForm()) {
-      // If validation fails, switch to the appropriate tab based on which field failed
-      if (formErrors.photographyConcept) {
-        setTabValue(3); // Photography tab
-      } else if (formErrors.bust || formErrors.waist || formErrors.hips || formErrors.height) {
-        setTabValue(1); // Measurements tab
-      } else {
-        setTabValue(0); // Customer info tab
+      // Always go back to the first tab with errors
+      if (tabsWithErrors.length > 0) {
+        setTabValue(tabsWithErrors[0]);
       }
       return;
     }
@@ -357,7 +401,7 @@ const CustomerFitting = () => {
         preferredStyles: styleIds,
         photographyConcept: photographyConcept as PhotographyConcept,
         photoReferenceUrls,
-        status: 'pending',
+        status,
         appointmentDate: appointmentDate || undefined,
         notes: generalNotes || undefined
       };
@@ -521,20 +565,44 @@ const CustomerFitting = () => {
                     <Typography variant="body2" color="textSecondary">{fitting.phone}</Typography>
                   </TableCell>
                   <TableCell>
-                    <Stack direction="row" spacing={1}>
-                      <Chip 
-                        icon={<Straighten />} 
-                        label={`Bust: ${fitting.measurements.bust}cm`} 
-                        size="small" 
-                        variant="outlined" 
-                      />
-                      <Chip 
-                        icon={<Straighten />} 
-                        label={`Waist: ${fitting.measurements.waist}cm`} 
-                        size="small" 
-                        variant="outlined" 
-                      />
-                    </Stack>
+                    <Grid container spacing={1} sx={{ maxWidth: 320 }}>
+                      <Grid item xs={6}>
+                        <Chip 
+                          icon={<Straighten />} 
+                          label={`Bust: ${fitting.measurements.bust}cm`} 
+                          size="small" 
+                          variant="outlined" 
+                          sx={{ width: '100%', justifyContent: 'flex-start' }}
+                        />
+                      </Grid>
+                      <Grid item xs={6}>
+                        <Chip 
+                          icon={<Straighten />} 
+                          label={`Waist: ${fitting.measurements.waist}cm`} 
+                          size="small" 
+                          variant="outlined"
+                          sx={{ width: '100%', justifyContent: 'flex-start' }}
+                        />
+                      </Grid>
+                      <Grid item xs={6}>
+                        <Chip 
+                          icon={<Straighten />} 
+                          label={`Hips: ${fitting.measurements.hips}cm`} 
+                          size="small" 
+                          variant="outlined"
+                          sx={{ width: '100%', justifyContent: 'flex-start' }}
+                        />
+                      </Grid>
+                      <Grid item xs={6}>
+                        <Chip 
+                          icon={<Straighten />} 
+                          label={`Height: ${fitting.measurements.height}cm`} 
+                          size="small" 
+                          variant="outlined"
+                          sx={{ width: '100%', justifyContent: 'flex-start' }}
+                        />
+                      </Grid>
+                    </Grid>
                   </TableCell>
                   <TableCell>
                     {fitting.preferredStyles.length > 0 ? (
@@ -560,6 +628,13 @@ const CustomerFitting = () => {
                   </TableCell>
                   <TableCell>
                     <Chip 
+                      icon={
+                        fitting.status === 'completed' 
+                          ? <CheckCircle fontSize="small" /> 
+                          : fitting.status === 'in-progress' 
+                            ? <Timelapse fontSize="small" />
+                            : <Schedule fontSize="small" />
+                      }
                       label={fitting.status.charAt(0).toUpperCase() + fitting.status.slice(1)} 
                       color={
                         fitting.status === 'completed' 
@@ -569,6 +644,34 @@ const CustomerFitting = () => {
                             : 'default'
                       }
                       size="small"
+                      onClick={() => {
+                        // Create a cycling function for status
+                        const nextStatus = 
+                          fitting.status === 'pending' ? 'in-progress' :
+                          fitting.status === 'in-progress' ? 'completed' : 'pending';
+                        
+                        // Update the status in the database
+                        updateCustomerFitting(fitting._id, { status: nextStatus })
+                          .then(updatedFitting => {
+                            // Update local state
+                            setFittings(fittings.map(f => 
+                              f._id === fitting._id ? { ...f, status: nextStatus } : f
+                            ));
+                            showSnackbar(`Status updated to ${nextStatus.charAt(0).toUpperCase() + nextStatus.slice(1)}`, 'success');
+                          })
+                          .catch(error => {
+                            showSnackbar('Failed to update status', 'error');
+                          });
+                      }}
+                      sx={{ 
+                        minWidth: '90px',
+                        '& .MuiChip-label': { fontWeight: 'medium' },
+                        cursor: 'pointer',
+                        '&:hover': {
+                          boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
+                          opacity: 0.9
+                        }
+                      }}
                     />
                   </TableCell>
                   <TableCell>
@@ -692,6 +795,84 @@ const CustomerFitting = () => {
             </IconButton>
           </Box>
           
+          {/* Error Summary */}
+          {formTouched && Object.keys(formErrors).length > 0 && (
+            <Alert 
+              severity="error" 
+              sx={{ 
+                mx: 2, 
+                mt: 2, 
+                display: 'flex', 
+                flexDirection: 'column', 
+                alignItems: 'flex-start',
+                borderRadius: '8px',
+                '& .MuiAlert-message': {
+                  width: '100%'
+                }
+              }}
+            >
+              <Typography variant="subtitle1" fontWeight="bold" sx={{ mb: 1 }}>
+                Please fill in the required fields:
+              </Typography>
+              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                {(formErrors.customerName || formErrors.email || formErrors.phone) && (
+                  <Chip 
+                    icon={<Person />} 
+                    label="Customer Info" 
+                    color="error" 
+                    size="small" 
+                    onClick={() => setTabValue(0)}
+                    sx={{ 
+                      cursor: 'pointer',
+                      fontWeight: 'bold',
+                      px: 1,
+                      '&:hover': {
+                        boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
+                        bgcolor: 'error.dark'
+                      }
+                    }}
+                  />
+                )}
+                {(formErrors.bust || formErrors.waist || formErrors.hips || formErrors.height) && (
+                  <Chip 
+                    icon={<Straighten />} 
+                    label="Measurements" 
+                    color="error" 
+                    size="small"
+                    onClick={() => setTabValue(1)}
+                    sx={{ 
+                      cursor: 'pointer',
+                      fontWeight: 'bold',
+                      px: 1,
+                      '&:hover': {
+                        boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
+                        bgcolor: 'error.dark'
+                      }
+                    }}
+                  />
+                )}
+                {formErrors.photographyConcept && (
+                  <Chip 
+                    icon={<Photo />} 
+                    label="Photography" 
+                    color="error" 
+                    size="small"
+                    onClick={() => setTabValue(3)}
+                    sx={{ 
+                      cursor: 'pointer',
+                      fontWeight: 'bold',
+                      px: 1,
+                      '&:hover': {
+                        boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
+                        bgcolor: 'error.dark'
+                      }
+                    }}
+                  />
+                )}
+              </Box>
+            </Alert>
+          )}
+          
           <Box sx={{ 
             display: 'flex',
             bgcolor: '#f5f5f5',
@@ -722,6 +903,24 @@ const CustomerFitting = () => {
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                     <Person />
                     <span>Customer Info</span>
+                    {formTouched && tabsWithErrors.includes(0) && (
+                      <Box 
+                        component="span" 
+                        sx={{ 
+                          bgcolor: 'error.main', 
+                          color: 'white', 
+                          borderRadius: '50%', 
+                          width: 18, 
+                          height: 18, 
+                          fontSize: '0.75rem',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center'
+                        }}
+                      >
+                        !
+                      </Box>
+                    )}
                   </Box>
                 } 
                 {...a11yProps(0)} 
@@ -731,6 +930,24 @@ const CustomerFitting = () => {
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                     <Straighten />
                     <span>Measurements</span>
+                    {formTouched && tabsWithErrors.includes(1) && (
+                      <Box 
+                        component="span" 
+                        sx={{ 
+                          bgcolor: 'error.main', 
+                          color: 'white', 
+                          borderRadius: '50%', 
+                          width: 18, 
+                          height: 18, 
+                          fontSize: '0.75rem',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center'
+                        }}
+                      >
+                        !
+                      </Box>
+                    )}
                   </Box>
                 } 
                 {...a11yProps(1)} 
@@ -749,6 +966,24 @@ const CustomerFitting = () => {
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                     <Photo />
                     <span>Photography</span>
+                    {formTouched && tabsWithErrors.includes(3) && (
+                      <Box 
+                        component="span" 
+                        sx={{ 
+                          bgcolor: 'error.main', 
+                          color: 'white', 
+                          borderRadius: '50%', 
+                          width: 18, 
+                          height: 18, 
+                          fontSize: '0.75rem',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center'
+                        }}
+                      >
+                        !
+                      </Box>
+                    )}
                   </Box>
                 } 
                 {...a11yProps(3)} 
@@ -771,8 +1006,8 @@ const CustomerFitting = () => {
                     label="Customer Name"
                     value={customerName}
                     onChange={(e) => setCustomerName(e.target.value)}
-                    error={!!formErrors.customerName}
-                    helperText={formErrors.customerName}
+                    error={formTouched && !!formErrors.customerName}
+                    helperText={formTouched ? formErrors.customerName : undefined}
                     InputProps={{
                       startAdornment: (
                         <Box component="span" sx={{ color: 'text.secondary', mr: 1 }}>
@@ -792,8 +1027,8 @@ const CustomerFitting = () => {
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    error={!!formErrors.email}
-                    helperText={formErrors.email}
+                    error={formTouched && !!formErrors.email}
+                    helperText={formTouched ? formErrors.email : undefined}
                     InputProps={{
                       startAdornment: (
                         <Box component="span" sx={{ color: 'text.secondary', mr: 1 }}>
@@ -812,8 +1047,8 @@ const CustomerFitting = () => {
                     label="Phone"
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
-                    error={!!formErrors.phone}
-                    helperText={formErrors.phone}
+                    error={formTouched && !!formErrors.phone}
+                    helperText={formTouched ? formErrors.phone : undefined}
                     InputProps={{
                       startAdornment: (
                         <Box component="span" sx={{ color: 'text.secondary', mr: 1 }}>
@@ -845,6 +1080,31 @@ const CustomerFitting = () => {
                     size="small"
                     sx={{ '& .MuiOutlinedInput-root': { borderRadius: '8px' } }}
                   />
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', width: '100%' }}>
+                    <Box component="span" sx={{ color: 'text.secondary', mr: 1 }}>
+                      {status === 'completed' ? (
+                        <CheckCircle fontSize="small" color="success" />
+                      ) : status === 'in-progress' ? (
+                        <Timelapse fontSize="small" color="primary" />
+                      ) : (
+                        <Schedule fontSize="small" color="action" />
+                      )}
+                    </Box>
+                    <FormControl fullWidth size="small" sx={{ '& .MuiOutlinedInput-root': { borderRadius: '8px' } }}>
+                      <InputLabel>Status</InputLabel>
+                      <Select
+                        value={status}
+                        onChange={(e) => setStatus(e.target.value as 'pending' | 'in-progress' | 'completed')}
+                        label="Status"
+                      >
+                        <MenuItem value="pending">Pending</MenuItem>
+                        <MenuItem value="in-progress">In Progress</MenuItem>
+                        <MenuItem value="completed">Completed</MenuItem>
+                      </Select>
+                    </FormControl>
+                  </Box>
                 </Grid>
                 <Grid item xs={12}>
                   <TextField
@@ -906,8 +1166,8 @@ const CustomerFitting = () => {
                       }}
                       value={bust === null ? '' : bust}
                       onChange={(e) => setBust(e.target.value ? Number(e.target.value) : null)}
-                      error={!!formErrors.bust}
-                      helperText={formErrors.bust}
+                      error={formTouched && !!formErrors.bust}
+                      helperText={formTouched ? formErrors.bust : undefined}
                       sx={{ '& .MuiOutlinedInput-root': { borderRadius: '8px' } }}
                     />
                   </Grid>
@@ -924,8 +1184,8 @@ const CustomerFitting = () => {
                       }}
                       value={waist === null ? '' : waist}
                       onChange={(e) => setWaist(e.target.value ? Number(e.target.value) : null)}
-                      error={!!formErrors.waist}
-                      helperText={formErrors.waist}
+                      error={formTouched && !!formErrors.waist}
+                      helperText={formTouched ? formErrors.waist : undefined}
                       sx={{ '& .MuiOutlinedInput-root': { borderRadius: '8px' } }}
                     />
                   </Grid>
@@ -942,8 +1202,8 @@ const CustomerFitting = () => {
                       }}
                       value={hips === null ? '' : hips}
                       onChange={(e) => setHips(e.target.value ? Number(e.target.value) : null)}
-                      error={!!formErrors.hips}
-                      helperText={formErrors.hips}
+                      error={formTouched && !!formErrors.hips}
+                      helperText={formTouched ? formErrors.hips : undefined}
                       sx={{ '& .MuiOutlinedInput-root': { borderRadius: '8px' } }}
                     />
                   </Grid>
@@ -960,8 +1220,8 @@ const CustomerFitting = () => {
                       }}
                       value={height === null ? '' : height}
                       onChange={(e) => setHeight(e.target.value ? Number(e.target.value) : null)}
-                      error={!!formErrors.height}
-                      helperText={formErrors.height}
+                      error={formTouched && !!formErrors.height}
+                      helperText={formTouched ? formErrors.height : undefined}
                       sx={{ '& .MuiOutlinedInput-root': { borderRadius: '8px' } }}
                     />
                   </Grid>
@@ -1056,27 +1316,36 @@ const CustomerFitting = () => {
                   Preferred Dress Styles
                 </Typography>
               </Box>
-            
+              
+              <Typography variant="subtitle2" gutterBottom sx={{ mb: 1, fontWeight: 'medium' }}>
+                Select Preferred Styles
+              </Typography>
+              
               <FormControl fullWidth size="small" sx={{ mb: 3 }}>
-                <InputLabel>Select Preferred Styles</InputLabel>
                 <Select
+                  displayEmpty
                   multiple
                   value={preferredStyles}
                   onChange={(e) => setPreferredStyles(e.target.value as string[])}
-                  renderValue={(selected) => (
-                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                      {(selected as string[]).map((value) => {
-                        const dress = dresses.find(d => d._id === value);
-                        return (
-                          <Chip 
-                            key={value} 
-                            label={dress ? dress.name : value} 
-                            size="small" 
-                          />
-                        );
-                      })}
-                    </Box>
-                  )}
+                  renderValue={(selected) => {
+                    if (selected.length === 0) {
+                      return <em>Choose styles...</em>;
+                    }
+                    return (
+                      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                        {(selected as string[]).map((value) => {
+                          const dress = dresses.find(d => d._id === value);
+                          return (
+                            <Chip 
+                              key={value} 
+                              label={dress ? dress.name : value} 
+                              size="small" 
+                            />
+                          );
+                        })}
+                      </Box>
+                    );
+                  }}
                 >
                   {dresses.map((dress) => (
                     <MenuItem key={dress._id} value={dress._id}>
@@ -1154,11 +1423,12 @@ const CustomerFitting = () => {
               
               <Grid container spacing={2}>
                 <Grid item xs={12}>
-                  <FormControl fullWidth size="small" sx={{ mb: 3 }} error={!!formErrors.photographyConcept}>
+                  <FormControl fullWidth size="small" sx={{ mb: 3 }} error={formTouched && !!formErrors.photographyConcept}>
                     <InputLabel>Select Photography Concept</InputLabel>
                     <Select
                       value={photographyConcept}
                       onChange={(e) => setPhotographyConcept(e.target.value as PhotographyConcept)}
+                      required
                     >
                       <MenuItem value="">
                         <em>Select a concept</em>
@@ -1172,7 +1442,7 @@ const CustomerFitting = () => {
                       <MenuItem value="Artistic">Artistic</MenuItem>
                       <MenuItem value="Minimalist">Minimalist</MenuItem>
                     </Select>
-                    {formErrors.photographyConcept && (
+                    {formTouched && formErrors.photographyConcept && (
                       <FormHelperText>{formErrors.photographyConcept}</FormHelperText>
                     )}
                   </FormControl>
@@ -1338,6 +1608,7 @@ const CustomerFitting = () => {
                 boxShadow: 2,
                 width: { xs: '100%', sm: 'auto' }
               }}
+              startIcon={Object.keys(formErrors).length > 0 ? <Error /> : undefined}
             >
               {editMode ? 'Update' : 'Create'}
             </Button>
