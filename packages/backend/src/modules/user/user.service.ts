@@ -2,8 +2,16 @@ import { Injectable, NotFoundException, UnauthorizedException, BadRequestExcepti
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import * as bcrypt from 'bcrypt';
-import { User, UserDocument } from '../../models/entities/user.entity';
-import { UpdateProfileDto, UpdatePasswordDto, UpdateUsernameDto } from './dto/update-profile.dto';
+import { User, UserDocument, Address } from '../../models/entities/user.entity';
+import { 
+  UpdateProfileDto, 
+  UpdatePasswordDto, 
+  UpdateUsernameDto,
+  AddAddressDto,
+  UpdateAddressDto,
+  DeleteAddressDto,
+  SetDefaultAddressDto 
+} from './dto/update-profile.dto';
 
 @Injectable()
 export class UserService {
@@ -23,6 +31,23 @@ export class UserService {
     const user = await this.findByUsername(username);
     const { password, verificationCode, verificationExpiry, ...userProfile } = user.toObject();
     return userProfile;
+  }
+
+  // Get only public profile information for a user by username
+  async getPublicProfile(username: string): Promise<any> {
+    const user = await this.findByUsername(username);
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+    
+    // Return only public fields
+    return {
+      username: user.username,
+      firstName: user.firstName || '',
+      lastName: user.lastName || '',
+      profileImage: user.profileImageUrl || null,
+      role: user.role
+    };
   }
 
   async updateProfile(username: string, updateProfileDto: UpdateProfileDto): Promise<any> {
@@ -103,5 +128,139 @@ export class UserService {
     
     const { password, verificationCode, verificationExpiry, ...userProfile } = user.toObject();
     return userProfile;
+  }
+
+  // Address management methods
+  async addAddress(username: string, addAddressDto: AddAddressDto): Promise<any> {
+    const user = await this.findByUsername(username);
+    
+    // Create new address with unique ID
+    const addressId = new Date().getTime().toString();
+    
+    // Create a properly typed Address object
+    const newAddress = {
+      id: addressId,
+      firstName: addAddressDto.address.firstName,
+      lastName: addAddressDto.address.lastName,
+      company: addAddressDto.address.company || '',
+      address: addAddressDto.address.address,
+      apartment: addAddressDto.address.apartment || '',
+      city: addAddressDto.address.city,
+      province: addAddressDto.address.province,
+      postalCode: addAddressDto.address.postalCode,
+      phone: addAddressDto.address.phone,
+      country: addAddressDto.address.country
+    } as Address;
+    
+    // Add address to user's addresses
+    if (!user.addresses) {
+      user.addresses = [];
+    }
+    
+    user.addresses.push(newAddress);
+    
+    // If this is the first address or setAsDefault is true, set as default
+    if (addAddressDto.setAsDefault || user.addresses.length === 1) {
+      user.defaultAddressId = addressId;
+    }
+    
+    user.updatedAt = new Date();
+    await user.save();
+    
+    const { password, verificationCode, verificationExpiry, ...userProfile } = user.toObject();
+    return userProfile;
+  }
+  
+  async updateAddress(username: string, updateAddressDto: UpdateAddressDto): Promise<any> {
+    const user = await this.findByUsername(username);
+    const { addressId, address, setAsDefault } = updateAddressDto;
+    
+    // Find address by ID
+    const addressIndex = user.addresses.findIndex(addr => addr.id === addressId);
+    if (addressIndex === -1) {
+      throw new NotFoundException('Address not found');
+    }
+    
+    // Update address with proper typing
+    user.addresses[addressIndex] = {
+      id: addressId,
+      firstName: address.firstName,
+      lastName: address.lastName,
+      company: address.company || '',
+      address: address.address,
+      apartment: address.apartment || '',
+      city: address.city,
+      province: address.province,
+      postalCode: address.postalCode,
+      phone: address.phone,
+      country: address.country
+    } as Address;
+    
+    // If setAsDefault is true, update defaultAddressId
+    if (setAsDefault) {
+      user.defaultAddressId = addressId;
+    }
+    
+    user.updatedAt = new Date();
+    await user.save();
+    
+    const { password, verificationCode, verificationExpiry, ...userProfile } = user.toObject();
+    return userProfile;
+  }
+  
+  async deleteAddress(username: string, deleteAddressDto: DeleteAddressDto): Promise<any> {
+    const user = await this.findByUsername(username);
+    const { addressId } = deleteAddressDto;
+    
+    // Check if address exists
+    const addressIndex = user.addresses.findIndex(addr => addr.id === addressId);
+    if (addressIndex === -1) {
+      throw new NotFoundException('Address not found');
+    }
+    
+    // Remove address
+    user.addresses = user.addresses.filter(addr => addr.id !== addressId);
+    
+    // If deleted address was the default, set a new default if addresses exist
+    if (user.defaultAddressId === addressId && user.addresses.length > 0) {
+      user.defaultAddressId = user.addresses[0].id;
+    } else if (user.addresses.length === 0) {
+      user.defaultAddressId = null;
+    }
+    
+    user.updatedAt = new Date();
+    await user.save();
+    
+    const { password, verificationCode, verificationExpiry, ...userProfile } = user.toObject();
+    return userProfile;
+  }
+  
+  async setDefaultAddress(username: string, setDefaultAddressDto: SetDefaultAddressDto): Promise<any> {
+    const user = await this.findByUsername(username);
+    const { addressId } = setDefaultAddressDto;
+    
+    // Check if address exists
+    const addressExists = user.addresses.some(addr => addr.id === addressId);
+    if (!addressExists) {
+      throw new NotFoundException('Address not found');
+    }
+    
+    // Set as default
+    user.defaultAddressId = addressId;
+    
+    user.updatedAt = new Date();
+    await user.save();
+    
+    const { password, verificationCode, verificationExpiry, ...userProfile } = user.toObject();
+    return userProfile;
+  }
+  
+  async getAddresses(username: string): Promise<any> {
+    const user = await this.findByUsername(username);
+    
+    return {
+      addresses: user.addresses || [],
+      defaultAddressId: user.defaultAddressId
+    };
   }
 } 

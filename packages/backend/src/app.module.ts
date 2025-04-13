@@ -9,6 +9,9 @@ import { UserModule } from './modules/user/user.module';
 import { DressModule } from './modules/dress/dress.module';
 import { CartModule } from './modules/cart/cart.module';
 import { OrderModule } from './modules/order/order.module';
+import { ReviewModule } from './modules/review/review.module';
+import { AppointmentModule } from './modules/appointment/appointment.module';
+import { ContactModule } from './modules/contact/contact.module';
 
 // Thêm vào để chạy seed
 import { Color, ColorSchema } from './models/entities/color.entity';
@@ -16,6 +19,8 @@ import { Size, SizeSchema } from './models/entities/size.entity';
 import { Dress, DressSchema } from './models/entities/dress.entity';
 import { Order, OrderSchema } from './models/entities/order.entity';
 import { Cart, CartSchema } from './models/entities/cart.entity';
+import { Review, ReviewSchema } from './models/entities/review.entity';
+import { Appointment, AppointmentSchema } from './models/entities/appointment.entity';
 import { MongooseModule } from '@nestjs/mongoose';
 @Module({
   imports: [
@@ -29,14 +34,18 @@ import { MongooseModule } from '@nestjs/mongoose';
     DressModule,
     CartModule,
     OrderModule,
+    ReviewModule,
+    AppointmentModule,
+    ContactModule,
 
-    MongooseModule.forRoot('mongodb+srv://enchanted:2zlpDUeMpcTvv4X7@enchanted.ss8ztcz.mongodb.net/enchanted'),
     MongooseModule.forFeature([
       { name: Color.name, schema: ColorSchema },
       { name: Size.name, schema: SizeSchema },
       { name: Dress.name, schema: DressSchema },
       { name: Order.name, schema: OrderSchema },
       { name: Cart.name, schema: CartSchema },
+      { name: Review.name, schema: ReviewSchema },
+      { name: Appointment.name, schema: AppointmentSchema },
     ]),
   ],
 })

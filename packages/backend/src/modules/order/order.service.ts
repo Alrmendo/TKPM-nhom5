@@ -80,7 +80,19 @@ export class OrderService {
   }
 
   async getUserOrders(userId: string): Promise<Order[]> {
-    return this.orderModel.find({ userId: new Types.ObjectId(userId) }).sort({ createdAt: -1 });
+    return this.orderModel.find({ userId: new Types.ObjectId(userId) })
+      .sort({ createdAt: -1 })
+      .exec();
+  }
+
+  async getAllOrders(): Promise<Order[]> {
+    return this.orderModel.find()
+      .populate({
+        path: 'userId',
+        select: 'name email'
+      })
+      .sort({ createdAt: -1 })
+      .exec();
   }
 
   async getOrderById(orderId: string): Promise<Order> {
@@ -96,19 +108,15 @@ export class OrderService {
   async cancelOrder(orderId: string): Promise<Order> {
     const order = await this.getOrderById(orderId);
     
-    if (order.status !== OrderStatus.PENDING && order.status !== OrderStatus.UNDER_REVIEW) {
-      throw new Error('Order cannot be cancelled at this stage');
-    }
+    // Update order status to CANCELLED
     
-    // Restore dress stock
+    // Return stock to inventory
     for (const item of order.items) {
       const dress = await this.dressService.findById(item.dressId.toString());
       if (dress) {
-        // Find the matching variant by size and color
-        // Note: We need to find the variant by name since we don't store IDs in the order
+        // Sửa cách truy cập size và color
         const variant = dress.variants.find(
-          v => (v.size['label'] === item.size || v.size.toString() === item.size) && 
-               (v.color['name'] === item.color || v.color.toString() === item.color)
+          v => v.size.toString() === item.size || v.color.toString() === item.color
         );
         
         if (variant) {
@@ -118,12 +126,57 @@ export class OrderService {
       }
     }
     
-    // Update order status
-    await this.orderModel.updateOne(
-      { _id: new Types.ObjectId(orderId) },
-      { $set: { status: OrderStatus.CANCELLED } }
+    // Sửa cách cập nhật order thay vì dùng save()
+    return await this.orderModel.findByIdAndUpdate(
+      orderId,
+      { status: OrderStatus.CANCELLED },
+      { new: true }
+    );
+  }
+
+  async updateShippingAddress(orderId: string, shippingAddress: any): Promise<Order> {
+    // Sửa cách cập nhật order thay vì dùng save()
+    return await this.orderModel.findByIdAndUpdate(
+      orderId,
+      { shippingAddress: shippingAddress },
+      { new: true }
+    );
+  }
+
+  async processPayment(orderId: string, paymentMethod: any): Promise<Order> {
+    console.log(`Processing payment for order ${orderId} with payment method:`, paymentMethod);
+    
+    // Sửa cách cập nhật order thay vì dùng save()
+    const updatedOrder = await this.orderModel.findByIdAndUpdate(
+      orderId,
+      { 
+        paymentMethod: paymentMethod,
+        status: OrderStatus.CONFIRMED
+      },
+      { new: true }
     );
     
-    return this.getOrderById(orderId);
+    console.log(`Order ${orderId} status updated to confirmed after payment processing`);
+    return updatedOrder;
+  }
+
+  async updateOrderStatus(orderId: string, status: OrderStatus): Promise<Order> {
+    const order = await this.getOrderById(orderId);
+    
+    // Perform status-specific operations if needed
+    if (status === OrderStatus.DELIVERED) {
+      // Handle delivery logic - could update inventory, notify user, etc.
+      console.log(`Order ${orderId} marked as delivered`);
+    } else if (status === OrderStatus.RETURNED) {
+      // Handle return logic - could update inventory, initiate refund, etc.
+      console.log(`Order ${orderId} marked as returned`);
+    }
+    
+    // Update the order status
+    return await this.orderModel.findByIdAndUpdate(
+      orderId,
+      { status: status },
+      { new: true }
+    );
   }
 } 

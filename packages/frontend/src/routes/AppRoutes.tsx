@@ -14,6 +14,7 @@ const OrderHistory = lazy(() => import('../pages/Profile/OrderHistory'));
 const CurrentOrders = lazy(() => import('../pages/Profile/CurrentOrders'));
 const TrackOrder = lazy(() => import('../pages/Profile/TrackOrder'));
 const Address = lazy(() => import('../pages/Profile/Address'));
+const Settings = lazy(() => import('../pages/Profile/Settings'));
 const OrderDetails = lazy(() => import('../pages/Profile/OrderDetails'));
 const Review = lazy(() => import('../pages/Payment/Review'));
 const Information = lazy(() => import('../pages/Payment/Information'));
@@ -21,13 +22,17 @@ const Shipping = lazy(() => import('../pages/Payment/Shipping'));
 const Checkout = lazy(() => import('../pages/Payment/Checkout'));
 const Successful = lazy(() => import('../pages/Payment/Successful'));
 const SearchOverlay = lazy(() => import('../pages/Search/SearchOverlay'));
-const Measurement = lazy(() => import('../pages/Admin/measurement'));
-const Style = lazy(() => import('../pages/Admin/style'));
-const Photography = lazy(() => import('../pages/Admin/photography'));
-const Deliver = lazy(() => import('../pages/Admin/deliver'));
-const ContactAdmin = lazy(() => import('../pages/Admin/contact_admin'));
-const DressManager = lazy(() => import('../pages/Admin/dress-manager'));
-const Statistics = lazy(() => import('../pages/Admin/statistic'));
+const Appointment = lazy(() => import('../pages/Appointment/Appointment'));
+
+// New Admin Components
+const AdminDashboard = lazy(() => import('../pages/Admin/Dashboard'));
+const AdminProducts = lazy(() => import('../pages/Admin/Products'));
+const AdminCustomers = lazy(() => import('../pages/Admin/Customers'));
+const AdminOrders = lazy(() => import('../pages/Admin/Orders'));
+const AdminAppointments = lazy(() => import('../pages/Admin/Appointments'));
+const AdminContacts = lazy(() => import('../pages/Admin/Contacts'));
+const AdminCustomerFitting = lazy(() => import('../pages/Admin/CustomerFitting'));
+
 const SignIn = lazy(() => import('../pages/Auth/SignIn'));
 const SignUp = lazy(() => import('../pages/Auth/SignUp'));
 const VerifyEmail = lazy(() => import('../pages/Auth/VerifyEmail'));
@@ -35,8 +40,6 @@ const ForgotPassword = lazy(() => import('../pages/Auth/ForgotPassword'));
 const ResetPassword = lazy(() => import('../pages/Auth/ResetPassword'));
 const Cart = lazy(() => import('../pages/Cart/Cart'));
 const AboutPage = lazy(() => import('../pages/About/About'));
-const Appointments = lazy(() => import('../pages/Admin/appointments'));
-const CustomerList = lazy(() => import('../pages/Admin/customer-list'));
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -73,6 +76,7 @@ const AppRoutes = () => {
     { path: '/pdp/:id', element: <PDP /> },
     { path: '/product/:id', element: <PDP /> },
     { path: '/pcp', element: <PCP /> },
+    { path: '/appointment', element: <Appointment /> },
     {
       path: '/profile',
       element: (
@@ -85,65 +89,51 @@ const AppRoutes = () => {
     { path: '/current-orders', element: <CurrentOrders /> },
     { path: '/track-order', element: <TrackOrder /> },
     { path: '/address', element: <Address /> },
+    { 
+      path: '/settings', 
+      element: (
+        <ProtectedRoute requiredRole="user">
+          <Settings />
+        </ProtectedRoute>
+      ) 
+    },
     { path: '/order-details/:id', element: <OrderDetails /> },
     { path: '/payment-review', element: <Review /> },
     { path: '/payment-information', element: <Information /> },
     { path: '/payment-shipping', element: <Shipping /> },
     { path: '/payment-checkout', element: <Checkout /> },
     { path: '/payment-successful', element: <Successful /> },
+    
+    // Admin Routes
     {
-      path: '/admin/measurement',
+      path: '/admin/dashboard',
       element: (
         <ProtectedRoute requiredRole="admin">
-          <Measurement />
+          <AdminDashboard />
         </ProtectedRoute>
       ),
     },
     {
-      path: '/admin/style',
+      path: '/admin/products',
       element: (
         <ProtectedRoute requiredRole="admin">
-          <Style />
+          <AdminProducts />
         </ProtectedRoute>
       ),
     },
     {
-      path: '/admin/photography',
+      path: '/admin/customers',
       element: (
         <ProtectedRoute requiredRole="admin">
-          <Photography />
+          <AdminCustomers />
         </ProtectedRoute>
       ),
     },
     {
-      path: '/admin/deliver',
+      path: '/admin/orders',
       element: (
         <ProtectedRoute requiredRole="admin">
-          <Deliver />
-        </ProtectedRoute>
-      ),
-    },
-    {
-      path: '/admin/contact',
-      element: (
-        <ProtectedRoute requiredRole="admin">
-          <ContactAdmin />
-        </ProtectedRoute>
-      ),
-    },
-    {
-      path: '/admin/dresses',
-      element: (
-        <ProtectedRoute requiredRole="admin">
-          <DressManager />
-        </ProtectedRoute>
-      ),
-    },
-    {
-      path: '/admin/statistics',
-      element: (
-        <ProtectedRoute requiredRole="admin">
-          <Statistics />
+          <AdminOrders />
         </ProtectedRoute>
       ),
     },
@@ -151,26 +141,74 @@ const AppRoutes = () => {
       path: '/admin/appointments',
       element: (
         <ProtectedRoute requiredRole="admin">
-          <Appointments />
+          <AdminAppointments />
         </ProtectedRoute>
       ),
     },
     {
-      path: '/admin/customer-list',
+      path: '/admin/contacts',
       element: (
         <ProtectedRoute requiredRole="admin">
-          <CustomerList />
+          <AdminContacts />
         </ProtectedRoute>
       ),
     },
+    {
+      path: '/admin/customer-fitting',
+      element: (
+        <ProtectedRoute requiredRole="admin">
+          <AdminCustomerFitting />
+        </ProtectedRoute>
+      ),
+    },
+    
+    // Redirect old admin routes to new admin dashboard
+    {
+      path: '/admin/measurement',
+      element: (
+        <ProtectedRoute requiredRole="admin">
+          <Navigate to="/admin/customer-fitting" replace />
+        </ProtectedRoute>
+      ),
+    },
+    {
+      path: '/admin/photography',
+      element: (
+        <ProtectedRoute requiredRole="admin">
+          <Navigate to="/admin/customer-fitting" replace />
+        </ProtectedRoute>
+      ),
+    },
+    {
+      path: '/admin/styles',
+      element: (
+        <ProtectedRoute requiredRole="admin">
+          <Navigate to="/admin/customer-fitting" replace />
+        </ProtectedRoute>
+      ),
+    },
+    {
+      path: '/admin/*',
+      element: (
+        <ProtectedRoute requiredRole="admin">
+          <Navigate to="/admin/dashboard" replace />
+        </ProtectedRoute>
+      ),
+    },
+    
+    // Auth Routes
     { path: '/signin', element: <SignIn /> },
     { path: '/signup', element: <SignUp /> },
     { path: '/verify-email', element: <VerifyEmail /> },
     { path: '/forgot-password', element: <ForgotPassword /> },
     { path: '/reset-password', element: <ResetPassword /> },
+    
+    // Other Routes
     { path: '/cart', element: <Cart /> },
     { path: '/about', element: <AboutPage /> },
     { path: '/search', element: <SearchOverlay /> },
+    
+    // Fallback Route
     { path: '*', element: <NotFoundPage /> },
   ];
 

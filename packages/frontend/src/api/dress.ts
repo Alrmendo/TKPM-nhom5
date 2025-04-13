@@ -1,9 +1,44 @@
 import axios from 'axios';
 
 const API = axios.create({
-  baseURL: 'http://localhost:3000', // Cập nhật URL backend của bạn
+  baseURL: 'http://localhost:3000',
   withCredentials: true, // Cấu hình gửi cookie kèm theo request
 });
+
+// Thêm interceptor để ghi log các request
+API.interceptors.request.use(
+  config => {
+    console.log('API Request:', {
+      url: config.url,
+      method: config.method,
+      withCredentials: config.withCredentials
+    });
+    return config;
+  },
+  error => {
+    console.error('API Request Error:', error);
+    return Promise.reject(error);
+  }
+);
+
+// Thêm interceptor để ghi log các response
+API.interceptors.response.use(
+  response => {
+    console.log('API Response:', {
+      status: response.status,
+      url: response.config.url
+    });
+    return response;
+  },
+  error => {
+    console.error('API Response Error:', error.response ? {
+      status: error.response.status,
+      data: error.response.data,
+      url: error.config.url
+    } : error);
+    return Promise.reject(error);
+  }
+);
 
 // Define dress type
 export interface DressVariant {
@@ -194,5 +229,121 @@ export const removeImage = async (dressId: string, imageUrl: string): Promise<{ 
   } catch (error) {
     console.error(`Error removing image from dress with ID ${dressId}:`, error);
     throw error;
+  }
+};
+
+// Interface for review submission
+export interface ReviewSubmission {
+  dressId: string;
+  rating: number;
+  reviewText: string;
+  images?: File[];
+  userId?: string;
+}
+
+// Submit a review for dress
+export const submitReview = async (reviewData: ReviewSubmission): Promise<{ success: boolean; message: string }> => {
+  try {
+    const formData = new FormData();
+    
+    // Chuẩn bị dữ liệu đầu vào
+    const dressId = reviewData.dressId.trim();
+    const rating = Math.max(1, Math.min(5, Number(reviewData.rating) || 0));
+    const reviewText = (reviewData.reviewText || '').trim();
+    
+    // Kiểm tra dữ liệu ở phía client
+    if (!dressId) {
+      throw new Error('Dress ID is required');
+    }
+    
+    if (isNaN(rating) || rating < 1 || rating > 5) {
+      throw new Error('Rating must be a number between 1 and 5');
+    }
+    
+    if (!reviewText) {
+      throw new Error('Review text is required');
+    }
+    
+    // Thêm vào formData
+    formData.append('dressId', dressId);
+    formData.append('rating', rating.toString());
+    formData.append('reviewText', reviewText);
+    if (reviewData.userId) {
+      formData.append('userId', reviewData.userId);
+    }
+    
+    console.log('Submitting review with data:', {
+      dressId,
+      rating,
+      reviewText,
+      userId: reviewData.userId,
+      hasImages: reviewData.images ? reviewData.images.length > 0 : false
+    });
+    
+    // Thêm ảnh nếu có
+    if (reviewData.images && reviewData.images.length > 0) {
+      reviewData.images.forEach(image => {
+        formData.append('images', image);
+      });
+    }
+    
+    // Gửi request
+    const response = await API.post(`/dress/${dressId}/review`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+      withCredentials: true,
+    });
+    
+    // Kiểm tra kết quả
+    if (response.data && response.data.success) {
+      return response.data;
+    }
+    
+    console.error('Server responded with error:', response.data);
+    throw new Error(response.data.message || 'Failed to submit review');
+  } catch (error) {
+    console.error('Error submitting review:', error);
+    if (error.response) {
+      console.error('Error response from server:', error.response.data);
+      throw new Error(error.response.data.message || `Server error: ${error.response.status}`);
+    }
+    throw error;
+  }
+};
+
+// Reply to an existing review
+export const replyToReview = async (
+  dressId: string, 
+  reviewId: string, 
+  replyText: string
+): Promise<{ success: boolean; message: string }> => {
+  try {
+    const response = await API.post(`/dress/${dressId}/review/${reviewId}/reply`, {
+      replyText
+    });
+    
+    if (response.data && response.data.success) {
+      return response.data;
+    }
+    
+    throw new Error(response.data.message || 'Failed to reply to review');
+  } catch (error) {
+    console.error(`Error replying to review:`, error);
+    throw error;
+  }
+};
+
+// Check if user has already reviewed a dress
+export const checkUserReview = async (dressId: string): Promise<boolean> => {
+  try {
+    const response = await API.get(`/dress/${dressId}/review/check`, {
+      withCredentials: true,
+    });
+    
+    return response.data.hasReviewed;
+  } catch (error) {
+    console.error(`Error checking if user has reviewed dress with ID ${dressId}:`, error);
+    return false;
   }
 }; 

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import Header from '../../components/header';
 import ProfileSidebar from './profile/sidebar';
 import { ChevronLeft, CheckCircle, Clock, Hourglass, XCircle } from 'lucide-react';
@@ -7,7 +7,9 @@ import type { OrderItem } from './profile/order-card';
 import Footer from '../../components/footer';
 import { useAuth } from '../../context/AuthContext';
 import { getUserProfile } from '../../api/user';
+import { cancelOrder } from '../../api/order';
 import { UserProfile } from '../../api/user';
+import { toast } from 'react-hot-toast';
 
 // Mock data cho orders
 const mockOrders: OrderItem[] = [
@@ -47,10 +49,12 @@ const mockOrders: OrderItem[] = [
 ];
 
 const OrderDetailsPage: React.FC = () => {
-  const { id: orderId } = useParams<{ id: string }>();
+  const { id } = useParams<{ id: string }>();
   const [order, setOrder] = useState<OrderItem | undefined>();
   const [userData, setUserData] = useState<UserProfile | null>(null);
+  const [loading, setLoading] = useState(false);
   const { isAuthenticated } = useAuth();
+  const navigate = useNavigate();
   
   useEffect(() => {
     const fetchUserData = async () => {
@@ -68,9 +72,9 @@ const OrderDetailsPage: React.FC = () => {
   }, [isAuthenticated]);
 
   useEffect(() => {
-    const foundOrder = mockOrders.find(o => o.id === orderId);
+    const foundOrder = mockOrders.find(o => o.id === id);
     setOrder(foundOrder);
-  }, [orderId]);
+  }, [id]);
 
   const getStatusIcon = () => {
     if (!order) return null;
@@ -133,6 +137,24 @@ const OrderDetailsPage: React.FC = () => {
       return 'order-history';
     } else {
       return 'current-orders';
+    }
+  };
+
+  const handleCancelOrder = async () => {
+    if (!id) return;
+    
+    try {
+      setLoading(true);
+      await cancelOrder(id);
+      toast.success('Order canceled successfully');
+      
+      // Navigate back to current orders page
+      navigate('/current-orders');
+    } catch (err: any) {
+      console.error('Failed to cancel order:', err);
+      toast.error(err.message || 'Failed to cancel order');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -247,8 +269,12 @@ const OrderDetailsPage: React.FC = () => {
 
                 {(order.status === 'pending' || order.status === 'under-review') && (
                   <div className="pt-4">
-                    <button className="w-full py-2 px-4 bg-red-500 text-white rounded-md hover:bg-red-600 transition-colors">
-                      Cancel Order
+                    <button 
+                      onClick={handleCancelOrder}
+                      disabled={loading}
+                      className="w-full py-2 px-4 bg-red-500 text-white rounded-md hover:bg-red-600 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
+                    >
+                      {loading ? 'Canceling...' : 'Cancel Order'}
                     </button>
                   </div>
                 )}

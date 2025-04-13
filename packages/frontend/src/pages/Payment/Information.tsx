@@ -1,318 +1,412 @@
-import { CheckCircle, Truck, CreditCard, ChevronDown, Check, Search, Info, CircleHelp, ChevronLeft, ChevronRight } from 'lucide-react';
-import Header from '../../components/header';
-import Footer from '../../components/footer';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useState } from 'react';
-import { ShippingFormData } from './types';
+import axios from 'axios';
+import { CartItem, OrderSummary, Address } from './types';
+import { calculateOrderSummary, formatCurrency } from './utils/paymentUtils';
+import CheckoutSteps from './components/CheckoutSteps';
+import AddressForm from './components/AddressForm';
+import { useToast } from '../../hooks/use-toast';
 
 const Information: React.FC = () => {
   const navigate = useNavigate();
-  const [formData, setFormData] = useState<ShippingFormData>({
-    firstName: '',
-    lastName: '',
-    company: '',
-    address: '',
-    apartment: '',
-    city: '',
-    province: '',
-    postalCode: '',
-    phone: '',
-    country: ''
+  const [cartItems, setCartItems] = useState<CartItem[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [summary, setSummary] = useState<OrderSummary>({
+    subtotal: 0,
+    tax: 0,
+    shipping: 0,
+    total: 0,
+    currency: 'USD'
   });
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
+  const [savedAddresses, setSavedAddresses] = useState<any[]>([]);
+  const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null);
+  const [defaultAddressId, setDefaultAddressId] = useState<string | null>(null);
+  const [showAddressForm, setShowAddressForm] = useState(true);
+  const { toast } = useToast();
+  
+  // Fetch cart data, user addresses, and profile info on component mount
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setIsLoading(true);
+        
+        // Fetch cart data
+        const cartResponse = await axios.get('http://localhost:3000/cart', { withCredentials: true });
+        
+        if (cartResponse.data.success && cartResponse.data.data) {
+          setCartItems(cartResponse.data.data.items || []);
+          
+          // Calculate order summary if there are items
+          if (cartResponse.data.data.items && cartResponse.data.data.items.length > 0) {
+            const firstItem = cartResponse.data.data.items[0];
+            const calculatedSummary = calculateOrderSummary(
+              cartResponse.data.data.items,
+              new Date(firstItem.startDate),
+              new Date(firstItem.endDate)
+            );
+            setSummary(calculatedSummary);
+          }
+        } else {
+          setError('No items in cart');
+          setTimeout(() => {
+            navigate('/cart');
+          }, 2000);
+          return;
+        }
+        
+        // Fetch user addresses
+        try {
+          const addressesResponse = await axios.get('http://localhost:3000/users/addresses', { withCredentials: true });
+          
+          if (addressesResponse.data.success && addressesResponse.data.data) {
+            const addressData = addressesResponse.data.data;
+            setSavedAddresses(addressData.addresses || []);
+            setDefaultAddressId(addressData.defaultAddressId || null);
+            
+            // Show address form if no saved addresses
+            if (!addressData.addresses || addressData.addresses.length === 0) {
+              setShowAddressForm(true);
+            } else {
+              // Just show the saved addresses without selecting any by default
+              setSelectedAddressId(null);
+              setShowAddressForm(false);
+            }
+          }
+        } catch (error) {
+          console.error('Error fetching user addresses:', error);
+          // Non-critical, continue without saved addresses
+        }
+        
+        // Fetch user profile
+        try {
+          const profileResponse = await axios.get('http://localhost:3000/users/profile', { withCredentials: true });
+          
+          if (profileResponse.data.success && profileResponse.data.data) {
+            // Store profile data for pre-filling forms if needed
+            const userData = profileResponse.data.data;
+            
+            // If we have profile data but no addresses, pre-set the form with name and contact info
+            if (savedAddresses.length === 0 && userData) {
+              setShowAddressForm(true);
+            }
+          }
+        } catch (error) {
+          console.error('Error fetching user profile:', error);
+          // Non-critical, continue without profile data
+        }
+      } catch (error) {
+        console.error('Error fetching data:', error);
+        setError('Failed to load required data');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    fetchData();
+  }, [navigate, savedAddresses.length]);
+  
+  const handleSelectAddress = (addressId: string) => {
+    setSelectedAddressId(addressId);
+    setShowAddressForm(false);
   };
-
+  
+  const handleUseNewAddress = () => {
+    setSelectedAddressId(null);
+    setShowAddressForm(true);
+  };
+  
+  const handleAddressSubmit = async (addressData: Address) => {
+    try {
+      setIsSubmitting(true);
+      
+      // Save address to session storage for use in later steps
+      sessionStorage.setItem('shippingAddress', JSON.stringify(addressData));
+      
+      // If this is a new address and user opted to save it, add it to their profile
+      if (showAddressForm) {
+        try {
+          await axios.post('http://localhost:3000/users/addresses', 
+            { 
+              address: addressData,
+              setAsDefault: savedAddresses.length === 0 // Set as default if it's the first address
+            }, 
+            { withCredentials: true }
+          );
+          
+          toast({
+            title: 'Address saved',
+            description: 'Your address has been saved to your profile'
+          });
+        } catch (error) {
+          console.error('Error saving address to profile:', error);
+          // Non-critical, continue to next step anyway
+        }
+      }
+      
+      // Navigate to next step
+      navigate('/payment-shipping');
+    } catch (error) {
+      console.error('Error processing address:', error);
+      setError('Failed to save address information');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+  
+  const handleBackToReview = () => {
+    navigate('/cart');
+  };
+  
+  // Handle using a selected saved address
+  const handleUseSavedAddress = async () => {
+    if (!selectedAddressId) {
+      toast({
+        title: 'Please select an address',
+        description: 'You must select a delivery address to continue',
+        variant: 'destructive'
+      });
+      return;
+    }
+    
+    try {
+      setIsSubmitting(true);
+      
+      // Find the selected address
+      const selectedAddress = savedAddresses.find(addr => addr.id === selectedAddressId);
+      if (!selectedAddress) {
+        setError('Selected address not found');
+        setIsSubmitting(false);
+        return;
+      }
+      
+      // Convert to the format expected by the checkout process
+      const addressForCheckout: Address = {
+        firstName: selectedAddress.firstName,
+        lastName: selectedAddress.lastName,
+        company: selectedAddress.company || '',
+        address: selectedAddress.address,
+        apartment: selectedAddress.apartment || '',
+        city: selectedAddress.city,
+        province: selectedAddress.province,
+        postalCode: selectedAddress.postalCode,
+        phone: selectedAddress.phone,
+        country: selectedAddress.country
+      };
+      
+      // Save to session storage for use in later steps
+      sessionStorage.setItem('shippingAddress', JSON.stringify(addressForCheckout));
+      
+      // Navigate to next step
+      navigate('/payment-shipping');
+    } catch (error) {
+      console.error('Error processing saved address:', error);
+      setError('Failed to process address information');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+  
+  if (isLoading) {
+    return (
+      <div className="container mx-auto px-4 py-8 max-w-6xl">
+        <CheckoutSteps currentStep="information" completedSteps={['review']} />
+        <div className="flex justify-center items-center h-64">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#c3937c]"></div>
+        </div>
+      </div>
+    );
+  }
+  
+  if (error && cartItems.length === 0) {
+    return (
+      <div className="container mx-auto px-4 py-8 max-w-6xl">
+        <CheckoutSteps currentStep="information" completedSteps={['review']} />
+        <div className="bg-white rounded-lg shadow-md p-8 text-center">
+          <h2 className="text-2xl font-semibold mb-4">Error</h2>
+          <p className="text-gray-600 mb-6">{error}</p>
+          <p className="text-gray-600 mb-6">Redirecting to cart...</p>
+        </div>
+      </div>
+    );
+  }
+  
   return (
-    <div className="min-h-screen bg-white">
-      <Header />
-{/* Progress Tracker */}
-<div className="container mx-auto px-4 py-8">
-        <div className="flex flex-wrap justify-between items-center max-w-4xl mx-auto">
-          <div className="flex flex-col items-center mb-4 md:mb-0">
-            <div className="w-12 h-12 rounded-full bg-[#000000] flex items-center justify-center">
-              <CheckCircle className="w-6 h-6 text-white" />
+    <div className="container mx-auto px-4 py-8 max-w-6xl">
+      <CheckoutSteps currentStep="information" completedSteps={['review']} />
+      
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {/* Main Content - Address Form */}
+        <div className="lg:col-span-2">
+          {error && (
+            <div className="bg-red-50 border border-red-200 text-red-800 rounded-md p-4 mb-4">
+              {error}
             </div>
-            <span className="mt-2 text-sm font-medium">Reserve a time</span>
-          </div>
-
-          <div className="hidden md:block w-16 h-[1px] bg-[#c3937c]"></div>
-
-          <div className="flex flex-col items-center mb-4 md:mb-0">
-            <div className="w-12 h-12 rounded-full bg-[#000000] flex items-center justify-center">
-              <CheckCircle className="w-6 h-6 text-white" />
+          )}
+          
+          {/* Saved Addresses Section */}
+          {savedAddresses.length > 0 && (
+            <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+              <h2 className="text-lg font-semibold mb-2">Saved Addresses</h2>
+              <p className="text-sm text-gray-600 mb-4">Please select an address for delivery</p>
+              
+              <div className="space-y-4">
+                {savedAddresses.map((address) => (
+                  <div 
+                    key={address.id}
+                    className={`border rounded-md p-4 cursor-pointer transition-colors ${
+                      selectedAddressId === address.id 
+                        ? 'border-[#c3937c] bg-[#f9f5f2]' 
+                        : 'border-gray-200 hover:border-[#c3937c]'
+                    }`}
+                    onClick={() => handleSelectAddress(address.id)}
+                  >
+                    <div className="flex items-start gap-4">
+                      <div className="flex items-center h-6 mt-1">
+                        <div className={`w-5 h-5 rounded-full border ${selectedAddressId === address.id ? 'border-[#c3937c]' : 'border-gray-300'} flex items-center justify-center`}>
+                          {selectedAddressId === address.id && (
+                            <div className="w-3 h-3 rounded-full bg-[#c3937c]"></div>
+                          )}
+                        </div>
+                      </div>
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-1">
+                          <h3 className="font-medium">
+                            {address.firstName} {address.lastName}
+                          </h3>
+                          {address.id === defaultAddressId && (
+                            <span className="text-xs bg-green-100 text-green-800 px-2 py-0.5 rounded-full">
+                              Default
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-sm text-gray-600">
+                          {address.address}
+                          {address.apartment && `, ${address.apartment}`}
+                        </p>
+                        <p className="text-sm text-gray-600">
+                          {address.city}, {address.province}, {address.country}
+                        </p>
+                        <p className="text-sm text-gray-600">{address.postalCode}</p>
+                        <p className="text-sm text-gray-600">{address.phone}</p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+                
+                <button
+                  type="button"
+                  className="text-[#c3937c] hover:text-[#a67c66] font-medium text-sm mt-2 flex items-center"
+                  onClick={handleUseNewAddress}
+                >
+                  + Add a new address
+                </button>
+              </div>
+              
+              {!showAddressForm && (
+                <div className="mt-6">
+                  <button
+                    type="button"
+                    onClick={handleUseSavedAddress}
+                    disabled={isSubmitting || !selectedAddressId}
+                    className={`w-full rounded-md px-4 py-2 text-white font-medium shadow-sm focus:outline-none focus:ring-2 focus:ring-[#c3937c] ${
+                      selectedAddressId ? 'bg-[#c3937c] hover:bg-[#a67c66]' : 'bg-gray-400 cursor-not-allowed'
+                    } ${isSubmitting ? 'opacity-70 cursor-not-allowed' : ''}`}
+                  >
+                    {isSubmitting ? 'Processing...' : selectedAddressId ? 'Deliver to this address' : 'Please select an address'}
+                  </button>
+                </div>
+              )}
             </div>
-            <span className="mt-2 text-sm font-medium">Order overview</span>
-          </div>
-
-          <div className="hidden md:block w-16 h-[1px] bg-[#cbcbcb]"></div>
-
-          <div className="flex flex-col items-center mb-4 md:mb-0">
-            <div className="w-12 h-12 rounded-full bg-[#c3937c] flex items-center justify-center">
-              <Info className="w-6 h-6 text-white" />
-            </div>
-            <span className="mt-2 text-sm text-[#404040]">Information</span>
-          </div>
-
-          <div className="hidden md:block w-16 h-[1px] bg-[#cbcbcb]"></div>
-
-          <div className="flex flex-col items-center mb-4 md:mb-0">
-            <div className="w-12 h-12 rounded-full bg-[#ededed] flex items-center justify-center">
-              <Truck className="w-6 h-6 text-[#cbcbcb]" />
-            </div>
-            <span className="mt-2 text-sm text-[#404040]">Shipping</span>
-          </div>
-
-          <div className="hidden md:block w-16 h-[1px] bg-[#cbcbcb]"></div>
-
-          <div className="flex flex-col items-center">
-            <div className="w-12 h-12 rounded-full bg-[#ededed] flex items-center justify-center">
-              <CreditCard className="w-6 h-6 text-[#cbcbcb]" />
-            </div>
-            <span className="mt-2 text-sm text-[#404040]">Payment</span>
+          )}
+          
+          {/* Show Address Form if needed */}
+          {showAddressForm && (
+            <AddressForm 
+              onSubmit={handleAddressSubmit}
+              isLoading={isSubmitting}
+              submitLabel="Continue to Shipping"
+            />
+          )}
+          
+          <div className="mt-6">
+            <button
+              onClick={handleBackToReview}
+              className="text-[#c3937c] hover:text-[#a67c66] font-medium flex items-center"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4 mr-1">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
+              </svg>
+              Return to cart
+            </button>
           </div>
         </div>
-      </div>
-
-      {/* Main Content */}
-      <div className="container mx-auto px-4 pb-16">
-        <div className="flex flex-col lg:flex-row gap-8">
-          {/* Left Column - Delivery Form */}
-          <div className="lg:w-3/5 border-r border-[#eaeaea] pr-8">
-            <h2 className="text-2xl font-medium mb-6">Delivery</h2>
-
-            <div className="space-y-4">
-              {/* Country/Region */}
-              <div>
-                <label className="block text-xs text-[#868686] mb-1">Country/ Region</label>
-                <div className="relative">
-                  <input 
-                    type="text" 
-                    name="country"
-                    value={formData.country}
-                    onChange={handleInputChange}
-                    className="w-full border border-[#dfdfdf] rounded p-3 pr-10" 
-                  />
-                  <div className="absolute right-3 top-1/2 transform -translate-y-1/2 text-[#868686]">
-                    <ChevronDown size={18} />
+        
+        {/* Order Summary */}
+        <div className="lg:col-span-1">
+          <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+            <h2 className="text-lg font-semibold mb-4">Order Summary</h2>
+            
+            <div className="divide-y divide-gray-200">
+              {cartItems.map((item, index) => {
+                // Calculate days
+                const startDate = new Date(item.startDate);
+                const endDate = new Date(item.endDate);
+                const days = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+                
+                return (
+                  <div key={index} className="py-4 flex items-center">
+                    <div className="h-16 w-16 flex-shrink-0 overflow-hidden rounded-md border border-gray-200 relative">
+                      <img
+                        src={item.image}
+                        alt={item.name}
+                        className="h-full w-full object-cover object-center"
+                      />
+                      <span className="absolute -top-2 -right-2 h-6 w-6 rounded-full bg-[#c3937c] text-white text-xs flex items-center justify-center">
+                        {item.quantity}
+                      </span>
+                    </div>
+                    
+                    <div className="ml-4 flex-1">
+                      <h3 className="text-sm font-medium text-gray-900">{item.name}</h3>
+                      <p className="text-xs text-gray-500">{item.sizeName} · {item.colorName}</p>
+                      <p className="text-xs text-gray-500">{days} days rental</p>
+                    </div>
+                    
+                    <div className="text-right">
+                      <p className="text-sm font-medium text-gray-900">
+                        {formatCurrency(item.pricePerDay * days * item.quantity)}
+                      </p>
+                    </div>
                   </div>
-                </div>
-              </div>
-
-              {/* Name Fields */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs text-[#868686] mb-1">First Name</label>
-                  <input 
-                    type="text" 
-                    name="firstName"
-                    value={formData.firstName}
-                    onChange={handleInputChange}
-                    className="w-full border border-[#dfdfdf] rounded p-3" 
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs text-[#868686] mb-1">Last Name</label>
-                  <input 
-                    type="text" 
-                    name="lastName"
-                    value={formData.lastName}
-                    onChange={handleInputChange}
-                    className="w-full border border-[#dfdfdf] rounded p-3" 
-                  />
-                </div>
-              </div>
-
-              {/* Company */}
-              <div>
-                <label className="block text-xs text-[#868686] mb-1">Company (optional)</label>
-                <input 
-                  type="text" 
-                  name="company"
-                  value={formData.company}
-                  onChange={handleInputChange}
-                  className="w-full border border-[#dfdfdf] rounded p-3" 
-                />
-              </div>
-
-              {/* Address */}
-              <div>
-                <label className="block text-xs text-[#868686] mb-1">Address</label>
-                <div className="relative">
-                  <input 
-                    type="text" 
-                    name="address"
-                    value={formData.address}
-                    onChange={handleInputChange}
-                    className="w-full border border-[#dfdfdf] rounded p-3 pr-10" 
-                  />
-                  <div className="absolute right-3 top-1/2 transform -translate-y-1/2 text-[#868686]">
-                    <Search size={18} />
-                  </div>
-                </div>
-              </div>
-
-              {/* Apartment */}
-              <div>
-                <label className="block text-xs text-[#868686] mb-1">Apartment, Suite,etc (optional)</label>
-                <div className="relative">
-                  <input 
-                    type="text" 
-                    name="apartment"
-                    value={formData.apartment}
-                    onChange={handleInputChange}
-                    className="w-full border border-[#dfdfdf] rounded p-3 pr-10" 
-                  />
-                  <div className="absolute right-3 top-1/2 transform -translate-y-1/2 text-[#868686]">
-                    <Check size={18} />
-                  </div>
-                </div>
-              </div>
-
-              {/* Supporting Text */}
-              <div className="flex justify-between items-center">
-                <span className="text-xs text-[#868686]">Supporting Text</span>
-                <span className="text-xs text-[#868686]">0/360</span>
-              </div>
-
-              {/* City, Province, Postal Code */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div>
-                  <label className="block text-xs text-[#868686] mb-1">City</label>
-                  <input 
-                    type="text" 
-                    name="city"
-                    value={formData.city}
-                    onChange={handleInputChange}
-                    className="w-full border border-[#dfdfdf] rounded p-3" 
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs text-[#868686] mb-1">Province</label>
-                  <input 
-                    type="text" 
-                    name="province"
-                    value={formData.province}
-                    onChange={handleInputChange}
-                    className="w-full border border-[#dfdfdf] rounded p-3" 
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs text-[#868686] mb-1">Postal code</label>
-                  <input 
-                    type="text" 
-                    name="postalCode"
-                    value={formData.postalCode}
-                    onChange={handleInputChange}
-                    className="w-full border border-[#dfdfdf] rounded p-3" 
-                  />
-                </div>
-              </div>
-
-              {/* Phone */}
-              <div>
-                <label className="block text-xs text-[#868686] mb-1">Phone</label>
-                <input 
-                  type="text" 
-                  name="phone"
-                  value={formData.phone}
-                  onChange={handleInputChange}
-                  className="w-full border border-[#dfdfdf] rounded p-3" 
-                />
-              </div>
+                );
+              })}
             </div>
-
-            {/* Navigation Buttons */}
-            <div className="flex justify-between items-center mt-8">
-              <button
-                onClick={() => {
-                  navigate('/payment-review');
-                }}
-                className="text-[#c3937c] flex items-center">
-                <ChevronLeft className="w-4 h-4 mr-1" />
-                Back to cart
-              </button>
-              <button
-                onClick={() => {
-                  navigate('/payment-shipping');
-                }}
-                className="bg-[#c3937c] text-white px-6 py-3 rounded flex items-center">
-                Continue to shipping
-                <ChevronRight className="w-4 h-4 ml-1" />
-              </button>
-            </div>
-          </div>
-
-          {/* Right Column - Order Summary */}
-          <div className="lg:w-2/5">
-            <div className="flex items-start space-x-4 mb-6">
-              <div className="bg-[#f5f5f5] rounded-lg w-16 h-20 overflow-hidden">
-                <img src="/placeholder.svg?height=80&width=64" alt="Eliza Satin Dress" width={64} height={80} className="object-cover w-full h-full" />
+            
+            <div className="border-t border-gray-200 pt-4 mt-4">
+              <div className="flex justify-between text-sm mb-2">
+                <span className="text-gray-600">Subtotal</span>
+                <span className="font-medium">{formatCurrency(summary.subtotal)}</span>
               </div>
-              <div className="flex-1">
-                <div className="flex justify-between">
-                  <h3 className="text-lg font-medium">Eliza Satin</h3>
-                  <span className="font-medium">$1050</span>
-                </div>
-                <p className="text-sm text-[#868686]">M / White / 3 Nights</p>
+              <div className="flex justify-between text-sm mb-2">
+                <span className="text-gray-600">Tax</span>
+                <span className="font-medium">{formatCurrency(summary.tax)}</span>
               </div>
-            </div>
-
-            {/* Discount Code */}
-            <div className="flex space-x-2 mb-6">
-              <input type="text" placeholder="Discount code or gift card" className="flex-1 border border-[#dfdfdf] rounded p-3 text-sm" defaultValue="********" />
-              <button className="bg-[#f5f5f5] text-[#868686] px-4 py-2 rounded">Apply</button>
-            </div>
-
-            {/* Price Summary */}
-            <div className="space-y-3 border-b border-[#eaeaea] pb-4 mb-4">
-              <div className="flex justify-between">
-                <span className="text-[#0c0c0c]">Subtotal</span>
-                <span className="font-medium">$1050</span>
+              <div className="flex justify-between text-sm mb-4">
+                <span className="text-gray-600">Shipping</span>
+                <span className="font-medium">
+                  {summary.shipping === 0 ? 'Free' : formatCurrency(summary.shipping)}
+                </span>
               </div>
-              <div className="flex justify-between">
-                <span className="text-[#0c0c0c]">TAX %13</span>
-                <span className="font-medium">$136.5</span>
+              <div className="flex justify-between font-medium text-lg">
+                <span>Total</span>
+                <span className="text-[#c3937c]">{formatCurrency(summary.total)}</span>
               </div>
-              <div className="flex justify-between items-center">
-                <div className="flex items-center">
-                  <span className="text-[#0c0c0c] mr-1">Shipping</span>
-                  <CircleHelp size={16} className="text-[#868686]" />
-                </div>
-                <span className="text-[#868686]">Enter shipping address</span>
-              </div>
-            </div>
-
-            {/* Total */}
-            <div className="flex justify-between items-center mb-6">
-              <span className="text-lg font-medium">Total</span>
-              <div className="text-right">
-                <span className="text-sm text-[#868686] mr-1">CAD</span>
-                <span className="text-xl font-bold">1186.5$</span>
-              </div>
-            </div>
-
-            {/* Guarantee */}
-            <div className="bg-[#f5f5f5] p-4 rounded-lg">
-              <div className="flex items-start mb-2">
-                <div className="mr-2 mt-1">
-                  <Info size={18} className="text-[#868686]" />
-                </div>
-                <p className="text-sm">We guarantee no additional charges on delivery.</p>
-              </div>
-              <p className="text-sm">We also send an agreement for you based on our rules and regulations which should be signed on behalf of you.</p>
             </div>
           </div>
         </div>
       </div>
-
-      {/* Footer */}
-      <Footer />
     </div>
   );
 };

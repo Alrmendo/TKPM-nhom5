@@ -167,6 +167,12 @@ const Header: React.FC<NavigationProps> = ({ isSticky = false }) => {
               </li>
               <li
                 className="text-[#C3937C] hover:text-[#6164bc] cursor-pointer text-sm lg:text-base"
+                onClick={() => navigate('/appointment')}
+              >
+                Appointment
+              </li>
+              <li
+                className="text-[#C3937C] hover:text-[#6164bc] cursor-pointer text-sm lg:text-base"
                 onClick={() => navigate('/about')}
               >
                 About
@@ -250,101 +256,53 @@ const Header: React.FC<NavigationProps> = ({ isSticky = false }) => {
               className="w-6 h-8 cursor-pointer"
               src={cartIcon}
               alt="Cart Icon"
-              onClick={() => navigate('/cart')}
+              onClick={() => {
+                goToCartPage();
+                setIsMenuOpen(false);
+              }}
             />
           </div>
 
-          {/* Navigation links for mobile */}
-          <ul className="flex flex-col items-center py-4">
+          {/* Mobile menu items */}
+          <ul className="py-4 px-6 space-y-4">
             <li
-              className="text-[#C3937C] hover:text-[#6164bc] cursor-pointer py-3 w-full text-center 
-                          active:bg-[#f8f1e8] transition-colors duration-200"
+              className="text-[#C3937C] hover:text-[#6164bc] cursor-pointer"
               onClick={() => {
-                navigate('/');
+                goToHomePage();
                 setIsMenuOpen(false);
               }}
             >
               Home
             </li>
-
-            {/* Category dropdown for mobile */}
-            <li className="w-full">
-              <div
-                className="flex items-center justify-center text-[#C3937C] hover:text-[#6164bc] cursor-pointer py-3
-                          active:bg-[#f8f1e8] transition-colors duration-200"
-                onClick={() => toggleDropdown('category-mobile')}
-              >
-                <span>Category</span>
-                {activeDropdown === 'category-mobile' ? (
-                  <ChevronUp className="ml-1 w-4 h-4" />
-                ) : (
-                  <ChevronDown className="ml-1 w-4 h-4" />
-                )}
-              </div>
-
-              {/* Mobile Category dropdown content */}
-              {activeDropdown === 'category-mobile' && (
-                <div className="px-4 py-2 bg-white rounded-lg mt-1 mb-2 shadow-inner mx-4">
-                  <DropdownPanel
-                    items={categoryItems}
-                    imageUrl="./pic14.jpg"
-                    altText="Category image"
-                    isMobile={true}
-                    onItemClick={(item) => {
-                      if (item === 'Wedding dress') {
-                        navigate('/pcp');
-                      }
-                      setIsMenuOpen(false);
-                      setActiveDropdown(null);
-                    }}
-                  />
-                </div>
-              )}
+            <li className="text-[#C3937C] hover:text-[#6164bc] cursor-pointer">
+              Category
             </li>
-
-            {/* Services dropdown for mobile */}
-            <li className="w-full">
-              <div
-                className="flex items-center justify-center text-[#C3937C] hover:text-[#6164bc] cursor-pointer py-3
-                          active:bg-[#f8f1e8] transition-colors duration-200"
-                onClick={() => toggleDropdown('services-mobile')}
-              >
-                <span>Services</span>
-                {activeDropdown === 'services-mobile' ? (
-                  <ChevronUp className="ml-1 w-4 h-4" />
-                ) : (
-                  <ChevronDown className="ml-1 w-4 h-4" />
-                )}
-              </div>
-
-              {/* Mobile Services dropdown content */}
-              {activeDropdown === 'services-mobile' && (
-                <div className="px-4 py-2 bg-white rounded-lg mt-1 mb-2 shadow-inner mx-4">
-                  <DropdownPanel
-                    items={servicesItems}
-                    imageUrl="./pic14.jpg"
-                    altText="Services image"
-                    isMobile={true}
-                  />
-                </div>
-              )}
+            <li className="text-[#C3937C] hover:text-[#6164bc] cursor-pointer">
+              Services
             </li>
-
             <li
-              className="text-[#C3937C] hover:text-[#6164bc] cursor-pointer py-3 w-full text-center
-                          active:bg-[#f8f1e8] transition-colors duration-200"
+              className="text-[#C3937C] hover:text-[#6164bc] cursor-pointer"
+              onClick={() => {
+                navigate('/appointment');
+                setIsMenuOpen(false);
+              }}
+            >
+              Appointment
+            </li>
+            <li
+              className="text-[#C3937C] hover:text-[#6164bc] cursor-pointer"
+              onClick={() => {
+                navigate('/about');
+                setIsMenuOpen(false);
+              }}
             >
               About
             </li>
-            <li
-              className="text-[#C3937C] hover:text-[#6164bc] cursor-pointer py-3 w-full text-center
-                          active:bg-[#f8f1e8] transition-colors duration-200"
-            >
+            <li className="text-[#C3937C] hover:text-[#6164bc] cursor-pointer">
               Blog
             </li>
             <li
-              className="text-[#C3937C] hover:text-[#6164bc] cursor-pointer py-3 w-full text-center
-                          active:bg-[#f8f1e8] transition-colors duration-200"
+              className="text-[#C3937C] hover:text-[#6164bc] cursor-pointer"
               onClick={() => {
                 navigate('/contact');
                 setIsMenuOpen(false);

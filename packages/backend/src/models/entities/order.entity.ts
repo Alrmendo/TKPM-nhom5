@@ -38,6 +38,61 @@ export class OrderItem {
 
 export const OrderItemSchema = SchemaFactory.createForClass(OrderItem);
 
+@Schema()
+export class Address {
+  @Prop({ required: true })
+  firstName: string;
+
+  @Prop({ required: true })
+  lastName: string;
+
+  @Prop()
+  company: string;
+
+  @Prop({ required: true })
+  address: string;
+
+  @Prop()
+  apartment: string;
+
+  @Prop({ required: true })
+  city: string;
+
+  @Prop({ required: true })
+  province: string;
+
+  @Prop({ required: true })
+  postalCode: string;
+
+  @Prop({ required: true })
+  phone: string;
+
+  @Prop({ required: true })
+  country: string;
+}
+
+export const AddressSchema = SchemaFactory.createForClass(Address);
+
+@Schema()
+export class PaymentMethod {
+  @Prop({ required: true })
+  id: string;
+
+  @Prop({ required: true, enum: ['credit_card', 'paypal', 'cash_on_delivery'] })
+  type: string;
+
+  @Prop()
+  last4: string;
+
+  @Prop()
+  cardBrand: string;
+
+  @Prop()
+  expiryDate: string;
+}
+
+export const PaymentMethodSchema = SchemaFactory.createForClass(PaymentMethod);
+
 @Schema({ timestamps: true })
 export class Order {
   @Prop({ type: Types.ObjectId, ref: 'User', required: true })
@@ -71,6 +126,12 @@ export class Order {
 
   @Prop()
   notes: string;
+
+  @Prop({ type: AddressSchema })
+  shippingAddress: Address;
+
+  @Prop({ type: PaymentMethodSchema })
+  paymentMethod: PaymentMethod;
 }
 
 export const OrderSchema = SchemaFactory.createForClass(Order); 

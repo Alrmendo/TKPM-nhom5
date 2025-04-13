@@ -8,6 +8,8 @@ import SizeSelector from './pdp/size-selector';
 import DatePicker from './pdp/date-picker';
 import AccordionSection from './pdp/accordion-section';
 import ReviewItem from './pdp/review-item';
+import ReviewForm from './pdp/review-form';
+import ReviewList from './pdp/review-list';
 import ProductCarousel from './pdp/product-carousel';
 import Header from '../../components/header';
 import Footer from '../../components/footer';
@@ -15,6 +17,7 @@ import { getDressById, getSimilarDresses, Dress } from '../../api/dress';
 import { addToCart } from '../../api/cart';
 import { useAuth } from '../../context/AuthContext';
 import { format } from 'date-fns';
+import axios from 'axios';
 
 export default function ProductDetailPage(): JSX.Element {
   const { id } = useParams<{ id: string }>();
@@ -35,6 +38,12 @@ export default function ProductDetailPage(): JSX.Element {
   const [selectedColor, setSelectedColor] = useState<string>('');
   const [quantity, setQuantity] = useState<number>(1);
   const [availableStock, setAvailableStock] = useState<number | null>(null);
+  
+  // Purchase option state (mua/thuê)
+  const [purchaseOption, setPurchaseOption] = useState<'buy' | 'rent'>('rent');
+
+  const [refreshReviews, setRefreshReviews] = useState<boolean>(false);
+  const [reviews, setReviews] = useState<any[]>([]);
 
   useEffect(() => {
     const fetchDressData = async () => {
@@ -62,6 +71,16 @@ export default function ProductDetailPage(): JSX.Element {
         // Fetch similar dresses
         const similar = await getSimilarDresses(id, 4);
         setSimilarDresses(similar);
+
+        // Fetch reviews (Thêm mới)
+        try {
+          const response = await axios.get(`http://localhost:3000/dress/${id}/review`);
+          if (response.data && response.data.success) {
+            setReviews(response.data.data);
+          }
+        } catch (reviewError) {
+          console.error('Failed to fetch reviews:', reviewError);
+        }
         
         setError(null);
       } catch (error) {
@@ -73,7 +92,7 @@ export default function ProductDetailPage(): JSX.Element {
     };
 
     fetchDressData();
-  }, [id]);
+  }, [id, refreshReviews]);
   
   // Update available stock when size or color changes
   useEffect(() => {
@@ -156,8 +175,14 @@ export default function ProductDetailPage(): JSX.Element {
         return;
       }
       
-      if (!id || !selectedSize || !selectedColor || !startDate || !endDate) {
-        toast.error('Please select size, color, and rental dates');
+      if (!id || !selectedSize || !selectedColor) {
+        toast.error('Please select size and color');
+        return;
+      }
+
+      // Kiểm tra ngày thuê đối với tùy chọn thuê
+      if (purchaseOption === 'rent' && (!startDate || !endDate)) {
+        toast.error('Please select rental dates');
         return;
       }
 
@@ -168,30 +193,27 @@ export default function ProductDetailPage(): JSX.Element {
 
       setIsAddingToCart(true);
       
-      const formattedStartDate = format(startDate, 'yyyy-MM-dd');
-      const formattedEndDate = format(endDate, 'yyyy-MM-dd');
-      
-      console.log('Adding to cart with params:', {
+      let requestData: any = {
         dressId: id,
         sizeId: selectedSize,
         colorId: selectedColor,
         quantity,
-        startDate: formattedStartDate,
-        endDate: formattedEndDate
-      });
+        purchaseType: purchaseOption
+      };
+      
+      // Thêm ngày bắt đầu và kết thúc đối với tùy chọn thuê
+      if (purchaseOption === 'rent' && startDate && endDate) {
+        requestData.startDate = format(startDate, 'yyyy-MM-dd');
+        requestData.endDate = format(endDate, 'yyyy-MM-dd');
+      }
+      
+      console.log('Adding to cart with params:', requestData);
       
       // Wait for a short time to ensure auth cookie is set properly
       // This can help resolve timing issues with cookie setting
       await new Promise(resolve => setTimeout(resolve, 500));
       
-      const result = await addToCart({
-        dressId: id,
-        sizeId: selectedSize,
-        colorId: selectedColor,
-        quantity,
-        startDate: formattedStartDate,
-        endDate: formattedEndDate
-      });
+      const result = await addToCart(requestData);
       
       console.log('Add to cart successful, result:', result);
       toast.success('Item added to cart successfully');
@@ -222,16 +244,24 @@ export default function ProductDetailPage(): JSX.Element {
 
   // Format rental price as number
   const rentalPrice = dress?.dailyRentalPrice ? dress.dailyRentalPrice : 0;
+  
+  // Format purchase price (assume purchase price is about 10x rental price if not available)
+  const purchasePrice = dress?.purchasePrice ? dress.purchasePrice : rentalPrice * 10;
 
   // Check if all required fields are filled
   const isBookingEnabled = 
     selectedSize && 
     selectedColor && 
-    startDate && 
-    endDate && 
+    (purchaseOption === 'buy' || (purchaseOption === 'rent' && startDate && endDate)) && 
     quantity > 0 && 
     availableStock !== null && 
     availableStock > 0;
+
+  // Handle review submission
+  const handleReviewSubmitted = () => {
+    // Refresh dress data to show the new review
+    setRefreshReviews(prev => !prev);
+  };
 
   // If loading, show loading state
   if (loading) {
@@ -306,8 +336,39 @@ export default function ProductDetailPage(): JSX.Element {
               <span className="text-sm text-[#868686]">24 Rented</span>
             </div>
 
+            {/* Purchase Options */}
+            <div className="flex flex-col space-y-2">
+              <h3 className="text-sm font-medium text-[#333333]">Lựa chọn:</h3>
+              <div className="grid grid-cols-2 gap-4">
+                <button 
+                  className={`py-2 px-4 rounded-md border ${
+                    purchaseOption === 'buy' 
+                      ? 'bg-[#ead9c9] border-[#c3937c] text-[#333333]' 
+                      : 'bg-white border-gray-300 text-gray-600'
+                  }`}
+                  onClick={() => setPurchaseOption('buy')}
+                >
+                  Mua sản phẩm
+                </button>
+                <button 
+                  className={`py-2 px-4 rounded-md border ${
+                    purchaseOption === 'rent' 
+                      ? 'bg-[#ead9c9] border-[#c3937c] text-[#333333]' 
+                      : 'bg-white border-gray-300 text-gray-600'
+                  }`}
+                  onClick={() => setPurchaseOption('rent')}
+                >
+                  Thuê sản phẩm
+                </button>
+              </div>
+            </div>
+
             {/* Price */}
-            <div className="text-xl font-medium text-[#333333]">${rentalPrice}/ per day</div>
+            <div className="text-xl font-medium text-[#333333]">
+              {purchaseOption === 'buy' 
+                ? `$${purchasePrice}` 
+                : `$${rentalPrice}/ per day`}
+            </div>
 
             {/* Color Selection */}
             <div className="space-y-3">
@@ -363,38 +424,42 @@ export default function ProductDetailPage(): JSX.Element {
               </div>
             </div>
 
-            {/* Date Selection */}
-            <div className="space-y-3">
-              <h3 className="text-sm font-medium text-[#333333]">Rental Period</h3>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <DatePicker
-                    label="Start Date"
-                    selectedDate={startDate}
-                    onDateChange={handleStartDateChange}
-                    showPicker={showStartDatePicker}
-                    onPickerChange={setShowStartDatePicker}
-                    disabled={availableStock === 0}
-                    minDate={new Date()}
-                  />
-                </div>
-                <div>
-                  <DatePicker
-                    label="End Date"
-                    selectedDate={endDate}
-                    onDateChange={handleEndDateChange}
-                    showPicker={showEndDatePicker}
-                    onPickerChange={setShowEndDatePicker}
-                    disabled={availableStock === 0 || !startDate}
-                    minDate={startDate || new Date()}
-                  />
+            {/* Date Selection - Only show if rental option is selected */}
+            {purchaseOption === 'rent' && (
+              <div className="space-y-3">
+                <h3 className="text-sm font-medium text-[#333333]">Rental Period</h3>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <DatePicker
+                      label="Start Date"
+                      selectedDate={startDate}
+                      onDateChange={handleStartDateChange}
+                      showPicker={showStartDatePicker}
+                      onPickerChange={setShowStartDatePicker}
+                      disabled={availableStock === 0}
+                      minDate={new Date()}
+                    />
+                  </div>
+                  <div>
+                    <DatePicker
+                      label="End Date"
+                      selectedDate={endDate}
+                      onDateChange={handleEndDateChange}
+                      showPicker={showEndDatePicker}
+                      onPickerChange={setShowEndDatePicker}
+                      disabled={availableStock === 0 || !startDate}
+                      minDate={startDate || new Date()}
+                    />
+                  </div>
                 </div>
               </div>
-            </div>
+            )}
             
-            <div className="text-xs text-[#868686] italic">
-              *Tip to select Start Date, preferably 1 month before you plan to wear it
-            </div>
+            {purchaseOption === 'rent' && (
+              <div className="text-xs text-[#868686] italic">
+                *Tip to select Start Date, preferably 1 month before you plan to wear it
+              </div>
+            )}
 
             {/* Book Button */}
             <button 
@@ -406,7 +471,15 @@ export default function ProductDetailPage(): JSX.Element {
               disabled={!isBookingEnabled || isAddingToCart}
               onClick={handleRequestToBook}
             >
-              {isAddingToCart ? 'Adding to cart...' : (availableStock === 0 ? 'Out of Stock' : 'Request to Book')}
+              {isAddingToCart 
+                ? 'Adding to cart...' 
+                : (availableStock === 0 
+                  ? 'Out of Stock' 
+                  : purchaseOption === 'buy' 
+                    ? 'Add to Cart' 
+                    : 'Request to Book'
+                  )
+              }
               {!isAddingToCart && availableStock > 0 && <ChevronRight className="w-4 h-4 ml-1" />}
             </button>
 
@@ -455,6 +528,30 @@ export default function ProductDetailPage(): JSX.Element {
               <button className="text-[#333333] hover:text-[#c3937c]">
                 <Mail className="w-5 h-5" />
               </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Reviews Section */}
+        <div className="mt-16">
+          <h2 className="text-2xl font-medium mb-8">Đánh giá & Bình luận</h2>
+          
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            {/* Review Form */}
+            <div className="lg:col-span-1">
+              <ReviewForm 
+                dressId={id || ''} 
+                onReviewSubmitted={handleReviewSubmitted} 
+              />
+            </div>
+            
+            {/* Review List */}
+            <div className="lg:col-span-2">
+              <ReviewList 
+                dressId={id || ''} 
+                reviews={reviews} 
+                onRefresh={handleReviewSubmitted} 
+              />
             </div>
           </div>
         </div>

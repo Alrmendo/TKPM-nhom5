@@ -29,7 +29,7 @@ export default function Home() {
                 </div>
                 <div className="flex items-center space-x-3">
                   <Mail className="w-5 h-5" />
-                  <p>Email: OXBride@gmail.com</p>
+                  <p>Email: enchanted@gmail.com</p>
                 </div>
               </div>
             </div>

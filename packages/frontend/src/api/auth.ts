@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const API = axios.create({
-  baseURL: 'http://localhost:3000', // Cập nhật URL backend của bạn
+  baseURL: 'http://localhost:3000',
   withCredentials: true, // Cấu hình gửi cookie kèm theo request
   headers: {
     'Content-Type': 'application/json',
