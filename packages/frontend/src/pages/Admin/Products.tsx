@@ -157,8 +157,19 @@ const Products = () => {
         getAllColors()
       ]);
       
+      console.log('Loaded sizes:', sizesData);
+      console.log('Loaded colors:', colorsData);
+      
       setSizes(sizesData);
       setColors(colorsData);
+      
+      if (!sizesData || sizesData.length === 0) {
+        setError('No sizes available. Please add sizes first.');
+      }
+      
+      if (!colorsData || colorsData.length === 0) {
+        setError('No colors available. Please add colors first.');
+      }
     } catch (error) {
       console.error('Error fetching sizes and colors:', error);
       setError('Failed to load sizes and colors');
@@ -387,7 +398,7 @@ const Products = () => {
 
   const getSizeLabel = (sizeId: string) => {
     const size = sizes.find(s => s._id === sizeId);
-    return size ? size.name : 'Unknown Size';
+    return size ? size.label : 'Unknown Size';
   };
 
   const getColorName = (colorId: string) => {
@@ -507,135 +518,220 @@ const Products = () => {
         fullWidth
         maxWidth="md"
       >
-        <DialogTitle>{editMode ? 'Edit Dress' : 'Add New Dress'}</DialogTitle>
-        <DialogContent dividers>
-          <Box component="form" onSubmit={handleSubmitDress} noValidate>
-            <Grid container spacing={3}>
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  required
-                  fullWidth
-                  label="Name"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  error={!!formErrors.name}
-                  helperText={formErrors.name}
-                />
+        <DialogTitle 
+          sx={{ 
+            borderBottom: '1px solid #e0e0e0',
+            bgcolor: '#f5f5f5',
+            mb: 2
+          }}
+        >
+          {editMode ? 'Edit Dress' : 'Add New Dress'}
+        </DialogTitle>
+        <DialogContent>
+          <Box component="form" onSubmit={handleSubmitDress} noValidate sx={{ mt: 1 }}>
+            {/* Basic Information Section */}
+            <Paper sx={{ p: 2, mb: 3, border: '1px solid #e0e0e0', borderRadius: 1 }}>
+              <Typography variant="subtitle1" fontWeight="bold" gutterBottom sx={{ mb: 2, color: '#3f51b5' }}>
+                Basic Information
+              </Typography>
+              <Grid container spacing={2}>
+                <Grid item xs={12} sm={6}>
+                  <TextField
+                    required
+                    fullWidth
+                    label="Name"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    error={!!formErrors.name}
+                    helperText={formErrors.name}
+                    size="small"
+                  />
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <TextField
+                    required
+                    fullWidth
+                    label="Style"
+                    value={style}
+                    onChange={(e) => setStyle(e.target.value)}
+                    size="small"
+                  />
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <TextField
+                    required
+                    fullWidth
+                    label="Daily Rental Price"
+                    type="number"
+                    InputProps={{ 
+                      inputProps: { min: 0 },
+                      startAdornment: <Typography variant="body2" sx={{ mr: 1 }}>$</Typography>
+                    }}
+                    value={dailyRentalPrice === null ? '' : dailyRentalPrice}
+                    onChange={(e) => setDailyRentalPrice(Number(e.target.value))}
+                    error={!!formErrors.dailyRentalPrice}
+                    helperText={formErrors.dailyRentalPrice}
+                    size="small"
+                  />
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <TextField
+                    required
+                    fullWidth
+                    label="Purchase Price"
+                    type="number"
+                    InputProps={{ 
+                      inputProps: { min: 0 },
+                      startAdornment: <Typography variant="body2" sx={{ mr: 1 }}>$</Typography>
+                    }}
+                    value={purchasePrice === null ? '' : purchasePrice}
+                    onChange={(e) => setPurchasePrice(Number(e.target.value))}
+                    error={!!formErrors.purchasePrice}
+                    helperText={formErrors.purchasePrice}
+                    size="small"
+                  />
+                </Grid>
+                <Grid item xs={12}>
+                  <TextField
+                    fullWidth
+                    label="Material"
+                    value={material}
+                    onChange={(e) => setMaterial(e.target.value)}
+                    size="small"
+                  />
+                </Grid>
               </Grid>
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  required
-                  fullWidth
-                  label="Style"
-                  value={style}
-                  onChange={(e) => setStyle(e.target.value)}
-                />
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  required
-                  fullWidth
-                  label="Daily Rental Price"
-                  type="number"
-                  InputProps={{ inputProps: { min: 0 } }}
-                  value={dailyRentalPrice === null ? '' : dailyRentalPrice}
-                  onChange={(e) => setDailyRentalPrice(Number(e.target.value))}
-                  error={!!formErrors.dailyRentalPrice}
-                  helperText={formErrors.dailyRentalPrice}
-                />
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  required
-                  fullWidth
-                  label="Purchase Price"
-                  type="number"
-                  InputProps={{ inputProps: { min: 0 } }}
-                  value={purchasePrice === null ? '' : purchasePrice}
-                  onChange={(e) => setPurchasePrice(Number(e.target.value))}
-                  error={!!formErrors.purchasePrice}
-                  helperText={formErrors.purchasePrice}
-                />
-              </Grid>
-              <Grid item xs={12}>
-                <TextField
-                  fullWidth
-                  label="Material"
-                  value={material}
-                  onChange={(e) => setMaterial(e.target.value)}
-                />
-              </Grid>
-              <Grid item xs={12}>
-                <TextField
-                  fullWidth
-                  label="Product Detail"
-                  multiline
-                  rows={3}
-                  value={productDetail}
-                  onChange={(e) => setProductDetail(e.target.value)}
-                />
-              </Grid>
-              <Grid item xs={12}>
-                <TextField
-                  fullWidth
-                  label="Size and Fit"
-                  multiline
-                  rows={3}
-                  value={sizeAndFit}
-                  onChange={(e) => setSizeAndFit(e.target.value)}
-                />
-              </Grid>
-              <Grid item xs={12}>
-                <TextField
-                  fullWidth
-                  label="Description"
-                  multiline
-                  rows={3}
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                />
-              </Grid>
+            </Paper>
 
-              <Grid item xs={12}>
-                <Typography variant="subtitle1" gutterBottom>
+            {/* Description Section */}
+            <Paper sx={{ p: 2, mb: 3, border: '1px solid #e0e0e0', borderRadius: 1 }}>
+              <Typography variant="subtitle1" fontWeight="bold" gutterBottom sx={{ mb: 2, color: '#3f51b5' }}>
+                Product Details & Description
+              </Typography>
+              <Grid container spacing={2}>
+                <Grid item xs={12} md={4}>
+                  <TextField
+                    fullWidth
+                    label="Product Detail"
+                    multiline
+                    rows={3}
+                    value={productDetail}
+                    onChange={(e) => setProductDetail(e.target.value)}
+                    size="small"
+                  />
+                </Grid>
+                <Grid item xs={12} md={4}>
+                  <TextField
+                    fullWidth
+                    label="Size and Fit"
+                    multiline
+                    rows={3}
+                    value={sizeAndFit}
+                    onChange={(e) => setSizeAndFit(e.target.value)}
+                    size="small"
+                  />
+                </Grid>
+                <Grid item xs={12} md={4}>
+                  <TextField
+                    fullWidth
+                    label="Description"
+                    multiline
+                    rows={3}
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
+                    size="small"
+                  />
+                </Grid>
+              </Grid>
+            </Paper>
+
+            {/* Variants Section */}
+            <Paper sx={{ p: 2, mb: 3, border: '1px solid #e0e0e0', borderRadius: 1 }}>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                <Typography variant="subtitle1" fontWeight="bold" sx={{ color: '#3f51b5' }}>
                   Variants
                 </Typography>
-                {formErrors.variants && (
-                  <FormHelperText error>{formErrors.variants}</FormHelperText>
-                )}
-                {variants.map((variant, index) => (
-                  <Box key={index} sx={{ mb: 2, p: 2, border: '1px solid #e0e0e0', borderRadius: 1 }}>
+                <Button
+                  variant="outlined"
+                  size="small"
+                  startIcon={<Add />}
+                  onClick={handleAddVariant}
+                >
+                  Add Variant
+                </Button>
+              </Box>
+
+              {formErrors.variants && (
+                <FormHelperText error sx={{ mb: 2 }}>{formErrors.variants}</FormHelperText>
+              )}
+
+              {variants.length === 0 ? (
+                <Box sx={{ p: 2, textAlign: 'center', bgcolor: '#f5f5f5', borderRadius: 1 }}>
+                  <Typography variant="body2" color="text.secondary">
+                    No variants added yet. Click "Add Variant" to create size and color combinations.
+                  </Typography>
+                </Box>
+              ) : (
+                variants.map((variant, index) => (
+                  <Box 
+                    key={index} 
+                    sx={{ 
+                      mb: 2, 
+                      p: 2, 
+                      border: '1px solid #e0e0e0', 
+                      borderRadius: 1,
+                      bgcolor: index % 2 === 0 ? '#f8f8f8' : 'white'
+                    }}
+                  >
                     <Grid container spacing={2} alignItems="center">
                       <Grid item xs={12} sm={4}>
-                        <FormControl fullWidth>
+                        <FormControl fullWidth size="small">
                           <InputLabel>Size</InputLabel>
                           <Select
                             value={variant.size}
                             label="Size"
                             onChange={(e) => handleVariantChange(index, 'size', e.target.value)}
                           >
-                            {sizes.map((size) => (
-                              <MenuItem key={size._id} value={size._id}>
-                                {size.name}
+                            {sizes && sizes.length > 0 ? (
+                              sizes.map((size) => (
+                                <MenuItem key={size._id} value={size._id}>
+                                  {size.label}
+                                </MenuItem>
+                              ))
+                            ) : (
+                              <MenuItem disabled value="">
+                                No sizes available
                               </MenuItem>
-                            ))}
+                            )}
                           </Select>
+                          {(!sizes || sizes.length === 0) && (
+                            <FormHelperText error>No sizes available. Please add sizes first.</FormHelperText>
+                          )}
                         </FormControl>
                       </Grid>
                       <Grid item xs={12} sm={4}>
-                        <FormControl fullWidth>
+                        <FormControl fullWidth size="small">
                           <InputLabel>Color</InputLabel>
                           <Select
                             value={variant.color}
                             label="Color"
                             onChange={(e) => handleVariantChange(index, 'color', e.target.value)}
                           >
-                            {colors.map((color) => (
-                              <MenuItem key={color._id} value={color._id}>
-                                {color.name}
+                            {colors && colors.length > 0 ? (
+                              colors.map((color) => (
+                                <MenuItem key={color._id} value={color._id}>
+                                  {color.name}
+                                </MenuItem>
+                              ))
+                            ) : (
+                              <MenuItem disabled value="">
+                                No colors available
                               </MenuItem>
-                            ))}
+                            )}
                           </Select>
+                          {(!colors || colors.length === 0) && (
+                            <FormHelperText error>No colors available. Please add colors first.</FormHelperText>
+                          )}
                         </FormControl>
                       </Grid>
                       <Grid item xs={12} sm={3}>
@@ -643,6 +739,7 @@ const Products = () => {
                           fullWidth
                           label="Stock"
                           type="number"
+                          size="small"
                           InputProps={{ inputProps: { min: 0 } }}
                           value={variant.stock}
                           onChange={(e) => handleVariantChange(index, 'stock', parseInt(e.target.value) || 0)}
@@ -655,119 +752,129 @@ const Products = () => {
                       </Grid>
                     </Grid>
                   </Box>
-                ))}
-                <Button
-                  variant="outlined"
-                  startIcon={<Add />}
-                  onClick={handleAddVariant}
-                  sx={{ mt: 1 }}
-                >
-                  Add Variant
-                </Button>
-              </Grid>
+                ))
+              )}
+            </Paper>
 
-              <Grid item xs={12}>
-                <Typography variant="subtitle1" gutterBottom>
-                  Images
-                </Typography>
-                <Button
-                  component="label"
-                  variant="outlined"
-                  startIcon={<Image />}
-                >
-                  Add Images
-                  <VisuallyHiddenInput 
-                    type="file" 
-                    multiple 
-                    accept="image/*"
-                    onChange={handleImageSelect}
-                  />
-                </Button>
+            {/* Images Section */}
+            <Paper sx={{ p: 2, mb: 2, border: '1px solid #e0e0e0', borderRadius: 1 }}>
+              <Typography variant="subtitle1" fontWeight="bold" gutterBottom sx={{ mb: 2, color: '#3f51b5' }}>
+                Images
+              </Typography>
+              <Button
+                component="label"
+                variant="outlined"
+                startIcon={<Image />}
+                size="small"
+              >
+                Add Images
+                <VisuallyHiddenInput 
+                  type="file" 
+                  multiple 
+                  accept="image/*"
+                  onChange={handleImageSelect}
+                />
+              </Button>
 
-                {/* Image Previews */}
-                {(imagePreviewUrls.length > 0 || existingImages.length > 0) && (
-                  <Box sx={{ mt: 2, display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-                    {existingImages.map((img, index) => (
-                      <Box
-                        key={`existing-${index}`}
-                        sx={{
-                          position: 'relative',
-                          width: 100,
-                          height: 100,
+              {/* Image Previews */}
+              {(imagePreviewUrls.length > 0 || existingImages.length > 0) ? (
+                <Box sx={{ mt: 2, display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                  {existingImages.map((img, index) => (
+                    <Box
+                      key={`existing-${index}`}
+                      sx={{
+                        position: 'relative',
+                        width: 100,
+                        height: 100,
+                        borderRadius: 1,
+                        overflow: 'hidden',
+                        border: '1px solid #e0e0e0'
+                      }}
+                    >
+                      <img
+                        src={img}
+                        alt={`Dress Preview ${index}`}
+                        style={{
+                          width: '100%',
+                          height: '100%',
+                          objectFit: 'cover',
                         }}
-                      >
-                        <img
-                          src={img}
-                          alt={`Dress Preview ${index}`}
-                          style={{
-                            width: '100%',
-                            height: '100%',
-                            objectFit: 'cover',
-                            borderRadius: '4px',
-                          }}
-                        />
-                        <IconButton
-                          size="small"
-                          sx={{
-                            position: 'absolute',
-                            top: 0,
-                            right: 0,
-                            bgcolor: 'rgba(255, 255, 255, 0.7)',
-                            '&:hover': {
-                              bgcolor: 'rgba(255, 255, 255, 0.9)',
-                            },
-                          }}
-                          onClick={() => handleRemoveExistingImage(img)}
-                        >
-                          <Close fontSize="small" />
-                        </IconButton>
-                      </Box>
-                    ))}
-                    {imagePreviewUrls.map((url, index) => (
-                      <Box
-                        key={`new-${index}`}
+                      />
+                      <IconButton
+                        size="small"
                         sx={{
-                          position: 'relative',
-                          width: 100,
-                          height: 100,
+                          position: 'absolute',
+                          top: 0,
+                          right: 0,
+                          bgcolor: 'rgba(255, 255, 255, 0.7)',
+                          '&:hover': {
+                            bgcolor: 'rgba(255, 255, 255, 0.9)',
+                          },
                         }}
+                        onClick={() => handleRemoveExistingImage(img)}
                       >
-                        <img
-                          src={url}
-                          alt={`New Preview ${index}`}
-                          style={{
-                            width: '100%',
-                            height: '100%',
-                            objectFit: 'cover',
-                            borderRadius: '4px',
-                          }}
-                        />
-                        <IconButton
-                          size="small"
-                          sx={{
-                            position: 'absolute',
-                            top: 0,
-                            right: 0,
-                            bgcolor: 'rgba(255, 255, 255, 0.7)',
-                            '&:hover': {
-                              bgcolor: 'rgba(255, 255, 255, 0.9)',
-                            },
-                          }}
-                          onClick={() => handleRemoveSelectedImage(index)}
-                        >
-                          <Close fontSize="small" />
-                        </IconButton>
-                      </Box>
-                    ))}
-                  </Box>
-                )}
-              </Grid>
-            </Grid>
+                        <Close fontSize="small" />
+                      </IconButton>
+                    </Box>
+                  ))}
+                  {imagePreviewUrls.map((url, index) => (
+                    <Box
+                      key={`new-${index}`}
+                      sx={{
+                        position: 'relative',
+                        width: 100,
+                        height: 100,
+                        borderRadius: 1,
+                        overflow: 'hidden',
+                        border: '1px solid #e0e0e0'
+                      }}
+                    >
+                      <img
+                        src={url}
+                        alt={`New Preview ${index}`}
+                        style={{
+                          width: '100%',
+                          height: '100%',
+                          objectFit: 'cover',
+                        }}
+                      />
+                      <IconButton
+                        size="small"
+                        sx={{
+                          position: 'absolute',
+                          top: 0,
+                          right: 0,
+                          bgcolor: 'rgba(255, 255, 255, 0.7)',
+                          '&:hover': {
+                            bgcolor: 'rgba(255, 255, 255, 0.9)',
+                          },
+                        }}
+                        onClick={() => handleRemoveSelectedImage(index)}
+                      >
+                        <Close fontSize="small" />
+                      </IconButton>
+                    </Box>
+                  ))}
+                </Box>
+              ) : (
+                <Box sx={{ mt: 2, p: 2, textAlign: 'center', bgcolor: '#f5f5f5', borderRadius: 1 }}>
+                  <Typography variant="body2" color="text.secondary">
+                    No images added yet. Click "Add Images" to upload product photos.
+                  </Typography>
+                </Box>
+              )}
+            </Paper>
           </Box>
         </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCloseForm}>Cancel</Button>
-          <Button variant="contained" onClick={handleSubmitDress}>
+        <DialogActions sx={{ borderTop: '1px solid #e0e0e0', p: 2 }}>
+          <Button onClick={handleCloseForm} variant="outlined">
+            Cancel
+          </Button>
+          <Button 
+            onClick={handleSubmitDress} 
+            variant="contained" 
+            startIcon={editMode ? <Edit /> : <Add />}
+          >
             {editMode ? 'Update' : 'Create'}
           </Button>
         </DialogActions>

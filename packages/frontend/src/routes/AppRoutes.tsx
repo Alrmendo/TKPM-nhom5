@@ -35,6 +35,7 @@ const AdminAppointments = lazy(() => import('../pages/Admin/Appointments'));
 const AdminContacts = lazy(() => import('../pages/Admin/Contacts'));
 const AdminCustomerFitting = lazy(() => import('../pages/Admin/CustomerFitting'));
 const AdminPhotography = lazy(() => import('../pages/Admin/Photography'));
+const AdminSettings = lazy(() => import('../pages/Admin/Settings'));
 
 const SignIn = lazy(() => import('../pages/Auth/SignIn'));
 const SignUp = lazy(() => import('../pages/Auth/SignUp'));
@@ -171,6 +172,14 @@ const AppRoutes = () => {
       element: (
         <ProtectedRoute requiredRole="admin">
           <AdminPhotography />
+        </ProtectedRoute>
+      ),
+    },
+    {
+      path: '/admin/settings',
+      element: (
+        <ProtectedRoute requiredRole="admin">
+          <AdminSettings />
         </ProtectedRoute>
       ),
     },

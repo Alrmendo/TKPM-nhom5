@@ -62,7 +62,7 @@ const SignIn: React.FC = () => {
       const role = await getRoleFromCookie();
       console.log(role);
       if (role === 'admin') {
-        navigate('/admin/measurement');
+        navigate('/admin/dashboard');
       } else if (role === 'user') {
         navigate('/profile');
       }

@@ -732,95 +732,142 @@ const Contacts = () => {
         maxWidth="sm"
         fullWidth
       >
-        <DialogTitle>
+        <DialogTitle sx={{ backgroundColor: 'primary.main', color: 'white', mb: 2 }}>
           {formContact._id ? 'Edit Contact' : 'Add New Contact'}
         </DialogTitle>
         
         <DialogContent>
-          <Grid container spacing={2} sx={{ mt: 1 }}>
-            <Grid item xs={12}>
-              <TextField
-                name="name"
-                label="Name"
-                value={formContact.name}
-                onChange={handleFormChange}
-                fullWidth
-                required
-              />
-            </Grid>
+          <Box sx={{ p: 1 }}>
+            {/* Personal Information */}
+            <Paper elevation={1} sx={{ p: 2, mb: 2 }}>
+              <Typography variant="subtitle1" sx={{ mb: 2, fontWeight: 'bold', color: 'primary.main', display: 'flex', alignItems: 'center' }}>
+                <Person sx={{ mr: 1 }} /> Personal Information
+              </Typography>
+              <Grid container spacing={2}>
+                <Grid item xs={12}>
+                  <TextField
+                    name="name"
+                    label="Name"
+                    value={formContact.name}
+                    onChange={handleFormChange}
+                    fullWidth
+                    required
+                    size="small"
+                    InputProps={{
+                      startAdornment: <Person fontSize="small" sx={{ color: 'text.secondary', mr: 1 }} />
+                    }}
+                  />
+                </Grid>
+                
+                <Grid item xs={12} md={6}>
+                  <TextField
+                    name="phoneNumber"
+                    label="Phone Number"
+                    value={formContact.phoneNumber}
+                    onChange={handleFormChange}
+                    fullWidth
+                    required
+                    size="small"
+                    InputProps={{
+                      startAdornment: <Phone fontSize="small" sx={{ color: 'text.secondary', mr: 1 }} />
+                    }}
+                  />
+                </Grid>
+                
+                <Grid item xs={12} md={6}>
+                  <TextField
+                    name="email"
+                    label="Email"
+                    type="email"
+                    value={formContact.email}
+                    onChange={handleFormChange}
+                    fullWidth
+                    size="small"
+                    InputProps={{
+                      startAdornment: <Mail fontSize="small" sx={{ color: 'text.secondary', mr: 1 }} />
+                    }}
+                  />
+                </Grid>
+              </Grid>
+            </Paper>
             
-            <Grid item xs={12}>
-              <TextField
-                name="phoneNumber"
-                label="Phone Number"
-                value={formContact.phoneNumber}
-                onChange={handleFormChange}
-                fullWidth
-                required
-              />
-            </Grid>
+            {/* Address Information */}
+            <Paper elevation={1} sx={{ p: 2, mb: 2 }}>
+              <Typography variant="subtitle1" sx={{ mb: 2, fontWeight: 'bold', color: 'primary.main', display: 'flex', alignItems: 'center' }}>
+                <LocationOn sx={{ mr: 1 }} /> Address Information
+              </Typography>
+              <Grid container spacing={2}>
+                <Grid item xs={12}>
+                  <TextField
+                    name="address"
+                    label="Address"
+                    value={formContact.address}
+                    onChange={handleFormChange}
+                    fullWidth
+                    size="small"
+                    InputProps={{
+                      startAdornment: <LocationOn fontSize="small" sx={{ color: 'text.secondary', mr: 1 }} />
+                    }}
+                  />
+                </Grid>
+                
+                <Grid item xs={6}>
+                  <TextField
+                    name="city"
+                    label="City"
+                    value={formContact.city}
+                    onChange={handleFormChange}
+                    fullWidth
+                    size="small"
+                  />
+                </Grid>
+                
+                <Grid item xs={6}>
+                  <TextField
+                    name="postalCode"
+                    label="Postal Code"
+                    value={formContact.postalCode}
+                    onChange={handleFormChange}
+                    fullWidth
+                    size="small"
+                  />
+                </Grid>
+              </Grid>
+            </Paper>
             
-            <Grid item xs={12}>
-              <TextField
-                name="email"
-                label="Email"
-                type="email"
-                value={formContact.email}
-                onChange={handleFormChange}
-                fullWidth
-              />
-            </Grid>
-            
-            <Grid item xs={12}>
-              <TextField
-                name="address"
-                label="Address"
-                value={formContact.address}
-                onChange={handleFormChange}
-                fullWidth
-              />
-            </Grid>
-            
-            <Grid item xs={6}>
-              <TextField
-                name="city"
-                label="City"
-                value={formContact.city}
-                onChange={handleFormChange}
-                fullWidth
-              />
-            </Grid>
-            
-            <Grid item xs={6}>
-              <TextField
-                name="postalCode"
-                label="Postal Code"
-                value={formContact.postalCode}
-                onChange={handleFormChange}
-                fullWidth
-              />
-            </Grid>
-            
-            <Grid item xs={12}>
+            {/* Notes */}
+            <Paper elevation={1} sx={{ p: 2 }}>
+              <Typography variant="subtitle1" sx={{ mb: 2, fontWeight: 'bold', color: 'primary.main' }}>
+                Notes
+              </Typography>
               <TextField
                 name="notes"
-                label="Notes"
+                label="Additional Notes"
                 value={formContact.notes}
                 onChange={handleFormChange}
                 fullWidth
                 multiline
-                rows={4}
+                rows={3}
+                size="small"
+                placeholder="Enter any additional information about this contact..."
               />
-            </Grid>
-          </Grid>
+            </Paper>
+          </Box>
         </DialogContent>
         
-        <DialogActions>
-          <Button onClick={handleCloseForm}>Cancel</Button>
+        <DialogActions sx={{ px: 3, py: 2 }}>
+          <Button 
+            onClick={handleCloseForm} 
+            variant="outlined"
+            startIcon={<Close />}
+          >
+            Cancel
+          </Button>
           <Button 
             variant="contained"
             color="primary"
             onClick={handleSubmitForm}
+            startIcon={<Check />}
           >
             Save
           </Button>
