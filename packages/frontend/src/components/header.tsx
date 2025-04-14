@@ -161,6 +161,12 @@ const Header: React.FC<NavigationProps> = ({ isSticky = false }) => {
                       items={servicesItems}
                       imageUrl="./pic16.jpg"
                       altText="Services image"
+                      onItemClick={(item) => {
+                        if (item === 'Photography') {
+                          navigate('/photography');
+                        }
+                        setActiveDropdown(null);
+                      }}
                     />
                   </div>
                 )}
@@ -309,6 +315,15 @@ const Header: React.FC<NavigationProps> = ({ isSticky = false }) => {
               }}
             >
               Contact
+            </li>
+            <li
+              className="text-[#C3937C] hover:text-[#6164bc] cursor-pointer"
+              onClick={() => {
+                navigate('/photography');
+                setIsMenuOpen(false);
+              }}
+            >
+              Photography
             </li>
           </ul>
         </div>

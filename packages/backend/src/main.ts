@@ -3,10 +3,11 @@ import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import * as net from 'net';
-import * as cookieParser from 'cookie-parser';  // 👈 Import cookie-parser
+import * as cookieParser from 'cookie-parser';  // Import cookie-parser
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { join } from 'path';
 import * as fs from 'fs';
+import { PhotographySeedService } from './modules/photography/photography-seed';
 
 // Function to check if a port is available
 const isPortAvailable = (port: number): Promise<boolean> => {
@@ -92,6 +93,10 @@ async function bootstrap() {
 
     // Start the server
     await app.listen(appPort);
+    
+    // Run seed data
+    const photographySeedService = app.get(PhotographySeedService);
+    await photographySeedService.seed();
     
     // Log information about ports
     if (appPort !== initialAppPort) {

@@ -12,6 +12,7 @@ import { OrderModule } from './modules/order/order.module';
 import { ReviewModule } from './modules/review/review.module';
 import { AppointmentModule } from './modules/appointment/appointment.module';
 import { ContactModule } from './modules/contact/contact.module';
+import { PhotographyModule } from './modules/photography/photography.module';
 
 // Thêm vào để chạy seed
 import { Color, ColorSchema } from './models/entities/color.entity';
@@ -37,6 +38,7 @@ import { MongooseModule } from '@nestjs/mongoose';
     ReviewModule,
     AppointmentModule,
     ContactModule,
+    PhotographyModule,
 
     MongooseModule.forFeature([
       { name: Color.name, schema: ColorSchema },

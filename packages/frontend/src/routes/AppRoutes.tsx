@@ -23,6 +23,8 @@ const Checkout = lazy(() => import('../pages/Payment/Checkout'));
 const Successful = lazy(() => import('../pages/Payment/Successful'));
 const SearchOverlay = lazy(() => import('../pages/Search/SearchOverlay'));
 const Appointment = lazy(() => import('../pages/Appointment/Appointment'));
+const Photography = lazy(() => import('../pages/Photography/Photography'));
+const PhotographyServiceDetail = lazy(() => import('../pages/Photography/ServiceDetail'));
 
 // New Admin Components
 const AdminDashboard = lazy(() => import('../pages/Admin/Dashboard'));
@@ -32,6 +34,7 @@ const AdminOrders = lazy(() => import('../pages/Admin/Orders'));
 const AdminAppointments = lazy(() => import('../pages/Admin/Appointments'));
 const AdminContacts = lazy(() => import('../pages/Admin/Contacts'));
 const AdminCustomerFitting = lazy(() => import('../pages/Admin/CustomerFitting'));
+const AdminPhotography = lazy(() => import('../pages/Admin/Photography'));
 
 const SignIn = lazy(() => import('../pages/Auth/SignIn'));
 const SignUp = lazy(() => import('../pages/Auth/SignUp'));
@@ -77,6 +80,8 @@ const AppRoutes = () => {
     { path: '/product/:id', element: <PDP /> },
     { path: '/pcp', element: <PCP /> },
     { path: '/appointment', element: <Appointment /> },
+    { path: '/photography', element: <Photography /> },
+    { path: '/photography/service-detail/:id', element: <PhotographyServiceDetail /> },
     {
       path: '/profile',
       element: (
@@ -158,6 +163,14 @@ const AppRoutes = () => {
       element: (
         <ProtectedRoute requiredRole="admin">
           <AdminCustomerFitting />
+        </ProtectedRoute>
+      ),
+    },
+    {
+      path: '/admin/photography',
+      element: (
+        <ProtectedRoute requiredRole="admin">
+          <AdminPhotography />
         </ProtectedRoute>
       ),
     },
