@@ -1,13 +1,17 @@
 import { useState, useEffect } from 'react';
-import { CalendarIcon, Clock } from 'lucide-react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { format, differenceInDays } from 'date-fns';
 import { toast } from 'react-hot-toast';
-import { Separator } from '../../../components/separator';
 import { EmptyCart } from './empty-cart';
-import { getCart, removeFromCart, updateCartItemDates, clearCart } from '../../../api/cart';
+import { getCart, removeFromCart, updateCartItemDates } from '../../../api/cart';
 import { createOrder } from '../../../api/order';
 import DatePicker from '../../PDP/pdp/date-picker';
+import { 
+  getPhotographyCart, 
+  removePhotographyFromCart, 
+  updatePhotographyBookingDate, 
+  type PhotographyCartItem 
+} from '../../../api/photographyCart';
 
 // Define the CartItem type based on the API response
 interface CartItem {
@@ -42,16 +46,20 @@ interface CartItem {
 export const ShoppingCart: React.FC = () => {
   const navigate = useNavigate();
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
+  const [photographyItems, setPhotographyItems] = useState<PhotographyCartItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isProcessingOrder, setIsProcessingOrder] = useState(false);
   
   // States for date picker
   const [editingItem, setEditingItem] = useState<string | null>(null);
+  const [editingPhotoItem, setEditingPhotoItem] = useState<string | null>(null);
   const [showStartDatePicker, setShowStartDatePicker] = useState<boolean>(false);
   const [showEndDatePicker, setShowEndDatePicker] = useState<boolean>(false);
+  const [showPhotoDatePicker, setShowPhotoDatePicker] = useState<boolean>(false);
   const [newStartDate, setNewStartDate] = useState<Date | null>(null);
   const [newEndDate, setNewEndDate] = useState<Date | null>(null);
+  const [newPhotoDate, setNewPhotoDate] = useState<Date | null>(null);
 
   // Helper function to get dress name
   const getDressName = (item: CartItem): string => {
@@ -99,6 +107,8 @@ export const ShoppingCart: React.FC = () => {
       try {
         setLoading(true);
         console.log('Fetching cart data...');
+        
+        // Get dress rental items from backend API
         const cartData = await getCart();
         console.log('Cart data received:', cartData);
         
@@ -109,14 +119,23 @@ export const ShoppingCart: React.FC = () => {
           setCartItems(cartData.items || []);
           console.log('Cart items:', cartData.items);
         }
+        
+        // Get photography services from localStorage
+        const photoItems = getPhotographyCart();
+        console.log('Photography items from localStorage:', photoItems);
+        setPhotographyItems(photoItems);
+        
       } catch (err: any) {
         console.error('Failed to fetch cart:', err);
         console.error('Error details:', err.message);
         if (err.response) {
           console.error('Error response:', err.response);
         }
-        setError('Failed to load your cart. Please try again later.');
-        toast.error('Failed to load your cart');
+        setError('Failed to load cart data. Please try again.');
+        
+        // Even if API fails, still try to get photography items
+        const photoItems = getPhotographyCart();
+        setPhotographyItems(photoItems);
       } finally {
         setLoading(false);
       }
@@ -134,6 +153,18 @@ export const ShoppingCart: React.FC = () => {
     } catch (err) {
       console.error('Failed to remove item:', err);
       toast.error('Failed to remove item from cart');
+    }
+  };
+
+  // Handle removing photography service from cart
+  const handleRemovePhotoItem = (serviceId: string) => {
+    try {
+      const updatedItems = removePhotographyFromCart(serviceId);
+      setPhotographyItems(updatedItems);
+      toast.success('Service removed from cart');
+    } catch (err) {
+      console.error('Error removing photography item:', err);
+      toast.error('Failed to remove service');
     }
   };
 
@@ -172,15 +203,73 @@ export const ShoppingCart: React.FC = () => {
     }
   };
 
-  // Handle proceeding to payment
-  const handleContinueToPayment = () => {
-    if (cartItems.length === 0) {
-      toast.error('Your cart is empty');
-      return;
-    }
+  // Handle updating photography date
+  const handleUpdatePhotoDate = (serviceId: string) => {
+    try {
+      if (!newPhotoDate) {
+        toast.error('Please select a new date');
+        return;
+      }
 
-    // Navigate to the payment review page
-    navigate('/payment-review');
+      const formattedDate = format(newPhotoDate, 'yyyy-MM-dd');
+      const updatedItems = updatePhotographyBookingDate(serviceId, formattedDate);
+      setPhotographyItems(updatedItems);
+      setEditingPhotoItem(null);
+      setNewPhotoDate(null);
+      setShowPhotoDatePicker(false);
+      toast.success('Booking date updated');
+    } catch (err) {
+      console.error('Error updating photography date:', err);
+      toast.error('Failed to update booking date');
+    }
+  };
+
+  // Handle proceeding to payment
+  const handleContinueToPayment = async () => {
+    try {
+      setIsProcessingOrder(true);
+      
+      // Only proceed if we have items
+      if (cartItems.length === 0 && photographyItems.length === 0) {
+        toast.error('Your cart is empty');
+        return;
+      }
+      
+      // Create order with backend items first
+      if (cartItems.length > 0) {
+        await createOrder();
+      }
+      
+      // For now, we'll just clear the photography cart from localStorage
+      // In a real implementation, these should be sent to the backend
+      if (photographyItems.length > 0) {
+        localStorage.removeItem('photography_cart_items');
+      }
+      
+      // Show success and navigate
+      toast.success('Order created successfully!');
+      navigate('/order-success');
+    } catch (error: any) {
+      console.error('Failed to create order:', error);
+      toast.error(error.message || 'Failed to create order. Please try again.');
+    } finally {
+      setIsProcessingOrder(false);
+    }
+  };
+
+  // Handle date picker changes
+  const handleStartDateChange = (date: Date) => {
+    setNewStartDate(date);
+    setShowStartDatePicker(false);
+  };
+  
+  const handleEndDateChange = (date: Date) => {
+    setNewEndDate(date);
+    setShowEndDatePicker(false);
+  };
+
+  const handlePhotoDateChange = (date: Date) => {
+    setNewPhotoDate(date);
   };
 
   // Calculate rental days for an item
@@ -208,25 +297,9 @@ export const ShoppingCart: React.FC = () => {
   };
 
   // Calculate cart total
-  const total = cartItems.reduce((sum, item) => {
-    try {
-      return sum + calculateItemTotal(item);
-    } catch (err) {
-      console.error('Error in total calculation for item:', item, err);
-      return sum;
-    }
-  }, 0);
-
-  // Handle date picker changes
-  const handleStartDateChange = (date: Date) => {
-    setNewStartDate(date);
-    setShowStartDatePicker(false);
-  };
-  
-  const handleEndDateChange = (date: Date) => {
-    setNewEndDate(date);
-    setShowEndDatePicker(false);
-  };
+  const total = [...cartItems.map(item => calculateItemTotal(item)), 
+                ...photographyItems.map(item => item.price)]
+    .reduce((sum, price) => sum + price, 0);
 
   // Loading state
   if (loading) {
@@ -253,7 +326,7 @@ export const ShoppingCart: React.FC = () => {
   }
 
   // Empty cart state
-  if (cartItems.length === 0) {
+  if (cartItems.length === 0 && photographyItems.length === 0) {
     return <EmptyCart />;
   }
 
@@ -302,18 +375,26 @@ export const ShoppingCart: React.FC = () => {
 
                 <div className="mt-6 flex flex-col md:flex-row gap-4">
                   <div className="flex items-center gap-2 bg-[#f8f3ee] rounded-full px-4 py-2">
-                    <CalendarIcon className="h-4 w-4 text-[#c3937c]" />
+                    <span className="text-[#c3937c]">
+                      <i className="fas fa-calendar text-sm"></i>
+                    </span>
                     <span>Arrives: {format(new Date(item.startDate), 'dd/MM/yyyy')}</span>
                     <span className="mx-2">|</span>
-                    <Clock className="h-4 w-4 text-[#c3937c]" />
+                    <span className="text-[#c3937c]">
+                      <i className="fas fa-clock text-sm"></i>
+                    </span>
                     <span>Time: 8 to 10 am</span>
                   </div>
 
                   <div className="flex items-center gap-2 bg-[#f8f3ee] rounded-full px-4 py-2">
-                    <CalendarIcon className="h-4 w-4 text-[#c3937c]" />
+                    <span className="text-[#c3937c]">
+                      <i className="fas fa-calendar text-sm"></i>
+                    </span>
                     <span>Returns: {format(new Date(item.endDate), 'dd/MM/yyyy')}</span>
                     <span className="mx-2">|</span>
-                    <Clock className="h-4 w-4 text-[#c3937c]" />
+                    <span className="text-[#c3937c]">
+                      <i className="fas fa-clock text-sm"></i>
+                    </span>
                     <span>Time: 8 to 10 am</span>
                   </div>
                 </div>
@@ -379,12 +460,99 @@ export const ShoppingCart: React.FC = () => {
             </div>
           </div>
         ))}
+        
+        {photographyItems.map((item) => (
+          <div key={item.serviceId} className="border-b border-gray-200 pb-6 mb-6">
+            <div className="flex flex-col md:flex-row gap-6">
+              {/* Service Image */}
+              <div className="w-full md:w-1/4">
+                <img 
+                  src={item.imageUrl || '/assets/placeholder-image.jpg'} 
+                  alt={item.serviceName} 
+                  className="rounded-md w-full h-40 object-cover"
+                />
+              </div>
+              
+              {/* Service Details */}
+              <div className="w-full md:w-3/4">
+                <div className="flex justify-between">
+                  <h3 className="font-medium text-lg">{item.serviceName}</h3>
+                  <div className="cursor-pointer" onClick={() => handleRemovePhotoItem(item.serviceId)}>
+                    ✕
+                  </div>
+                </div>
+                
+                <div className="text-gray-500 mt-1">Type: {item.serviceType}</div>
+                <div className="text-gray-500 mt-1">Location: {item.location || 'Studio'}</div>
+                
+                <div className="bg-[#f8f3ee] p-3 rounded-md mt-3 inline-block">
+                  <div className="flex items-center text-[#c3937c]">
+                    <span className="mr-2">
+                      <i className="fas fa-calendar text-sm"></i>
+                    </span>
+                    <span>Booking Date: {format(new Date(item.bookingDate), 'dd MMM yyyy')}</span>
+                  </div>
+                </div>
+                
+                <div className="text-xl font-semibold mt-3">
+                  ${item.price}
+                </div>
+                
+                {/* Date editing */}
+                {editingPhotoItem === item.serviceId ? (
+                  <div className="mt-4 space-y-4">
+                    <div className="relative">
+                      <DatePicker
+                        label="Booking Date"
+                        selectedDate={newPhotoDate || new Date(item.bookingDate)}
+                        onDateChange={handlePhotoDateChange}
+                        showPicker={showPhotoDatePicker}
+                        onPickerChange={setShowPhotoDatePicker}
+                        minDate={new Date()}
+                      />
+                    </div>
+                    <div className="flex gap-2">
+                      <button
+                        className="bg-[#c3937c] hover:bg-[#a67563] text-white px-4 py-2 rounded-md"
+                        onClick={() => handleUpdatePhotoDate(item.serviceId)}
+                      >
+                        Update Date
+                      </button>
+                      <button
+                        className="border border-gray-300 px-4 py-2 rounded-md"
+                        onClick={() => {
+                          setEditingPhotoItem(null);
+                          setNewPhotoDate(null);
+                        }}
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="mt-4">
+                    <button 
+                      className="text-[#c3937c] hover:text-[#a67563] font-medium"
+                      onClick={() => {
+                        setEditingPhotoItem(item.serviceId);
+                        setNewPhotoDate(new Date(item.bookingDate));
+                      }}
+                    >
+                      Change Date
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        ))}
       </div>
 
       <div className="mt-10 bg-white rounded-lg p-6 shadow-sm">
         <h2 className="text-xl font-serif mb-4">Summary of orders</h2>
         <div className="space-y-3">
-          {cartItems.map((item, index) => (
+          {/* Dress Rentals summary */}
+          {cartItems.map((item) => (
             <div key={item._id} className="flex justify-between">
               <span>
                 {getDressName(item)} ({getRentalDays(item)} nights)
@@ -392,7 +560,16 @@ export const ShoppingCart: React.FC = () => {
               <span>${calculateItemTotal(item)}</span>
             </div>
           ))}
-          <Separator className="my-2" />
+          
+          {/* Photography Services summary */}
+          {photographyItems.map((item) => (
+            <div key={item.serviceId} className="flex justify-between">
+              <span>{item.serviceName} (Photography)</span>
+              <span>${item.price}</span>
+            </div>
+          ))}
+          
+          <hr className="my-2 border-t border-gray-200" />
           <div className="flex justify-between font-bold text-lg">
             <span>Total</span>
             <span>${total}</span>
@@ -404,7 +581,7 @@ export const ShoppingCart: React.FC = () => {
         <button
           className="bg-[#c3937c] hover:bg-[#a67563] text-white rounded-full px-8 py-6 h-auto font-medium"
           onClick={handleContinueToPayment}
-          disabled={isProcessingOrder || cartItems.length === 0}
+          disabled={isProcessingOrder || cartItems.length === 0 && photographyItems.length === 0}
         >
           {isProcessingOrder ? 'Processing...' : 'Continue to Payment'}
         </button>

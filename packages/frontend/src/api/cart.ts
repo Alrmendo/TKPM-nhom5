@@ -98,3 +98,46 @@ export const clearCart = async () => {
     throw new Error(error.response?.data?.message || 'Failed to clear cart');
   }
 }; 
+
+// Add photography service to cart
+export const addPhotographyServiceToCart = async (serviceData: {
+  serviceId: string;
+  serviceName: string;
+  serviceType: string;
+  price: number;
+  imageUrl: string;
+  bookingDate: string;
+  location?: string;
+}) => {
+  try {
+    console.log('Adding photography service to cart:', serviceData);
+    
+    // Format data to exactly match the expected format of the existing /cart/add endpoint
+    const cartItemData = {
+      dressId: serviceData.serviceId, // Backend API expects dressId
+      sizeId: "photography-size", // Placeholder for required field
+      colorId: "photography-color", // Placeholder for required field
+      quantity: 1,
+      startDate: serviceData.bookingDate,
+      endDate: serviceData.bookingDate, // Same day for photography
+      // Add metadata in a format the backend can store
+      isPhotography: true,
+      photographyData: JSON.stringify({
+        serviceName: serviceData.serviceName,
+        serviceType: serviceData.serviceType,
+        price: serviceData.price,
+        imageUrl: serviceData.imageUrl,
+        location: serviceData.location || 'Studio'
+      })
+    };
+    
+    console.log('Formatted cart data:', cartItemData);
+    const response = await API.post('/cart/add', cartItemData);
+    console.log('AddToCart response:', response);
+    return response.data.data;
+  } catch (error: any) {
+    console.error('Error in addPhotographyServiceToCart:', error);
+    console.error('Response data:', error.response?.data);
+    throw new Error(error.response?.data?.message || 'Failed to add photography service to cart');
+  }
+};
