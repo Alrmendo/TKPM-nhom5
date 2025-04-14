@@ -26,27 +26,106 @@ const Information: React.FC = () => {
   const [showAddressForm, setShowAddressForm] = useState(true);
   const { toast } = useToast();
   
-  // Fetch cart data, user addresses, and profile info on component mount
   useEffect(() => {
     const fetchData = async () => {
       try {
         setIsLoading(true);
         
-        // Fetch cart data
+        // Kiểm tra dữ liệu đơn hàng trong localStorage trước
+        const orderDataStr = localStorage.getItem('currentOrder');
+        if (orderDataStr) {
+          try {
+            const orderData = JSON.parse(orderDataStr);
+            console.log('Order data from localStorage in Information page:', orderData);
+            
+            if (orderData && orderData.items && orderData.items.length > 0) {
+              setCartItems(orderData.items);
+              
+              const firstItem = orderData.items[0];
+              let itemStartDate = firstItem.startDate ? new Date(firstItem.startDate) : new Date();
+              let itemEndDate = firstItem.endDate ? new Date(firstItem.endDate) : new Date();
+              
+              // Đảm bảo ngày hợp lệ
+              if (isNaN(itemStartDate.getTime())) itemStartDate = new Date();
+              if (isNaN(itemEndDate.getTime())) itemEndDate = new Date();
+              
+              const calculatedSummary = calculateOrderSummary(
+                orderData.items,
+                itemStartDate,
+                itemEndDate
+              );
+              setSummary(calculatedSummary);
+              
+              // Chỉ lấy thông tin địa chỉ nếu có dữ liệu đơn hàng từ localStorage
+              await fetchAddressAndProfileData();
+              setIsLoading(false);
+              return; // Thoát luôn nếu đã có dữ liệu trong localStorage
+            }
+          } catch (e) {
+            console.error('Error parsing order data from localStorage:', e);
+          }
+        }
+        
+        // Nếu không có dữ liệu trong localStorage, thực hiện logic cũ
         const cartResponse = await axios.get('http://localhost:3000/cart', { withCredentials: true });
         
         if (cartResponse.data.success && cartResponse.data.data) {
-          setCartItems(cartResponse.data.data.items || []);
+          const cartItems = cartResponse.data.data.items || [];
+          setCartItems(cartItems);
           
-          // Calculate order summary if there are items
-          if (cartResponse.data.data.items && cartResponse.data.data.items.length > 0) {
-            const firstItem = cartResponse.data.data.items[0];
-            const calculatedSummary = calculateOrderSummary(
-              cartResponse.data.data.items,
-              new Date(firstItem.startDate),
-              new Date(firstItem.endDate)
-            );
-            setSummary(calculatedSummary);
+          // Tính toán tổng đơn hàng nếu có items
+          if (cartItems && cartItems.length > 0) {
+            // Chuyển đổi dữ liệu giỏ hàng thành định dạng đơn hàng
+            const processedItems = cartItems.map((item: any) => {
+              return {
+                dressId: typeof item.dress === 'object' ? item.dress._id : (item.dressId || item.dress),
+                name: typeof item.dress === 'object' ? item.dress.name : item.name,
+                image: typeof item.dress === 'object' && item.dress.images ? item.dress.images[0] : item.image,
+                size: typeof item.size === 'object' ? item.size.name : item.sizeName,
+                color: typeof item.color === 'object' ? item.color.name : item.colorName,
+                quantity: item.quantity,
+                pricePerDay: typeof item.dress === 'object' && item.dress.dailyRentalPrice ? 
+                  item.dress.dailyRentalPrice : (item.pricePerDay || 0),
+                startDate: item.startDate,
+                endDate: item.endDate
+              };
+            });
+            
+            if (processedItems.length > 0) {
+              const firstItem = processedItems[0];
+              // Sử dụng startDate và endDate từ giỏ hàng hoặc giá trị mặc định
+              const today = new Date();
+              const tomorrow = new Date(today);
+              tomorrow.setDate(tomorrow.getDate() + 1);
+              
+              let itemStartDate = firstItem.startDate ? new Date(firstItem.startDate) : today;
+              let itemEndDate = firstItem.endDate ? new Date(firstItem.endDate) : tomorrow;
+              
+              // Đảm bảo ngày hợp lệ
+              if (isNaN(itemStartDate.getTime())) itemStartDate = today;
+              if (isNaN(itemEndDate.getTime())) itemEndDate = tomorrow;
+              
+              const calculatedSummary = calculateOrderSummary(
+                processedItems,
+                itemStartDate,
+                itemEndDate
+              );
+              
+              setSummary(calculatedSummary);
+              
+              // Lưu dữ liệu đã xử lý vào localStorage
+              const orderData = {
+                items: processedItems
+              };
+              localStorage.setItem('currentOrder', JSON.stringify(orderData));
+              setCartItems(processedItems);
+            }
+          } else {
+            setError('No items in cart');
+            setTimeout(() => {
+              navigate('/cart');
+            }, 2000);
+            return;
           }
         } else {
           setError('No items in cart');
@@ -56,51 +135,57 @@ const Information: React.FC = () => {
           return;
         }
         
-        // Fetch user addresses
-        try {
-          const addressesResponse = await axios.get('http://localhost:3000/users/addresses', { withCredentials: true });
-          
-          if (addressesResponse.data.success && addressesResponse.data.data) {
-            const addressData = addressesResponse.data.data;
-            setSavedAddresses(addressData.addresses || []);
-            setDefaultAddressId(addressData.defaultAddressId || null);
-            
-            // Show address form if no saved addresses
-            if (!addressData.addresses || addressData.addresses.length === 0) {
-              setShowAddressForm(true);
-            } else {
-              // Just show the saved addresses without selecting any by default
-              setSelectedAddressId(null);
-              setShowAddressForm(false);
-            }
-          }
-        } catch (error) {
-          console.error('Error fetching user addresses:', error);
-          // Non-critical, continue without saved addresses
-        }
+        await fetchAddressAndProfileData();
         
-        // Fetch user profile
-        try {
-          const profileResponse = await axios.get('http://localhost:3000/users/profile', { withCredentials: true });
-          
-          if (profileResponse.data.success && profileResponse.data.data) {
-            // Store profile data for pre-filling forms if needed
-            const userData = profileResponse.data.data;
-            
-            // If we have profile data but no addresses, pre-set the form with name and contact info
-            if (savedAddresses.length === 0 && userData) {
-              setShowAddressForm(true);
-            }
-          }
-        } catch (error) {
-          console.error('Error fetching user profile:', error);
-          // Non-critical, continue without profile data
-        }
+        setIsLoading(false);
       } catch (error) {
         console.error('Error fetching data:', error);
-        setError('Failed to load required data');
-      } finally {
+        setError('An error occurred while loading your order');
         setIsLoading(false);
+      }
+    };
+    
+    // Tách phần lấy địa chỉ và thông tin profile thành function riêng
+    const fetchAddressAndProfileData = async () => {
+      // Fetch user addresses
+      try {
+        const addressesResponse = await axios.get('http://localhost:3000/users/addresses', { withCredentials: true });
+        
+        if (addressesResponse.data.success && addressesResponse.data.data) {
+          const addressData = addressesResponse.data.data;
+          setSavedAddresses(addressData.addresses || []);
+          setDefaultAddressId(addressData.defaultAddressId || null);
+          
+          // Show address form if no saved addresses
+          if (!addressData.addresses || addressData.addresses.length === 0) {
+            setShowAddressForm(true);
+          } else {
+            // Just show the saved addresses without selecting any by default
+            setSelectedAddressId(null);
+            setShowAddressForm(false);
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching user addresses:', error);
+        // Non-critical, continue without saved addresses
+      }
+      
+      // Fetch user profile
+      try {
+        const profileResponse = await axios.get('http://localhost:3000/users/profile', { withCredentials: true });
+        
+        if (profileResponse.data.success && profileResponse.data.data) {
+          // Store profile data for pre-filling forms if needed
+          const userData = profileResponse.data.data;
+          
+          // If we have profile data but no addresses, pre-set the form with name and contact info
+          if (savedAddresses.length === 0 && userData) {
+            setShowAddressForm(true);
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching user profile:', error);
+        // Non-critical, continue without profile data
       }
     };
     
@@ -411,4 +496,4 @@ const Information: React.FC = () => {
   );
 };
 
-export default Information; 
+export default Information;

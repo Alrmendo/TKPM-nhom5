@@ -12,6 +12,15 @@ export enum OrderStatus {
   UNDER_REVIEW = 'under-review'
 }
 
+export enum PaymentStatus {
+  PENDING = 'pending',
+  PROCESSING = 'processing',
+  PAID = 'paid',
+  FAILED = 'failed',
+  REFUNDED = 'refunded',
+  PARTIALLY_REFUNDED = 'partially_refunded'
+}
+
 @Schema()
 export class OrderItem {
   @Prop({ type: Types.ObjectId, ref: 'Dress', required: true })
@@ -121,6 +130,9 @@ export class Order {
   @Prop({ enum: OrderStatus, default: OrderStatus.PENDING })
   status: OrderStatus;
 
+  @Prop({ enum: PaymentStatus, default: PaymentStatus.PENDING })
+  paymentStatus: PaymentStatus;
+
   @Prop({ required: true })
   totalAmount: number;
 
@@ -134,4 +146,4 @@ export class Order {
   paymentMethod: PaymentMethod;
 }
 
-export const OrderSchema = SchemaFactory.createForClass(Order); 
+export const OrderSchema = SchemaFactory.createForClass(Order);

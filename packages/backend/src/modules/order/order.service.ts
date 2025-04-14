@@ -179,4 +179,26 @@ export class OrderService {
       { new: true }
     );
   }
-} 
+
+  async updatePaymentStatus(orderId: string, paymentStatus: string): Promise<Order> {
+    const order = await this.getOrderById(orderId);
+    
+    console.log(`Updating payment status for order ${orderId} to ${paymentStatus}`);
+    
+    // Perform payment status-specific operations if needed
+    if (paymentStatus === 'paid') {
+      // Handle paid logic - could trigger shipping, notify user, etc.
+      console.log(`Order ${orderId} payment marked as paid`);
+    } else if (paymentStatus === 'refunded') {
+      // Handle refund logic - could update inventory, etc.
+      console.log(`Order ${orderId} payment marked as refunded`);
+    }
+    
+    // Update the payment status
+    return await this.orderModel.findByIdAndUpdate(
+      orderId,
+      { paymentStatus: paymentStatus },
+      { new: true }
+    );
+  }
+}

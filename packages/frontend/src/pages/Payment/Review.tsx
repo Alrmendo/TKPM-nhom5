@@ -23,27 +23,130 @@ const Review: React.FC = () => {
     const fetchCart = async () => {
       try {
         setIsLoading(true);
-        const response = await axios.get('http://localhost:3000/cart', { withCredentials: true });
         
-        if (response.data.success && response.data.data) {
-          setCartItems(response.data.data.items || []);
-          
-          // Calculate order summary if there are items
-          if (response.data.data.items && response.data.data.items.length > 0) {
-            const firstItem = response.data.data.items[0];
-            const calculatedSummary = calculateOrderSummary(
-              response.data.data.items,
-              new Date(firstItem.startDate),
-              new Date(firstItem.endDate)
-            );
-            setSummary(calculatedSummary);
+        // Kiểm tra dữ liệu đơn hàng trong localStorage
+        const orderDataStr = localStorage.getItem('currentOrder');
+        if (orderDataStr) {
+          try {
+            const orderData = JSON.parse(orderDataStr);
+            console.log('Order data from localStorage:', orderData);
+            
+            if (orderData && orderData.items && orderData.items.length > 0) {
+              setCartItems(orderData.items);
+              
+              const firstItem = orderData.items[0];
+              const startDate = new Date(firstItem.startDate);
+              const endDate = new Date(firstItem.endDate);
+              if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+                throw new Error('Invalid date format');
+              }
+              const calculatedSummary = calculateOrderSummary(
+                orderData.items,
+                startDate,
+                endDate
+              );
+              setSummary(calculatedSummary);
+              return; // Thoát luôn nếu đã có dữ liệu trong localStorage
+            }
+          } catch (e) {
+            console.error('Error parsing order data from localStorage:', e);
           }
-        } else {
-          setError('No items in cart');
+        }
+        
+        // Tiếp tục với logic cũ nếu không có dữ liệu trong localStorage
+        try {
+          // Thử lấy giỏ hàng thay vì đơn hàng
+          const cartResponse = await axios.get('http://localhost:3000/cart', { withCredentials: true });
+          
+          if (cartResponse.data.success && cartResponse.data.data && cartResponse.data.data.items) {
+            const cartItems = cartResponse.data.data.items;
+            console.log('Cart data received:', cartItems);
+            
+            if (cartItems.length > 0) {
+              setCartItems(cartItems);
+              
+              // Cố gắng chuyển đổi dữ liệu giỏ hàng thành định dạng đơn hàng
+              const processedItems = cartItems.map((item: any) => {
+                return {
+                  dressId: typeof item.dress === 'object' ? item.dress._id : (item.dressId || item.dress),
+                  name: typeof item.dress === 'object' ? item.dress.name : item.name,
+                  image: typeof item.dress === 'object' && item.dress.images ? item.dress.images[0] : item.image,
+                  size: typeof item.size === 'object' ? item.size.name : item.sizeName,
+                  color: typeof item.color === 'object' ? item.color.name : item.colorName,
+                  quantity: item.quantity,
+                  pricePerDay: typeof item.dress === 'object' && item.dress.dailyRentalPrice ? 
+                    item.dress.dailyRentalPrice : (item.pricePerDay || 0),
+                  startDate: item.startDate,
+                  endDate: item.endDate
+                };
+              });
+              
+              if (processedItems.length > 0) {
+                const firstItem = processedItems[0];
+                // Sử dụng startDate và endDate từ giỏ hàng hoặc giá trị mặc định
+                const today = new Date();
+                const tomorrow = new Date(today);
+                tomorrow.setDate(tomorrow.getDate() + 1);
+                
+                let itemStartDate = firstItem.startDate ? new Date(firstItem.startDate) : today;
+                let itemEndDate = firstItem.endDate ? new Date(firstItem.endDate) : tomorrow;
+                
+                // Đảm bảo ngày hợp lệ
+                if (isNaN(itemStartDate.getTime())) itemStartDate = today;
+                if (isNaN(itemEndDate.getTime())) itemEndDate = tomorrow;
+                
+                const calculatedSummary = calculateOrderSummary(
+                  processedItems,
+                  itemStartDate,
+                  itemEndDate
+                );
+                
+                setSummary(calculatedSummary);
+              }
+            } else {
+              setError('No items found in your cart');
+            }
+          } else {
+            setError('Failed to load cart data');
+          }
+        } catch (error) {
+          console.error('Error fetching cart data:', error);
+          setError('An error occurred while loading your order');
+        } finally {
+          setIsLoading(false);
         }
       } catch (error) {
-        console.error('Error fetching cart:', error);
-        setError('Failed to load cart items');
+        console.error('Error fetching order data:', error);
+        
+        // Nếu không lấy được đơn hàng, thử lấy từ giỏ hàng
+        try {
+          const cartResponse = await axios.get('http://localhost:3000/cart', { withCredentials: true });
+          
+          if (cartResponse.data.success && cartResponse.data.data && cartResponse.data.data.items) {
+            setCartItems(cartResponse.data.data.items || []);
+            
+            const cartItems = cartResponse.data.data.items;
+            if (cartItems.length > 0) {
+              const firstItem = cartItems[0];
+              const startDate = new Date(firstItem.startDate);
+              const endDate = new Date(firstItem.endDate);
+              if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+                throw new Error('Invalid date format');
+              }
+              const calculatedSummary = calculateOrderSummary(
+                cartItems,
+                startDate,
+                endDate
+              );
+              setSummary(calculatedSummary);
+            }
+          } else {
+            setError('No items found in your cart');
+          }
+        } catch (cartError) {
+          console.error('Error fetching cart:', cartError);
+          setError('Failed to load order and cart items');
+        }
       } finally {
         setIsLoading(false);
       }

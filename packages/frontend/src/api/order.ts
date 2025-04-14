@@ -75,4 +75,37 @@ export const cancelOrder = async (orderId: string) => {
   } catch (error: any) {
     throw new Error(error.response?.data?.message || 'Failed to cancel order');
   }
-}; 
+};
+
+// Get all orders (Admin function)
+export const getAllOrders = async () => {
+  try {
+    const response = await API.get('/orders/admin');
+    return response.data.data;
+  } catch (error: any) {
+    console.error('Failed to fetch all orders:', error);
+    throw new Error(error.response?.data?.message || 'Failed to fetch all orders');
+  }
+};
+
+// Update order status (Admin function)
+export const updateOrderStatus = async (orderId: string, status: string) => {
+  try {
+    const response = await API.put(`/orders/${orderId}/status`, { status });
+    return response.data.data;
+  } catch (error: any) {
+    console.error('Failed to update order status:', error);
+    throw new Error(error.response?.data?.message || 'Failed to update order status');
+  }
+};
+
+// Update payment status (Admin function)
+export const updatePaymentStatus = async (orderId: string, paymentStatus: string) => {
+  try {
+    const response = await API.put(`/orders/${orderId}/payment-status`, { paymentStatus });
+    return response.data.data;
+  } catch (error: any) {
+    console.error('Failed to update payment status:', error);
+    throw new Error(error.response?.data?.message || 'Failed to update payment status');
+  }
+};

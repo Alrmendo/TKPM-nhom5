@@ -98,10 +98,11 @@ const Products = () => {
   const [imagePreviewUrls, setImagePreviewUrls] = useState<string[]>([]);
   const [existingImages, setExistingImages] = useState<string[]>([]);
   const [variants, setVariants] = useState<Array<{
-    size: string;
-    color: string;
+    size: string; // Chỉ lưu ID của size
+    color: string; // Chỉ lưu ID của color
     stock: number;
   }>>([]);
+  const [showFullVariantForm, setShowFullVariantForm] = useState(true);
   
   // Confirmation dialog
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
@@ -199,20 +200,77 @@ const Products = () => {
       setStyle(dress.style || '');
       setMaterial(dress.material || '');
       setExistingImages(dress.images || []);
+      setShowFullVariantForm(true); // Luôn hiển thị form đầy đủ khi chỉnh sửa sản phẩm
       
-      // Convert variants
-      const formattedVariants = dress.variants.map(v => ({
-        size: v.size._id,
-        color: v.color._id,
-        stock: v.stock
-      }));
-      
-      setVariants(formattedVariants);
+      // Đảm bảo danh sách kích thước và màu sắc được tải trước khi thiết lập biến thể
+      fetchSizesAndColors().then(() => {
+        console.log('Loaded sizes:', sizes);
+        console.log('Loaded colors:', colors);
+        console.log('Dress variants:', JSON.stringify(dress.variants, null, 2));
+        
+        try {
+          // Chuyển đổi biến thể sau khi kích thước và màu sắc được tải
+          const formattedVariants = dress.variants.map(v => {
+            // In ra để kiểm tra giá trị ban đầu
+            console.log('Original variant:', JSON.stringify(v, null, 2));
+            
+            // Xử lý kỹ lưỡng để lấy ra ID
+            let sizeId = '';
+            if (v.size) {
+              if (typeof v.size === 'object' && v.size._id) {
+                sizeId = v.size._id;
+              } else if (typeof v.size === 'string') {
+                sizeId = v.size;
+              }
+            }
+            
+            let colorId = '';
+            if (v.color) {
+              if (typeof v.color === 'object' && v.color._id) {
+                colorId = v.color._id;
+              } else if (typeof v.color === 'string') {
+                colorId = v.color;
+              }
+            }
+            
+            // Kiểm tra xem ID có trong danh sách sizes và colors không
+            const sizeExists = sizes.some(s => s._id === sizeId);
+            const colorExists = colors.some(c => c._id === colorId);
+            
+            console.log(`Processed IDs - Size: ${sizeId} (exists: ${sizeExists}), Color: ${colorId} (exists: ${colorExists})`);
+            
+            // Sử dụng ID đầu tiên trong danh sách nếu không tìm thấy
+            if (!sizeExists && sizes.length > 0) {
+              sizeId = sizes[0]._id;
+              console.log(`Size ID not found, using default: ${sizeId}`);
+            }
+            
+            if (!colorExists && colors.length > 0) {
+              colorId = colors[0]._id;
+              console.log(`Color ID not found, using default: ${colorId}`);
+            }
+            
+            return {
+              size: sizeId,
+              color: colorId,
+              stock: v.stock || 0
+            };
+          });
+          
+          console.log('Final formatted variants:', formattedVariants);
+          setVariants(formattedVariants);
+        } catch (error) {
+          console.error('Error processing variants:', error);
+          // Thiết lập một mảng rỗng trong trường hợp có lỗi
+          setVariants([]);
+        }
+      });
     } else {
       // Add mode
       setEditMode(false);
       setCurrentDressId(null);
       resetForm();
+      setShowFullVariantForm(true); // Luôn hiển thị form đầy đủ khi tạo mới sản phẩm
     }
     
     setFormOpen(true);
@@ -277,19 +335,31 @@ const Products = () => {
       return;
     }
     
+    const defaultSizeId = sizes[0]?._id || '';
+    const defaultColorId = colors[0]?._id || '';
+    
+    console.log('Adding variant with default size:', defaultSizeId, 'color:', defaultColorId);
+    
     setVariants([
       ...variants,
       {
-        size: sizes[0]._id,
-        color: colors[0]._id,
+        size: defaultSizeId,
+        color: defaultColorId,
         stock: 0
       }
     ]);
   };
 
   const handleVariantChange = (index: number, field: 'size' | 'color' | 'stock', value: string | number) => {
+    console.log(`Changing variant ${index} field ${field} to:`, value);
+    
     const newVariants = [...variants];
-    newVariants[index][field] = value;
+    newVariants[index] = {
+      ...newVariants[index],
+      [field]: value
+    };
+    
+    console.log('Updated variants:', newVariants);
     setVariants(newVariants);
   };
 
@@ -685,54 +755,58 @@ const Products = () => {
                   >
                     <Grid container spacing={2} alignItems="center">
                       <Grid item xs={12} sm={4}>
-                        <FormControl fullWidth size="small">
-                          <InputLabel>Size</InputLabel>
-                          <Select
-                            value={variant.size}
-                            label="Size"
-                            onChange={(e) => handleVariantChange(index, 'size', e.target.value)}
-                          >
-                            {sizes && sizes.length > 0 ? (
-                              sizes.map((size) => (
-                                <MenuItem key={size._id} value={size._id}>
-                                  {size.label}
+                        {true && (
+                          <FormControl fullWidth size="small">
+                            <InputLabel>Size</InputLabel>
+                            <Select
+                              value={variant.size || ''}
+                              label="Size"
+                              onChange={(e) => handleVariantChange(index, 'size', e.target.value)}
+                            >
+                              {sizes && sizes.length > 0 ? (
+                                sizes.map((size) => (
+                                  <MenuItem key={size._id} value={size._id}>
+                                    {size.label}
+                                  </MenuItem>
+                                ))
+                              ) : (
+                                <MenuItem disabled value="">
+                                  No sizes available
                                 </MenuItem>
-                              ))
-                            ) : (
-                              <MenuItem disabled value="">
-                                No sizes available
-                              </MenuItem>
+                              )}
+                            </Select>
+                            {(!sizes || sizes.length === 0) && (
+                              <FormHelperText error>No sizes available. Please add sizes first.</FormHelperText>
                             )}
-                          </Select>
-                          {(!sizes || sizes.length === 0) && (
-                            <FormHelperText error>No sizes available. Please add sizes first.</FormHelperText>
-                          )}
-                        </FormControl>
+                          </FormControl>
+                        )}
                       </Grid>
                       <Grid item xs={12} sm={4}>
-                        <FormControl fullWidth size="small">
-                          <InputLabel>Color</InputLabel>
-                          <Select
-                            value={variant.color}
-                            label="Color"
-                            onChange={(e) => handleVariantChange(index, 'color', e.target.value)}
-                          >
-                            {colors && colors.length > 0 ? (
-                              colors.map((color) => (
-                                <MenuItem key={color._id} value={color._id}>
-                                  {color.name}
+                        {true && (
+                          <FormControl fullWidth size="small">
+                            <InputLabel>Color</InputLabel>
+                            <Select
+                              value={variant.color || ''}
+                              label="Color"
+                              onChange={(e) => handleVariantChange(index, 'color', e.target.value)}
+                            >
+                              {colors && colors.length > 0 ? (
+                                colors.map((color) => (
+                                  <MenuItem key={color._id} value={color._id}>
+                                    {color.name}
+                                  </MenuItem>
+                                ))
+                              ) : (
+                                <MenuItem disabled value="">
+                                  No colors available
                                 </MenuItem>
-                              ))
-                            ) : (
-                              <MenuItem disabled value="">
-                                No colors available
-                              </MenuItem>
+                              )}
+                            </Select>
+                            {(!colors || colors.length === 0) && (
+                              <FormHelperText error>No colors available. Please add colors first.</FormHelperText>
                             )}
-                          </Select>
-                          {(!colors || colors.length === 0) && (
-                            <FormHelperText error>No colors available. Please add colors first.</FormHelperText>
-                          )}
-                        </FormControl>
+                          </FormControl>
+                        )}
                       </Grid>
                       <Grid item xs={12} sm={3}>
                         <TextField

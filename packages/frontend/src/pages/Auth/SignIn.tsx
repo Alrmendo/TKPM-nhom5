@@ -53,18 +53,26 @@ const SignIn: React.FC = () => {
         return;
       }
       
+      // Get user role and set auth state
+      const role = await getRoleFromCookie();
+      console.log('User role:', role);
+      
+      // Show success notification
       setNotification({
         type: 'success',
-        message: 'Login successful! Redirecting...',
+        message: role === 'admin' ? 'Admin login successful! Redirecting to dashboard...' : 'Login successful! Redirecting...',
         visible: true
       });
       
-      const role = await getRoleFromCookie();
-      console.log(role);
+      // Redirect based on role - Admin goes to dashboard, users go to profile
       if (role === 'admin') {
-        navigate('/admin/dashboard');
+        setTimeout(() => {
+          navigate('/admin/dashboard', { replace: true });
+        }, 500);
       } else if (role === 'user') {
-        navigate('/profile');
+        setTimeout(() => {
+          navigate('/profile', { replace: true });
+        }, 500);
       }
     } catch (err: any) {
       // Handle specific error codes

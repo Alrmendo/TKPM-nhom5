@@ -65,21 +65,115 @@ const Shipping: React.FC = () => {
         
         setShippingAddress(JSON.parse(savedAddress));
         
-        // Fetch cart data
+        // Kiểm tra dữ liệu đơn hàng trong localStorage trước
+        const orderDataStr = localStorage.getItem('currentOrder');
+        if (orderDataStr) {
+          try {
+            const orderData = JSON.parse(orderDataStr);
+            console.log('Order data from localStorage in Shipping page:', orderData);
+            
+            if (orderData && orderData.items && orderData.items.length > 0) {
+              setCartItems(orderData.items);
+              
+              const firstItem = orderData.items[0];
+              let itemStartDate = firstItem.startDate ? new Date(firstItem.startDate) : new Date();
+              let itemEndDate = firstItem.endDate ? new Date(firstItem.endDate) : new Date();
+              
+              // Đảm bảo ngày hợp lệ
+              if (isNaN(itemStartDate.getTime())) itemStartDate = new Date();
+              if (isNaN(itemEndDate.getTime())) itemEndDate = new Date();
+              
+              const calculatedSummary = calculateOrderSummary(
+                orderData.items,
+                itemStartDate,
+                itemEndDate
+              );
+              setSummary(calculatedSummary);
+              
+              // Cập nhật shipping cost dựa trên lựa chọn hiện tại
+              const selectedOption = shippingOptions.find(option => option.id === selectedShippingOption);
+              if (selectedOption) {
+                setSummary(prevSummary => ({
+                  ...prevSummary,
+                  shipping: selectedOption.price,
+                  total: prevSummary.subtotal + prevSummary.tax + selectedOption.price
+                }));
+              }
+              
+              setIsLoading(false);
+              return; // Thoát luôn nếu đã có dữ liệu trong localStorage
+            }
+          } catch (e) {
+            console.error('Error parsing order data from localStorage:', e);
+          }
+        }
+        
+        // Nếu không có dữ liệu trong localStorage, thực hiện logic cũ
         const cartResponse = await axios.get('http://localhost:3000/cart', { withCredentials: true });
         
         if (cartResponse.data.success && cartResponse.data.data) {
-          setCartItems(cartResponse.data.data.items || []);
+          const cartItems = cartResponse.data.data.items || [];
           
-          // Calculate order summary if there are items
-          if (cartResponse.data.data.items && cartResponse.data.data.items.length > 0) {
-            const firstItem = cartResponse.data.data.items[0];
+          // Chuyển đổi dữ liệu giỏ hàng thành định dạng đơn hàng
+          const processedItems = cartItems.map((item: any) => {
+            return {
+              dressId: typeof item.dress === 'object' ? item.dress._id : (item.dressId || item.dress),
+              name: typeof item.dress === 'object' ? item.dress.name : item.name,
+              image: typeof item.dress === 'object' && item.dress.images ? item.dress.images[0] : item.image,
+              size: typeof item.size === 'object' ? item.size.name : item.sizeName,
+              color: typeof item.color === 'object' ? item.color.name : item.colorName,
+              quantity: item.quantity,
+              pricePerDay: typeof item.dress === 'object' && item.dress.dailyRentalPrice ? 
+                item.dress.dailyRentalPrice : (item.pricePerDay || 0),
+              startDate: item.startDate,
+              endDate: item.endDate
+            };
+          });
+          
+          if (processedItems.length > 0) {
+            const firstItem = processedItems[0];
+            // Sử dụng startDate và endDate từ giỏ hàng hoặc giá trị mặc định
+            const today = new Date();
+            const tomorrow = new Date(today);
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            
+            let itemStartDate = firstItem.startDate ? new Date(firstItem.startDate) : today;
+            let itemEndDate = firstItem.endDate ? new Date(firstItem.endDate) : tomorrow;
+            
+            // Đảm bảo ngày hợp lệ
+            if (isNaN(itemStartDate.getTime())) itemStartDate = today;
+            if (isNaN(itemEndDate.getTime())) itemEndDate = tomorrow;
+            
             const calculatedSummary = calculateOrderSummary(
-              cartResponse.data.data.items,
-              new Date(firstItem.startDate),
-              new Date(firstItem.endDate)
+              processedItems,
+              itemStartDate,
+              itemEndDate
             );
+            
             setSummary(calculatedSummary);
+            
+            // Cập nhật shipping cost dựa trên lựa chọn hiện tại
+            const selectedOption = shippingOptions.find(option => option.id === selectedShippingOption);
+            if (selectedOption) {
+              setSummary(prevSummary => ({
+                ...prevSummary,
+                shipping: selectedOption.price,
+                total: prevSummary.subtotal + prevSummary.tax + selectedOption.price
+              }));
+            }
+            
+            // Lưu dữ liệu đã xử lý vào localStorage
+            const orderData = {
+              items: processedItems
+            };
+            localStorage.setItem('currentOrder', JSON.stringify(orderData));
+            setCartItems(processedItems);
+          } else {
+            setError('No items in cart');
+            setTimeout(() => {
+              navigate('/cart');
+            }, 2000);
+            return;
           }
         } else {
           setError('No items in cart');
@@ -88,10 +182,11 @@ const Shipping: React.FC = () => {
           }, 2000);
           return;
         }
+        
+        setIsLoading(false);
       } catch (error) {
         console.error('Error fetching data:', error);
         setError('Failed to load required data');
-      } finally {
         setIsLoading(false);
       }
     };
@@ -333,4 +428,4 @@ const Shipping: React.FC = () => {
   );
 };
 
-export default Shipping; 
+export default Shipping;

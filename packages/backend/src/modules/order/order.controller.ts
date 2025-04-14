@@ -1,7 +1,7 @@
 import { Controller, Get, Post, Put, Delete, Param, UseGuards, Request, HttpException, HttpStatus, ForbiddenException, Body, NotFoundException } from '@nestjs/common';
 import { OrderService } from './order.service';
 import { JwtAuthGuard } from '../../guards/jwt-auth.guard';
-import { OrderStatus } from '../../models/entities/order.entity';
+import { OrderStatus, PaymentStatus } from '../../models/entities/order.entity';
 
 @Controller('orders')
 @UseGuards(JwtAuthGuard)
@@ -252,6 +252,42 @@ export class OrderController {
       throw new HttpException({
         success: false,
         message: error.message || 'Failed to update order status'
+      }, status);
+    }
+  }
+
+  @Put(':id/payment-status')
+  async updatePaymentStatus(@Request() req, @Param('id') orderId: string, @Body() body: { paymentStatus: string }) {
+    try {
+      // Only admin users can update payment status
+      if (req.user.role !== 'admin') {
+        throw new ForbiddenException('You do not have permission to update payment status');
+      }
+      
+      // Validate the payment status
+      if (!Object.values(PaymentStatus).includes(body.paymentStatus as PaymentStatus)) {
+        throw new HttpException({
+          success: false,
+          message: 'Invalid payment status'
+        }, HttpStatus.BAD_REQUEST);
+      }
+      
+      // Update payment status
+      const updatedOrder = await this.orderService.updatePaymentStatus(orderId, body.paymentStatus);
+      return {
+        success: true,
+        data: updatedOrder
+      };
+    } catch (error) {
+      const status = error instanceof ForbiddenException 
+        ? HttpStatus.FORBIDDEN 
+        : error instanceof NotFoundException
+          ? HttpStatus.NOT_FOUND
+          : HttpStatus.BAD_REQUEST;
+        
+      throw new HttpException({
+        success: false,
+        message: error.message || 'Failed to update payment status'
       }, status);
     }
   }

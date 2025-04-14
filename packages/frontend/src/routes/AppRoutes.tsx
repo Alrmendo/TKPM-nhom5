@@ -109,6 +109,7 @@ const AppRoutes = () => {
     { path: '/payment-shipping', element: <Shipping /> },
     { path: '/payment-checkout', element: <Checkout /> },
     { path: '/payment-successful', element: <Successful /> },
+    { path: '/order-success', element: <Successful /> },
     
     // Admin Routes
     {

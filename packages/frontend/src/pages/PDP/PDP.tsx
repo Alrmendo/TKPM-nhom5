@@ -59,6 +59,10 @@ export default function ProductDetailPage(): JSX.Element {
         
         // Fetch dress data
         const dressData = await getDressById(id);
+        // Log full dress data to check description structure
+        console.log('Fetched dress data:', JSON.stringify(dressData, null, 2));
+        console.log('Description object:', dressData.description);
+        
         setDress(dressData);
         
         // Set initial selected variants if available
@@ -487,16 +491,26 @@ export default function ProductDetailPage(): JSX.Element {
             <div className="space-y-4 mt-8">
               <AccordionSection 
                 title="Product Details" 
-                content={dress?.description?.productDetail || "No product details available"}
-              />
+                defaultOpen={true}
+                icon={<i className="fas fa-plus text-xs"></i>}
+                iconOpen={<i className="fas fa-minus text-xs"></i>}
+              >
+                {dress?.description?.productDetail || "No product details available"}
+              </AccordionSection>
               <AccordionSection 
                 title="Size & Fit Information" 
-                content={dress?.description?.sizeAndFit || "No size and fit information available"}
-              />
+                icon={<i className="fas fa-plus text-xs"></i>}
+                iconOpen={<i className="fas fa-minus text-xs"></i>}
+              >
+                {dress?.description?.sizeAndFit || "No size and fit information available"}
+              </AccordionSection>
               <AccordionSection 
                 title="Description" 
-                content={dress?.description?.description || "No description available"}
-              />
+                icon={<i className="fas fa-plus text-xs"></i>}
+                iconOpen={<i className="fas fa-minus text-xs"></i>}
+              >
+                {dress?.description?.description || "No description available"}
+              </AccordionSection>
             </div>
 
             {/* Reviews */}

@@ -235,6 +235,29 @@ export const ShoppingCart: React.FC = () => {
         return;
       }
       
+      // Chuyển đổi dữ liệu giỏ hàng sang định dạng phù hợp cho trang Review
+      const convertedCartItems = cartItems.map(item => {
+        // Chuyển đổi từ định dạng CartItem sang OrderItem
+        return {
+          dressId: typeof item.dress === 'object' ? item.dress._id : item.dressId || item.dress,
+          name: typeof item.dress === 'object' ? item.dress.name : item.name,
+          image: typeof item.dress === 'object' && item.dress.images ? item.dress.images[0] : item.image,
+          size: typeof item.size === 'object' ? item.size.name : item.sizeName,
+          color: typeof item.color === 'object' ? item.color.name : item.colorName,
+          quantity: item.quantity,
+          pricePerDay: typeof item.dress === 'object' ? item.dress.dailyRentalPrice : item.pricePerDay,
+          startDate: item.startDate,
+          endDate: item.endDate
+        };
+      });
+      
+      // Lưu dữ liệu đã chuyển đổi vào localStorage
+      const orderData = {
+        items: convertedCartItems,
+        photographyItems: photographyItems
+      };
+      localStorage.setItem('currentOrder', JSON.stringify(orderData));
+      
       // Create order with backend items first
       if (cartItems.length > 0) {
         await createOrder();
@@ -248,7 +271,7 @@ export const ShoppingCart: React.FC = () => {
       
       // Show success and navigate
       toast.success('Order created successfully!');
-      navigate('/order-success');
+      navigate('/payment-review');
     } catch (error: any) {
       console.error('Failed to create order:', error);
       toast.error(error.message || 'Failed to create order. Please try again.');
