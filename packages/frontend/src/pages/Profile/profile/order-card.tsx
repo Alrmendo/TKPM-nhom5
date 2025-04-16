@@ -14,6 +14,8 @@ export interface OrderItem {
   status: 'done' | 'pending' | 'under-review' | 'canceled' | 'confirmed';
   isCartItem?: boolean;
   isPaid?: boolean;
+  purchaseType?: 'rent' | 'buy' | 'service';  // Thêm 'service' cho dịch vụ nhiếp ảnh
+  isPhotographyService?: boolean;  // Flag để nhận biết đây là dịch vụ nhiếp ảnh
 }
 
 interface OrderCardProps {
@@ -89,11 +91,27 @@ export function OrderCard({ order, onDelete }: OrderCardProps): JSX.Element {
         <div className="flex-grow">
           <h3 className="font-medium text-lg">{order.name}</h3>
           <p className="text-gray-600 text-sm">
-            {order.size} / {order.color} / {order.rentalDuration}
+            {order.isPhotographyService ? (
+              <>Dịch vụ nhiếp ảnh / {order.size}</>
+            ) : (
+              <>
+                {order.size} / {order.color}
+                {order.purchaseType !== 'buy' && order.purchaseType !== 'service' && ` / ${order.rentalDuration}`}
+                {order.purchaseType === 'buy' && ` / Mua sản phẩm`}
+              </>
+            )}
           </p>
           <div className="mt-1 text-sm text-gray-600">
-            <p>Arrives by {order.arrivalDate}</p>
-            <p>Returns by {order.returnDate}</p>
+            {order.isPhotographyService ? (
+              <p>Ngày chụp: {order.arrivalDate}</p>
+            ) : order.purchaseType === 'buy' ? (
+              <p>Ngày giao hàng: {order.arrivalDate}</p>
+            ) : (
+              <>
+                <p>Arrives by {order.arrivalDate}</p>
+                <p>Returns by {order.returnDate}</p>
+              </>
+            )}
           </div>
         </div>
 

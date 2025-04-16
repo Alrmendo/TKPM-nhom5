@@ -278,10 +278,13 @@ export class AdminController {
         status: 'pending'
       });
 
+      // Chỉ tính doanh thu từ các đơn hàng đã thanh toán và không bị hủy
       const orderRevenue = await this.orderModel.aggregate([
         {
           $match: {
-            createdAt: { $gte: startDate.toDate(), $lte: endDate.toDate() }
+            createdAt: { $gte: startDate.toDate(), $lte: endDate.toDate() },
+            paymentStatus: 'paid',  // Chỉ tính các đơn hàng đã thanh toán
+            status: { $ne: 'cancelled' }  // Loại trừ các đơn hàng bị hủy
           }
         },
         {
@@ -311,10 +314,13 @@ export class AdminController {
         status: 'pending'
       });
 
+      // Chỉ tính doanh thu từ các đơn hàng đã thanh toán và không bị hủy (cho giai đoạn trước)
       const previousRevenue = await this.orderModel.aggregate([
         {
           $match: {
-            createdAt: { $gte: previousStartDate.toDate(), $lte: previousEndDate.toDate() }
+            createdAt: { $gte: previousStartDate.toDate(), $lte: previousEndDate.toDate() },
+            paymentStatus: 'paid',  // Chỉ tính các đơn hàng đã thanh toán
+            status: { $ne: 'cancelled' }  // Loại trừ các đơn hàng bị hủy
           }
         },
         {

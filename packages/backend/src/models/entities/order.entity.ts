@@ -43,6 +43,9 @@ export class OrderItem {
 
   @Prop({ required: true })
   pricePerDay: number;
+  
+  @Prop({ type: String, default: 'rent', enum: ['rent', 'buy'] })
+  purchaseType: string;
 }
 
 export const OrderItemSchema = SchemaFactory.createForClass(OrderItem);

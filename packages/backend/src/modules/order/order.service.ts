@@ -43,7 +43,8 @@ export class OrderService {
         size: item.sizeName,
         color: item.colorName,
         quantity: item.quantity,
-        pricePerDay: item.pricePerDay
+        pricePerDay: item.pricePerDay,
+        purchaseType: item.purchaseType || 'rent'  // Thêm trường purchaseType
       });
       
       // Update dress stock
@@ -73,8 +74,8 @@ export class OrderService {
       totalAmount
     });
     
-    // Clear cart after successful order creation
-    await this.cartService.clearCart(userId);
+    // Không xóa giỏ hàng khi tạo đơn hàng để người dùng có thể quay lại
+    // await this.cartService.clearCart(userId);
     
     return order;
   }

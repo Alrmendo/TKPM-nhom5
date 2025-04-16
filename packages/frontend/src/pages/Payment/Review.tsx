@@ -24,6 +24,97 @@ const Review: React.FC = () => {
       try {
         setIsLoading(true);
         
+        // First check if we have photographyItems in the current order
+        const orderStr = localStorage.getItem('currentOrder');
+        console.log('Order data from localStorage:', orderStr);
+        
+        if (orderStr) {
+          try {
+            const orderData = JSON.parse(orderStr);
+            console.log('Parsed order data:', orderData);
+            
+            // Check if there are photography items in the order
+            if (orderData && orderData.photographyItems && orderData.photographyItems.length > 0) {
+              console.log('Photography items found in order:', orderData.photographyItems);
+              
+              // Convert photography items to cart item format
+              const processedPhotographyItems = orderData.photographyItems.map((item: any) => ({
+                id: item.serviceId,
+                name: item.serviceName,
+                type: item.serviceType,
+                image: item.imageUrl,
+                price: item.price,
+                quantity: 1,
+                bookingDate: item.bookingDate,
+                location: item.location || 'Default location',
+                isPhotographyService: true
+              }));
+              
+              setCartItems(processedPhotographyItems);
+              
+              // Calculate summary for photography services
+              const totalAmount = processedPhotographyItems.reduce(
+                (sum: number, item: {price?: number}) => sum + (item.price || 0), 0
+              );
+              
+              setSummary({
+                subtotal: totalAmount,
+                tax: totalAmount * 0.1, // 10% tax
+                shipping: 0,  // No shipping for photography
+                total: totalAmount + (totalAmount * 0.1),
+                currency: 'USD'
+              });
+              
+              return; // Exit if we have photography items in the order
+            }
+          } catch (e) {
+            console.error('Error parsing order data from localStorage:', e);
+          }
+        }
+        
+        // If no photography items in the order, check for separate photography cart
+        const photographyCartStr = localStorage.getItem('photography_cart_items');
+        if (photographyCartStr) {
+          try {
+            const photographyItems = JSON.parse(photographyCartStr);
+            console.log('Photography cart data from localStorage:', photographyItems);
+            
+            if (photographyItems && photographyItems.length > 0) {
+              // Convert photography items to cart item format
+              const processedPhotographyItems = photographyItems.map((item: any) => ({
+                id: item.serviceId,
+                name: item.serviceName,
+                type: item.serviceType,
+                image: item.imageUrl,
+                price: item.price,
+                quantity: 1,
+                bookingDate: item.bookingDate,
+                location: item.location || 'Default location',
+                isPhotographyService: true
+              }));
+              
+              setCartItems(processedPhotographyItems);
+              
+              // Calculate summary for photography services
+              const totalAmount = processedPhotographyItems.reduce(
+                (sum: number, item: {price?: number}) => sum + (item.price || 0), 0
+              );
+              
+              setSummary({
+                subtotal: totalAmount,
+                tax: totalAmount * 0.1, // 10% tax
+                shipping: 0,  // No shipping for photography
+                total: totalAmount + (totalAmount * 0.1),
+                currency: 'USD'
+              });
+              
+              return; // Exit if we have photography items
+            }
+          } catch (e) {
+            console.error('Error parsing photography cart data from localStorage:', e);
+          }
+        }
+        
         // Kiểm tra dữ liệu đơn hàng trong localStorage
         const orderDataStr = localStorage.getItem('currentOrder');
         if (orderDataStr) {
@@ -215,46 +306,90 @@ const Review: React.FC = () => {
             
             <div className="space-y-6">
               {cartItems.map((item, index) => {
-                const startDate = new Date(item.startDate);
-                const endDate = new Date(item.endDate);
-                const days = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)) + 1;
-                const itemTotal = item.pricePerDay * days * item.quantity;
-                
-                return (
-                  <div key={index} className="flex border-b border-gray-200 pb-6">
-                    <div className="h-24 w-24 flex-shrink-0 overflow-hidden rounded-md border border-gray-200">
-                      <img
-                        src={item.image}
-                        alt={item.name}
-                        className="h-full w-full object-cover object-center"
-                      />
-                    </div>
-                    
-                    <div className="ml-4 flex flex-1 flex-col">
-                      <div>
-                        <div className="flex justify-between text-base font-medium text-gray-900">
-                          <h3>{item.name}</h3>
-                          <p className="ml-4">{formatCurrency(itemTotal)}</p>
-                        </div>
-                        <p className="mt-1 text-sm text-gray-500">
-                          {item.sizeName} · {item.colorName}
-                        </p>
+                // Check if it's a photography service item
+                if (item.isPhotographyService) {
+                  const bookingDate = item.bookingDate ? new Date(item.bookingDate) : new Date();
+                  const formattedDate = isNaN(bookingDate.getTime()) ? 'Invalid date' : formatDate(bookingDate);
+                  
+                  return (
+                    <div key={index} className="flex border-b border-gray-200 pb-6">
+                      <div className="h-24 w-24 flex-shrink-0 overflow-hidden rounded-md border border-gray-200">
+                        <img
+                          src={item.image}
+                          alt={item.name}
+                          className="h-full w-full object-cover object-center"
+                        />
                       </div>
                       
-                      <div className="flex flex-1 items-end justify-between text-sm">
+                      <div className="ml-4 flex flex-1 flex-col">
                         <div>
-                          <p className="text-gray-500">Qty {item.quantity}</p>
-                          <p className="text-gray-500 mt-1">
-                            {formatCurrency(item.pricePerDay)} per day × {days} days
+                          <div className="flex justify-between text-base font-medium text-gray-900">
+                            <h3>{item.name}</h3>
+                            <p className="ml-4">{formatCurrency(item.price || 0)}</p>
+                          </div>
+                          <p className="mt-1 text-sm text-gray-500">
+                            {item.type || 'Photography Service'}
                           </p>
-                          <p className="text-gray-500 mt-1">
-                            {formatDate(startDate)} - {formatDate(endDate)}
-                          </p>
+                        </div>
+                        
+                        <div className="flex flex-1 items-end justify-between text-sm">
+                          <div>
+                            <p className="text-gray-500">Photography Service</p>
+                            <p className="text-gray-500 mt-1">
+                              Location: {item.location || 'Not specified'}
+                            </p>
+                            <p className="text-gray-500 mt-1">
+                              Booking Date: {formattedDate}
+                            </p>
+                          </div>
                         </div>
                       </div>
                     </div>
-                  </div>
-                );
+                  );
+                } else {
+                  // Regular dress rental item
+                  const startDate = item.startDate ? new Date(item.startDate) : new Date();
+                  const endDate = item.endDate ? new Date(item.endDate) : new Date();
+                  const days = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+                  const pricePerDay = item.pricePerDay || 0;
+                  const itemTotal = pricePerDay * days * item.quantity;
+                  
+                  return (
+                    <div key={index} className="flex border-b border-gray-200 pb-6">
+                      <div className="h-24 w-24 flex-shrink-0 overflow-hidden rounded-md border border-gray-200">
+                        <img
+                          src={item.image}
+                          alt={item.name}
+                          className="h-full w-full object-cover object-center"
+                        />
+                      </div>
+                      
+                      <div className="ml-4 flex flex-1 flex-col">
+                        <div>
+                          <div className="flex justify-between text-base font-medium text-gray-900">
+                            <h3>{item.name}</h3>
+                            <p className="ml-4">{formatCurrency(itemTotal)}</p>
+                          </div>
+                          <p className="mt-1 text-sm text-gray-500">
+                            {item.sizeName || '-'} · {item.colorName || '-'}
+                          </p>
+                        </div>
+                        
+                        <div className="flex flex-1 items-end justify-between text-sm">
+                          <div>
+                            <p className="text-gray-500">Qty {item.quantity}</p>
+                            <p className="text-gray-500 mt-1">
+                              {formatCurrency(pricePerDay)} per day × {days} days
+                            </p>
+                            <p className="text-gray-500 mt-1">
+                              {startDate ? formatDate(startDate) : '-'} - {endDate ? formatDate(endDate) : '-'}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                }
               })}
             </div>
           </div>

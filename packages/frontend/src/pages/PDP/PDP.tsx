@@ -41,6 +41,10 @@ export default function ProductDetailPage(): JSX.Element {
   
   // Purchase option state (mua/thuê)
   const [purchaseOption, setPurchaseOption] = useState<'buy' | 'rent'>('rent');
+  
+  // Ngày giao hàng khi mua sản phẩm
+  const [deliveryDate, setDeliveryDate] = useState<Date | null>(null);
+  const [showDeliveryDatePicker, setShowDeliveryDatePicker] = useState<boolean>(false);
 
   const [refreshReviews, setRefreshReviews] = useState<boolean>(false);
   const [reviews, setReviews] = useState<any[]>([]);
@@ -161,6 +165,11 @@ export default function ProductDetailPage(): JSX.Element {
     setEndDate(date);
     setShowEndDatePicker(false);
   };
+  
+  const handleDeliveryDateChange = (date: Date) => {
+    setDeliveryDate(date);
+    setShowDeliveryDatePicker(false);
+  };
 
   // Handle request to book
   const handleRequestToBook = async () => {
@@ -205,10 +214,35 @@ export default function ProductDetailPage(): JSX.Element {
         purchaseType: purchaseOption
       };
       
-      // Thêm ngày bắt đầu và kết thúc đối với tùy chọn thuê
+      // Xử lý ngày bắt đầu và kết thúc dựa vào tùy chọn
       if (purchaseOption === 'rent' && startDate && endDate) {
+        // Nếu thuê, sử dụng ngày người dùng đã chọn
         requestData.startDate = format(startDate, 'yyyy-MM-dd');
         requestData.endDate = format(endDate, 'yyyy-MM-dd');
+      } else if (purchaseOption === 'buy') {
+        // Khi mua, sử dụng ngày giao hàng đã chọn hoặc ngày mặc định
+        
+        // Luôn đặt ngày bắt đầu ít nhất là ngày mai (gộp thêm 1 ngày)
+        const tomorrow = new Date();
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        
+        // Nếu người dùng đã chọn ngày giao hàng và ngày đó là trong tương lai
+        if (deliveryDate && deliveryDate >= tomorrow) {
+          requestData.startDate = format(deliveryDate, 'yyyy-MM-dd');
+          
+          // Ngày kết thúc là 1 ngày sau ngày giao
+          const endDate = new Date(deliveryDate);
+          endDate.setDate(endDate.getDate() + 1);
+          requestData.endDate = format(endDate, 'yyyy-MM-dd');
+        } else {
+          // Ngày mai
+          requestData.startDate = format(tomorrow, 'yyyy-MM-dd');
+          
+          // Ngày mốt
+          const dayAfterTomorrow = new Date(tomorrow);
+          dayAfterTomorrow.setDate(tomorrow.getDate() + 1);
+          requestData.endDate = format(dayAfterTomorrow, 'yyyy-MM-dd');
+        }
       }
       
       console.log('Adding to cart with params:', requestData);
@@ -455,6 +489,32 @@ export default function ProductDetailPage(): JSX.Element {
                       minDate={startDate || new Date()}
                     />
                   </div>
+                </div>
+              </div>
+            )}
+            
+            {/* Delivery Date Selection - Only show if buy option is selected */}
+            {purchaseOption === 'buy' && (
+              <div className="space-y-3">
+                <h3 className="text-sm font-medium text-[#333333]">Ngày giao hàng</h3>
+                <div>
+                  <DatePicker
+                    label="Chọn ngày giao hàng"
+                    selectedDate={deliveryDate}
+                    onDateChange={handleDeliveryDateChange}
+                    showPicker={showDeliveryDatePicker}
+                    onPickerChange={setShowDeliveryDatePicker}
+                    disabled={availableStock === 0}
+                    minDate={(() => {
+                      // Tạo ngày mai
+                      const tomorrow = new Date();
+                      tomorrow.setDate(tomorrow.getDate() + 1);
+                      return tomorrow;
+                    })()}
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    Ngày giao hàng phải ít nhất là ngày mai
+                  </p>
                 </div>
               </div>
             )}

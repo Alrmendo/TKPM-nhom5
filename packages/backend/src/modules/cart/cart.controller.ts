@@ -44,6 +44,7 @@ export class CartController {
       quantity: number;
       startDate: string;
       endDate: string;
+      purchaseType?: 'buy' | 'rent';
     }
   ) {
     try {

@@ -423,7 +423,10 @@ const Orders = () => {
                     Revenue
                   </Typography>
                   <Typography variant="h3" color="success.main" fontWeight="bold">
-                    ${orders.reduce((sum, order) => sum + order.totalAmount, 0).toLocaleString()}
+                    ${orders
+                        .filter(order => order.paymentStatus === 'paid' && order.status !== 'cancelled')
+                        .reduce((sum, order) => sum + order.totalAmount, 0)
+                        .toLocaleString()}
                   </Typography>
                 </CardContent>
               </Card>

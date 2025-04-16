@@ -38,6 +38,7 @@ export class CartService {
     quantity: number;
     startDate: Date;
     endDate: Date;
+    purchaseType?: 'buy' | 'rent';
   }): Promise<Cart> {
     console.log('Adding to cart for user:', userId, 'Item data:', itemData);
     
@@ -92,6 +93,7 @@ export class CartService {
       colorName,
       quantity: itemData.quantity,
       pricePerDay: dress.dailyRentalPrice,
+      purchaseType: itemData.purchaseType || 'rent', // Mặc định là thuê nếu không xác định
       startDate: new Date(itemData.startDate),
       endDate: new Date(itemData.endDate),
       arrivalDate,

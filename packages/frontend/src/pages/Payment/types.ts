@@ -72,17 +72,29 @@ export interface Order {
 }
 
 export interface CartItem {
-  dressId: string;
+  // Common properties
   name: string;
   image: string;
-  sizeId: string;
-  sizeName: string;
-  colorId: string;
-  colorName: string;
   quantity: number;
-  pricePerDay: number;
-  startDate: Date;
-  endDate: Date;
+  
+  // Dress rental specific properties
+  dressId?: string;
+  sizeId?: string;
+  sizeName?: string;
+  colorId?: string;
+  colorName?: string;
+  pricePerDay?: number;
+  startDate?: Date;
+  endDate?: Date;
   arrivalDate?: Date;
   returnDate?: Date;
+  
+  // Photography service specific properties
+  isPhotographyService?: boolean;
+  serviceId?: string;
+  serviceName?: string;
+  type?: string;
+  price?: number;
+  bookingDate?: string | Date;
+  location?: string;
 } 
