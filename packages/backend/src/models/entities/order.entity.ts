@@ -6,8 +6,9 @@ export type OrderDocument = Order & Document;
 export enum OrderStatus {
   PENDING = 'pending',
   CONFIRMED = 'confirmed',
-  CANCELLED = 'cancelled',
+  SHIPPED = 'shipped',
   DELIVERED = 'delivered',
+  CANCELLED = 'cancelled',
   RETURNED = 'returned',
   UNDER_REVIEW = 'under-review'
 }
@@ -110,6 +111,9 @@ export class Order {
   @Prop({ type: Types.ObjectId, ref: 'User', required: true })
   userId: Types.ObjectId;
 
+  @Prop()
+  orderNumber: string;
+
   @Prop({ 
     type: [{ 
       type: OrderItemSchema 
@@ -138,6 +142,18 @@ export class Order {
 
   @Prop({ required: true })
   totalAmount: number;
+  
+  @Prop()
+  remainingPayment: number;
+  
+  @Prop({ enum: ['perfect', 'good', 'damaged'] })
+  returnCondition: string;
+  
+  @Prop()
+  damageDescription: string;
+  
+  @Prop()
+  additionalCharges: number;
 
   @Prop()
   notes: string;

@@ -35,18 +35,22 @@ import {
   Typography,
   Alert,
   Snackbar,
+  Switch,
 } from '@mui/material';
 import {
   Search,
   Visibility,
   Edit,
-  CheckCircle,
   CreditCard,
-  LocalShipping
+  LocalShipping,
+  AssignmentReturn,
+  ReceiptLong,
+  Email
 } from '@mui/icons-material';
-import { getAllOrders, updateOrderStatus, updatePaymentStatus } from '../../api/order';
-
-// Mock data - replace with actual API calls
+import { getAllOrders, updateOrderStatus, updatePaymentStatus, processReturn } from '../../api/order';
+/**
+ * Interface cho đơn hàng trong hệ thống
+ */
 interface Order {
   _id: string;
   orderNumber: string;
@@ -75,7 +79,9 @@ interface Order {
   };
 }
 
-// Define OrderItem type for clarity
+/**
+ * Interface cho các sản phẩm trong đơn hàng
+ */
 interface OrderItem {
   dress: {
     _id: string;
@@ -89,8 +95,8 @@ interface OrderItem {
 // Order statuses for filter and display
 const ORDER_STATUSES = [
   { value: 'all', label: 'All Orders' },
-  { value: 'pending', label: 'In Cart', color: 'warning' },
-  { value: 'confirmed', label: 'Under Review', color: 'info' },
+  { value: 'pending', label: 'Pending', color: 'warning' },
+  { value: 'confirmed', label: 'Confirmed', color: 'info' },
   { value: 'shipped', label: 'Shipped', color: 'secondary' },
   { value: 'delivered', label: 'Delivered', color: 'success' },
   { value: 'cancelled', label: 'Cancelled', color: 'error' },
@@ -138,16 +144,24 @@ const Orders = () => {
   // Payment status dialog
   const [updatePaymentStatusDialogOpen, setUpdatePaymentStatusDialogOpen] = useState(false);
   const [newPaymentStatus, setNewPaymentStatus] = useState<Order['paymentStatus']>('pending');
+
+  // Return processing dialog
+  const [returnDialogOpen, setReturnDialogOpen] = useState(false);
+  const [returnCondition, setReturnCondition] = useState<'perfect' | 'good' | 'damaged'>('perfect');
+  const [damageDescription, setDamageDescription] = useState('');
+  const [additionalCharges, setAdditionalCharges] = useState<number>(0);
+  const [sendPaymentReminder, setSendPaymentReminder] = useState(true);
   
   // Error handling
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [processingAction, setProcessingAction] = useState(false);
   
   // Fetch orders from API
   const fetchOrders = async () => {
     try {
       setLoading(true);
-      // Real API call to fetch orders
+      // Gọi API lấy danh sách đơn hàng từ backend
       const ordersData = await getAllOrders();
       
       // Map backend response to our frontend interface
@@ -157,9 +171,13 @@ const Orders = () => {
           _id: order._id || '',
           orderNumber: order.orderNumber || `ORD-${order._id?.substring(0, 6) || '000000'}`,
           customer: {
-            _id: order.userId?._id || (typeof order.userId === 'string' ? order.userId : ''),
-            name: order.userId?.name || 'Unknown Customer',
-            email: order.userId?.email || 'unknown@example.com'
+            _id: order.userId?._id || order.customer?._id || (typeof order.userId === 'string' ? order.userId : ''),
+            name: order.userId?.name || 
+                  (order.userId?.firstName && order.userId?.lastName ? `${order.userId.firstName} ${order.userId.lastName}` : 
+                   order.userId?.username || 
+                   order.customer?.name || 
+                   (order.customer?.firstName && order.customer?.lastName ? `${order.customer.firstName} ${order.customer.lastName}` : 'Unknown Customer')),
+            email: order.userId?.email || order.customer?.email || 'unknown@example.com'
           },
           items: Array.isArray(order.items) ? order.items.map((item: any) => ({
             dress: {
@@ -261,8 +279,18 @@ const Orders = () => {
     setUpdatePaymentStatusDialogOpen(true);
   };
 
+  // Open return processing dialog
+  const handleOpenReturnDialog = (order: Order) => {
+    setSelectedOrder(order);
+    setReturnCondition('perfect');
+    setDamageDescription('');
+    setAdditionalCharges(0);
+    setSendPaymentReminder(true);
+    setReturnDialogOpen(true);
+  };
+
   const handleUpdateStatus = async () => {
-    if (!selectedOrder || !newStatus) return;
+    if (!selectedOrder) return;
     
     try {
       setLoading(true);
@@ -277,12 +305,18 @@ const Orders = () => {
         )
       );
       
+      // Update filtered orders as well
+      setFilteredOrders(prevOrders => 
+        prevOrders.map(order => 
+          order._id === selectedOrder._id ? { ...order, status: newStatus } : order
+        )
+      );
+      
       // Set success message
-      setSuccessMessage(`Order ${selectedOrder.orderNumber} status updated to ${newStatus}`);
+      setSuccessMessage(`Order status updated to "${ORDER_STATUSES.find(s => s.value === newStatus)?.label}"`);
       
       // Close the dialog
       setUpdateStatusDialogOpen(false);
-      setLoading(false);
       
       // If needed, also update payment status to maintain consistency
       // For example, if an order is delivered, payment status should be paid
@@ -323,28 +357,60 @@ const Orders = () => {
     if (!selectedOrder) return;
     
     try {
-      setLoading(true);
-      
-      // Call the API to update the payment status
+      setProcessingAction(true);
       await updatePaymentStatus(selectedOrder._id, newPaymentStatus);
       
-      // Update the local state with the updated payment status
-      setOrders(prevOrders => 
-        prevOrders.map(order => 
-          order._id === selectedOrder._id ? { ...order, paymentStatus: newPaymentStatus } : order
-        )
-      );
+      // Update orders in state
+      setOrders(orders.map(order => {
+        if (order._id === selectedOrder._id) {
+          return { ...order, paymentStatus: newPaymentStatus };
+        }
+        return order;
+      }));
       
-      // Set success message
-      setSuccessMessage(`Payment status for order ${selectedOrder.orderNumber} updated to ${newPaymentStatus}`);
-      
-      // Close the dialog
       setUpdatePaymentStatusDialogOpen(false);
-      setLoading(false);
-    } catch (error) {
-      console.error('Failed to update payment status:', error);
-      setError('Failed to update payment status. Please try again.');
-      setLoading(false);
+      setSuccessMessage(`Payment status for order ${selectedOrder.orderNumber} updated to ${newPaymentStatus}`);
+    } catch (err: any) {
+      setError(err.message || 'Failed to update payment status');
+    } finally {
+      setProcessingAction(false);
+    }
+  };
+
+  // Process return with condition assessment
+  const handleProcessReturn = async () => {
+    if (!selectedOrder) return;
+
+    try {
+      setProcessingAction(true);
+      
+      const returnData = {
+        condition: returnCondition,
+        damageDescription: returnCondition === 'damaged' ? damageDescription : undefined,
+        additionalCharges: additionalCharges > 0 ? additionalCharges : undefined,
+        sendPaymentReminder
+      };
+
+      await processReturn(selectedOrder._id, returnData);
+      
+      // Update orders in state
+      setOrders(orders.map(order => {
+        if (order._id === selectedOrder._id) {
+          return { 
+            ...order, 
+            status: 'returned',
+            paymentStatus: sendPaymentReminder ? 'processing' : order.paymentStatus
+          };
+        }
+        return order;
+      }));
+      
+      setReturnDialogOpen(false);
+      setSuccessMessage(`Return processed for order ${selectedOrder.orderNumber}. ${sendPaymentReminder ? 'Payment reminder sent to customer.' : ''}`);
+    } catch (err: any) {
+      setError(err.message || 'Failed to process return');
+    } finally {
+      setProcessingAction(false);
     }
   };
 
@@ -574,33 +640,44 @@ const Orders = () => {
                             <Visibility />
                           </IconButton>
                           {order.status === 'confirmed' ? (
-                            <IconButton
-                              color="success"
-                              onClick={() => {
-                                setSelectedOrder(order);
-                                setNewStatus('delivered');
-                                setUpdateStatusDialogOpen(true);
-                              }}
-                              size="small"
-                              title="Mark as delivered"
-                              sx={{ borderRadius: '0' }}
-                            >
-                              <CheckCircle />
-                            </IconButton>
-                          ) : order.status === 'pending' ? (
-                            <IconButton
-                              color="info"
-                              onClick={() => {
-                                setSelectedOrder(order);
-                                setNewStatus('confirmed');
-                                setUpdateStatusDialogOpen(true);
-                              }}
-                              size="small"
-                              title="Confirm order"
-                              sx={{ borderRadius: '0' }}
-                            >
-                              <CheckCircle />
-                            </IconButton>
+                            <FormControl variant="outlined" fullWidth>
+                              <InputLabel id="order-status-label">Order Status</InputLabel>
+                              <Select
+                                labelId="order-status-label"
+                                value={newStatus}
+                                onChange={(e) => setNewStatus(e.target.value as Order['status'])}
+                                label="Order Status"
+                                disabled={processingAction}
+                              >
+                                {/* Hiển thị các trạng thái theo thứ tự xử lý đơn hàng */}
+                                {['pending', 'confirmed', 'shipped', 'delivered', 'cancelled', 'returned', 'under-review']
+                                  .map(statusValue => {
+                                    const status = ORDER_STATUSES.find(s => s.value === statusValue);
+                                    if (!status) return null;
+                                    return (
+                                      <MenuItem key={status.value} value={status.value}>
+                                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                                          <Box
+                                            sx={{
+                                              width: 10,
+                                              height: 10,
+                                              borderRadius: '50%',
+                                              backgroundColor: status.color === 'default' ? '#9e9e9e' : 
+                                                status.color === 'warning' ? '#ff9800' :
+                                                status.color === 'error' ? '#f44336' :
+                                                status.color === 'success' ? '#4caf50' :
+                                                status.color === 'info' ? '#2196f3' :
+                                                status.color === 'secondary' ? '#9c27b0' : '#9e9e9e',
+                                              mr: 1
+                                            }}
+                                          />
+                                          {status.label}
+                                        </Box>
+                                      </MenuItem>
+                                    );
+                                  })}
+                              </Select>
+                            </FormControl>
                           ) : (
                             <IconButton
                               color="secondary"
@@ -618,9 +695,20 @@ const Orders = () => {
                               onClick={() => handleOpenUpdatePaymentStatusDialog(order)}
                               size="small"
                               title="Update payment status"
-                              sx={{ borderRadius: '0 4px 4px 0' }}
+                              sx={{ borderRadius: order.isRental && order.status === 'delivered' ? '0' : '0 4px 4px 0' }}
                             >
                               <CreditCard />
+                            </IconButton>
+                          )}
+                          {order.isRental && order.status === 'delivered' && (
+                            <IconButton
+                              color="secondary"
+                              onClick={() => handleOpenReturnDialog(order)}
+                              size="small"
+                              title="Process dress return"
+                              sx={{ borderRadius: '0 4px 4px 0' }}
+                            >
+                              <AssignmentReturn />
                             </IconButton>
                           )}
                         </ButtonGroup>
@@ -809,11 +897,14 @@ const Orders = () => {
                       <Step>
                         <StepLabel>Confirmed</StepLabel>
                       </Step>
-                      <Step>
+                      <Step completed={selectedOrder.status === 'shipped' || selectedOrder.status === 'delivered' || selectedOrder.status === 'returned'}>
                         <StepLabel>Shipped</StepLabel>
                       </Step>
-                      <Step>
+                      <Step completed={selectedOrder.status === 'delivered' || selectedOrder.status === 'returned'}>
                         <StepLabel>Delivered</StepLabel>
+                      </Step>
+                      <Step completed={selectedOrder.status === 'returned'}>
+                        <StepLabel>Returned</StepLabel>
                       </Step>
                     </Stepper>
                   </Paper>
@@ -862,6 +953,7 @@ const Orders = () => {
       >
         <DialogTitle sx={{ borderBottom: '1px solid rgba(0, 0, 0, 0.12)', pb: 1 }}>
           {newStatus === 'confirmed' ? 'Confirm Order' : 
+           newStatus === 'shipped' ? 'Ship Order' :
            newStatus === 'delivered' ? 'Mark as Delivered' : 
            'Update Order Status'}
         </DialogTitle>
@@ -869,12 +961,14 @@ const Orders = () => {
           <DialogContentText sx={{ mb: 2 }}>
             {newStatus === 'confirmed' ? 
               `Are you sure you want to confirm order ${selectedOrder?.orderNumber}?` :
+             newStatus === 'shipped' ? 
+              `Are you sure you want to mark order ${selectedOrder?.orderNumber} as shipped?` :
              newStatus === 'delivered' ? 
               `Are you sure you want to mark order ${selectedOrder?.orderNumber} as delivered?` :
               `Update the status for order ${selectedOrder?.orderNumber}`
             }
           </DialogContentText>
-          {!['confirmed', 'delivered'].includes(newStatus) && (
+          {!['confirmed', 'shipped', 'delivered'].includes(newStatus) && (
             <FormControl fullWidth sx={{ mt: 2 }}>
               <InputLabel>Status</InputLabel>
               <Select
@@ -882,11 +976,33 @@ const Orders = () => {
                 label="Status"
                 onChange={(e) => setNewStatus(e.target.value as Order['status'])}
               >
-                {ORDER_STATUSES.filter(s => s.value !== 'all').map((status) => (
-                  <MenuItem key={status.value} value={status.value}>
-                    {status.label}
-                  </MenuItem>
-                ))}
+                {/* Hiển thị các trạng thái theo thứ tự xử lý đơn hàng */}
+                {['pending', 'confirmed', 'shipped', 'delivered', 'cancelled', 'returned', 'under-review']
+                  .map(statusValue => {
+                    const status = ORDER_STATUSES.find(s => s.value === statusValue);
+                    if (!status) return null;
+                    return (
+                      <MenuItem key={status.value} value={status.value}>
+                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                          <Box
+                            sx={{
+                              width: 10,
+                              height: 10,
+                              borderRadius: '50%',
+                              backgroundColor: status.color === 'default' ? '#9e9e9e' : 
+                                status.color === 'warning' ? '#ff9800' :
+                                status.color === 'error' ? '#f44336' :
+                                status.color === 'success' ? '#4caf50' :
+                                status.color === 'info' ? '#2196f3' :
+                                status.color === 'secondary' ? '#9c27b0' : '#9e9e9e',
+                              mr: 1
+                            }}
+                          />
+                          {status.label}
+                        </Box>
+                      </MenuItem>
+                    );
+                  })}
               </Select>
             </FormControl>
           )}
@@ -912,7 +1028,7 @@ const Orders = () => {
       {/* Update Payment Status Dialog */}
       <Dialog
         open={updatePaymentStatusDialogOpen}
-        onClose={() => setUpdatePaymentStatusDialogOpen(false)}
+        onClose={() => !processingAction && setUpdatePaymentStatusDialogOpen(false)}
         PaperProps={{
           sx: { borderRadius: 2 }
         }}
@@ -930,6 +1046,7 @@ const Orders = () => {
               value={newPaymentStatus}
               label="Payment Status"
               onChange={(e) => setNewPaymentStatus(e.target.value as Order['paymentStatus'])}
+              disabled={processingAction}
             >
               {PAYMENT_STATUSES.filter(s => s.value !== 'all').map((status) => (
                 <MenuItem key={status.value} value={status.value}>
@@ -940,13 +1057,128 @@ const Orders = () => {
           </FormControl>
         </DialogContent>
         <DialogActions sx={{ borderTop: '1px solid rgba(0, 0, 0, 0.12)', px: 3, py: 2 }}>
-          <Button onClick={() => setUpdatePaymentStatusDialogOpen(false)} variant="outlined">Cancel</Button>
+          <Button 
+            onClick={() => setUpdatePaymentStatusDialogOpen(false)} 
+            variant="outlined"
+            disabled={processingAction}
+          >
+            Cancel
+          </Button>
           <Button 
             onClick={handleUpdatePaymentStatus} 
             variant="contained" 
             color="primary"
+            disabled={processingAction}
           >
-            Update Payment Status
+            {processingAction ? <CircularProgress size={24} /> : 'Update Payment Status'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+      
+      {/* Process Return Dialog */}
+      <Dialog
+        open={returnDialogOpen}
+        onClose={() => !processingAction && setReturnDialogOpen(false)}
+        PaperProps={{
+          sx: { borderRadius: 2, maxWidth: 550 }
+        }}
+      >
+        <DialogTitle sx={{ borderBottom: '1px solid rgba(0, 0, 0, 0.12)', pb: 1, display: 'flex', alignItems: 'center' }}>
+          <AssignmentReturn sx={{ mr: 1 }} />
+          Process Dress Return
+        </DialogTitle>
+        <DialogContent sx={{ pt: 3 }}>
+          <DialogContentText sx={{ mb: 3 }}>
+            Process the return for order {selectedOrder?.orderNumber}. Assess the condition of the returned dress and collect the remaining payment.
+          </DialogContentText>
+          
+          {/* Condition Selection */}
+          <FormControl fullWidth sx={{ mb: 3 }}>
+            <InputLabel>Dress Condition</InputLabel>
+            <Select
+              value={returnCondition}
+              label="Dress Condition"
+              onChange={(e) => setReturnCondition(e.target.value as 'perfect' | 'good' | 'damaged')}
+              disabled={processingAction}
+            >
+              <MenuItem value="perfect">Perfect - Like New</MenuItem>
+              <MenuItem value="good">Good - Minor Wear</MenuItem>
+              <MenuItem value="damaged">Damaged - Requires Repair</MenuItem>
+            </Select>
+          </FormControl>
+          
+          {/* Damage Description (only if damaged) */}
+          {returnCondition === 'damaged' && (
+            <TextField
+              label="Damage Description"
+              variant="outlined"
+              fullWidth
+              multiline
+              rows={3}
+              value={damageDescription}
+              onChange={(e) => setDamageDescription(e.target.value)}
+              disabled={processingAction}
+              sx={{ mb: 3 }}
+              placeholder="Describe the damage in detail..."
+            />
+          )}
+          
+          {/* Additional Charges */}
+          <TextField
+            label="Additional Charges (if any)"
+            variant="outlined"
+            fullWidth
+            type="number"
+            value={additionalCharges}
+            onChange={(e) => setAdditionalCharges(Number(e.target.value))}
+            disabled={processingAction}
+            InputProps={{
+              startAdornment: <span style={{ marginRight: 8 }}>$</span>,
+            }}
+            sx={{ mb: 3 }}
+          />
+          
+          {/* Remaining Payment Section */}
+          <Box sx={{ mb: 3, p: 2, bgcolor: '#f8f3f0', borderRadius: 1, border: '1px solid #c3937c' }}>
+            <Typography variant="subtitle2" sx={{ color: '#c3937c', mb: 1, display: 'flex', alignItems: 'center' }}>
+              <ReceiptLong sx={{ mr: 0.5, fontSize: 20 }} />
+              Remaining Payment
+            </Typography>
+            <Typography variant="body2" sx={{ mb: 1 }}>
+              Customer has paid 50% deposit (${selectedOrder ? (selectedOrder.totalAmount / 2).toFixed(2) : '0.00'}).
+              Remaining payment: ${selectedOrder ? (selectedOrder.totalAmount / 2 + additionalCharges).toFixed(2) : '0.00'}
+              {additionalCharges > 0 && ` (includes $${additionalCharges.toFixed(2)} additional charges)`}
+            </Typography>
+            <FormControl sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center' }}>
+              <Typography variant="body2" sx={{ display: 'flex', alignItems: 'center' }}>
+                <Email sx={{ mr: 0.5, fontSize: 16, color: '#c3937c' }} />
+                Send payment reminder email:
+              </Typography>
+              <Switch
+                checked={sendPaymentReminder}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSendPaymentReminder(e.target.checked)}
+                disabled={processingAction}
+                color="secondary"
+              />
+            </FormControl>
+          </Box>
+        </DialogContent>
+        <DialogActions sx={{ borderTop: '1px solid rgba(0, 0, 0, 0.12)', px: 3, py: 2 }}>
+          <Button 
+            onClick={() => setReturnDialogOpen(false)} 
+            variant="outlined"
+            disabled={processingAction}
+          >
+            Cancel
+          </Button>
+          <Button 
+            onClick={handleProcessReturn} 
+            variant="contained" 
+            color="secondary"
+            disabled={processingAction || (returnCondition === 'damaged' && damageDescription.trim() === '')}
+            startIcon={processingAction ? <CircularProgress size={20} /> : <AssignmentReturn />}
+          >
+            Process Return
           </Button>
         </DialogActions>
       </Dialog>

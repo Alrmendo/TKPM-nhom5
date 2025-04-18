@@ -26,6 +26,21 @@ export class UserService {
     }
     return user;
   }
+  
+  async findById(userId: string): Promise<UserDocument> {
+    try {
+      const user = await this.userModel.findById(userId);
+      if (!user) {
+        throw new NotFoundException(`User with ID ${userId} not found`);
+      }
+      return user;
+    } catch (error) {
+      if (error instanceof NotFoundException) {
+        throw error;
+      }
+      throw new NotFoundException(`Invalid user ID or user not found`);
+    }
+  }
 
   async getProfile(username: string): Promise<any> {
     const user = await this.findByUsername(username);

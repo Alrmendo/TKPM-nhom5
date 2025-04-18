@@ -34,6 +34,8 @@ export interface OrderSummary {
   tax: number;
   shipping: number;
   total: number;
+  initialDeposit: number; // 50% deposit amount
+  remainingPayment: number; // 50% remaining to be paid after returning
   currency: string;
 }
 
@@ -64,6 +66,8 @@ export interface Order {
   returnDate?: Date;
   status: OrderStatus;
   totalAmount: number;
+  depositPaid?: boolean; // Flag to indicate if deposit is paid
+  remainingPayment?: number; // Amount remaining to be paid
   notes?: string;
   shippingAddress?: Address;
   paymentMethod?: PaymentMethod;

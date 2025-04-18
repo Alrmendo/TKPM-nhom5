@@ -307,7 +307,7 @@ const Checkout: React.FC = () => {
             throw new Error('Order summary not calculated');
           }
           
-          // Tạo đơn hàng chỉ trên frontend
+          // Tạo đơn hàng chỉ trên frontend - Sử dụng deposit amount (50%) thay vì full amount
           newOrder = {
             _id: 'local_' + Date.now(),
             userId: 'current_user',
@@ -315,13 +315,16 @@ const Checkout: React.FC = () => {
             startDate: mockStartDate,
             endDate: mockEndDate,
             status: OrderStatus.CONFIRMED,
-            totalAmount: summary.total,
+            totalAmount: summary.initialDeposit, // Sử dụng số tiền đặt cọc 50%
+            depositPaid: true, // Đánh dấu đã thanh toán đặt cọc
+            remainingPayment: summary.remainingPayment, // Lưu số tiền cần thanh toán còn lại
+            notes: 'Khách hàng đã thanh toán 50% đặt cọc. 50% còn lại sẽ thanh toán khi trả váy.',
             shippingAddress: shippingAddress || undefined,
             paymentMethod: paymentMethod,
             createdAt: new Date()
           };
           
-          console.log('Mock order created:', newOrder);
+          console.log('Mock order created with 50% deposit:', newOrder);
         }
         
         // Giả lập xử lý thanh toán (không cần gọi API, vì backend có vấn đề)
@@ -514,8 +517,8 @@ const Checkout: React.FC = () => {
             <div className="divide-y divide-gray-200">
               {cartItems.map((item, index) => {
                 // Calculate days
-                const startDate = new Date(item.startDate);
-                const endDate = new Date(item.endDate);
+                const startDate = new Date(item.startDate || new Date());
+                const endDate = new Date(item.endDate || new Date());
                 const days = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)) + 1;
                 
                 return (
@@ -539,7 +542,7 @@ const Checkout: React.FC = () => {
                     
                     <div className="text-right">
                       <p className="text-sm font-medium text-gray-900">
-                        {formatCurrency(item.pricePerDay * days * item.quantity)}
+                        {formatCurrency((item.pricePerDay || 0) * days * item.quantity)}
                       </p>
                     </div>
                   </div>
@@ -574,10 +577,32 @@ const Checkout: React.FC = () => {
                   {formatCurrency(summary?.total || 0)}
                 </span>
               </div>
+              
+              {/* Deposit amount - 50% */}
+              <div className="flex justify-between py-2 mt-4 bg-[#f8f3f0] p-3 rounded-lg border border-[#c3937c]">
+                <span className="font-semibold text-[#c3937c]">Thanh toán đặt cọc (50%)</span>
+                <span className="font-semibold text-[#c3937c]">
+                  {formatCurrency(summary?.initialDeposit || 0)}
+                </span>
+              </div>
+              
+              {/* Remaining payment - 50% */}
+              <div className="flex justify-between py-2 mt-2 bg-gray-50 p-3 rounded-lg">
+                <span className="text-gray-600">Thanh toán khi trả váy (50%)</span>
+                <span className="text-gray-600">
+                  {formatCurrency(summary?.remainingPayment || 0)}
+                </span>
+              </div>
             </div>
           </div>
           
-          <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+          <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 space-y-3">
+            <div className="bg-[#f8f3f0] p-3 rounded-lg border border-[#c3937c]">
+              <p className="text-sm font-medium text-[#c3937c] mb-1">Lưu ý về đặt cọc</p>
+              <p className="text-xs text-gray-700">
+                Khoản thanh toán này chỉ là 50% đặt cọc của tổng giá trị đơn hàng. Khoản 50% còn lại sẽ được thanh toán khi bạn trả váy. Bạn sẽ nhận được thông báo qua email khi đến hạn thanh toán phần còn lại.
+              </p>
+            </div>
             <p className="text-xs text-gray-600">
               Bằng cách hoàn tất thanh toán, bạn đồng ý với Điều khoản dịch vụ và xác nhận rằng bạn đã đọc Chính sách bảo mật. Thông tin thanh toán của bạn được mã hóa an toàn và thông tin của bạn (ngoại trừ chi tiết thanh toán) sẽ được chia sẻ với OX bride.
             </p>
