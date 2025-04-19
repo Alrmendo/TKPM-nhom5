@@ -15,6 +15,8 @@ const Review: React.FC = () => {
     tax: 0,
     shipping: 0,
     total: 0,
+    initialDeposit: 0, // 50% deposit
+    remainingPayment: 0, // 50% remaining payment
     currency: 'USD'
   });
   
@@ -57,11 +59,14 @@ const Review: React.FC = () => {
                 (sum: number, item: {price?: number}) => sum + (item.price || 0), 0
               );
               
+              const totalWithTax = totalAmount + (totalAmount * 0.1);
               setSummary({
                 subtotal: totalAmount,
                 tax: totalAmount * 0.1, // 10% tax
                 shipping: 0,  // No shipping for photography
-                total: totalAmount + (totalAmount * 0.1),
+                total: totalWithTax,
+                initialDeposit: totalWithTax * 0.5, // 50% deposit
+                remainingPayment: totalWithTax * 0.5, // 50% remaining payment
                 currency: 'USD'
               });
               
@@ -100,11 +105,14 @@ const Review: React.FC = () => {
                 (sum: number, item: {price?: number}) => sum + (item.price || 0), 0
               );
               
+              const totalWithTax = totalAmount + (totalAmount * 0.1);
               setSummary({
                 subtotal: totalAmount,
                 tax: totalAmount * 0.1, // 10% tax
                 shipping: 0,  // No shipping for photography
-                total: totalAmount + (totalAmount * 0.1),
+                total: totalWithTax,
+                initialDeposit: totalWithTax * 0.5, // 50% deposit
+                remainingPayment: totalWithTax * 0.5, // 50% remaining payment
                 currency: 'USD'
               });
               
