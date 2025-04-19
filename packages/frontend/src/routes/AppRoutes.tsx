@@ -35,6 +35,7 @@ const AdminAppointments = lazy(() => import('../pages/Admin/Appointments'));
 const AdminContacts = lazy(() => import('../pages/Admin/Contacts'));
 const AdminCustomerFitting = lazy(() => import('../pages/Admin/CustomerFitting'));
 const AdminPhotography = lazy(() => import('../pages/Admin/Photography'));
+const AdminPhotographyStatistics = lazy(() => import('../pages/Admin/PhotographyStatistics'));
 const AdminSettings = lazy(() => import('../pages/Admin/Settings'));
 
 const SignIn = lazy(() => import('../pages/Auth/SignIn'));
@@ -185,17 +186,19 @@ const AppRoutes = () => {
       ),
     },
     
-    // Redirect old admin routes to new admin dashboard
+    // Photography Statistics page
     {
-      path: '/admin/measurement',
+      path: '/admin/photography-statistics',
       element: (
         <ProtectedRoute requiredRole="admin">
-          <Navigate to="/admin/customer-fitting" replace />
+          <AdminPhotographyStatistics />
         </ProtectedRoute>
       ),
     },
+    
+    // Redirect old admin routes to new admin dashboard
     {
-      path: '/admin/photography',
+      path: '/admin/measurement',
       element: (
         <ProtectedRoute requiredRole="admin">
           <Navigate to="/admin/customer-fitting" replace />

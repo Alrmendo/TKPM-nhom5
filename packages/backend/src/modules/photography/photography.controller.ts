@@ -132,6 +132,11 @@ export class AdminPhotographyController {
     return this.photographyService.getAllBookings(query);
   }
 
+  @Get('bookings/statistics')
+  async getBookingStatistics() {
+    return this.photographyService.getBookingStatistics();
+  }
+
   @Put('bookings/:id/status')
   async updateBookingStatus(@Param('id') id: string, @Body('status') status: BookingStatus) {
     return this.photographyService.updateBookingStatus(id, status);
