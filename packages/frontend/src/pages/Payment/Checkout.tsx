@@ -87,8 +87,12 @@ const Checkout: React.FC = () => {
             const orderData = JSON.parse(orderDataStr);
             console.log('Order data from localStorage in Checkout page:', orderData);
             
+            let hasItems = false;
+            
+            // Check for regular dress items
             if (orderData && orderData.items && orderData.items.length > 0) {
               setCartItems(orderData.items);
+              hasItems = true;
               
               const firstItem = orderData.items[0];
               let itemStartDate = firstItem.startDate ? new Date(firstItem.startDate) : new Date();
@@ -120,12 +124,95 @@ const Checkout: React.FC = () => {
               }
               
               setSummary(calculatedSummary);
+            }
+            
+            // Check for photography items
+            if (orderData && orderData.photographyItems && orderData.photographyItems.length > 0) {
+              console.log('Photography items found in order:', orderData.photographyItems);
+              console.log('Current hasItems status:', hasItems);
               
+              // Convert photography items to cart item format
+              const processedPhotographyItems = orderData.photographyItems.map((item) => ({
+                id: item.serviceId,
+                name: item.serviceName,
+                type: item.serviceType,
+                image: item.imageUrl,
+                price: item.price,
+                quantity: 1,
+                bookingDate: item.bookingDate,
+                location: item.location || 'Default location',
+                isPhotographyService: true
+              }));
+              
+              console.log('Processed photography items:', processedPhotographyItems);
+              
+              // If we already have dress items, merge the arrays; otherwise, set cartItems directly
+              if (hasItems) {
+                setCartItems(prev => [...prev, ...processedPhotographyItems]);
+              } else {
+                setCartItems(processedPhotographyItems);
+              }
+              
+              hasItems = true;
+              
+              // Calculate summary for photography services
+              const totalAmount = processedPhotographyItems.reduce(
+                (sum, item) => sum + (item.price || 0), 0
+              );
+              
+              console.log('Photography items total amount:', totalAmount);
+              
+              // Update or create summary with photography items
+              setSummary(prev => {
+                // Start with existing summary or create new one
+                const updatedSummary = prev || {
+                  subtotal: 0,
+                  tax: 0,
+                  shipping: 0,
+                  total: 0,
+                  currency: 'USD'
+                };
+                
+                // Add photography items to summary
+                updatedSummary.subtotal += totalAmount;
+                updatedSummary.tax += totalAmount * 0.1; // 10% tax
+                
+                // Calculate deposit and remaining amounts (50% each)
+                updatedSummary.initialDeposit = (updatedSummary.subtotal + updatedSummary.tax) * 0.5;
+                updatedSummary.remainingPayment = (updatedSummary.subtotal + updatedSummary.tax) * 0.5;
+                
+                // Apply shipping costs if available
+                try {
+                  const shippingMethodStr = sessionStorage.getItem('shippingMethod');
+                  if (shippingMethodStr) {
+                    const shippingMethodData = JSON.parse(shippingMethodStr);
+                    setShippingMethod(shippingMethodData);
+                    
+                    // Update shipping cost
+                    updatedSummary.shipping = shippingMethodData.price;
+                  }
+                } catch (e) {
+                  console.error('Error parsing shipping method from session storage:', e);
+                }
+                
+                // Recalculate total with all costs
+                updatedSummary.total = updatedSummary.subtotal + updatedSummary.tax + updatedSummary.shipping;
+                
+                console.log('Updated summary with photography items:', updatedSummary);
+                return updatedSummary;
+              });
+            }
+            
+            // If we have any items (dress or photography), process address and shipping info
+            if (hasItems) {
+              console.log('Items found in cart, proceeding with checkout');
               // Sau khi đã xử lý dữ liệu đơn hàng, tiếp tục lấy địa chỉ từ session storage
               processAddressAndShippingMethod();
               
               setIsLoading(false);
               return; // Thoát luôn nếu đã có dữ liệu trong localStorage
+            } else {
+              console.error('No items found in order data');
             }
           } catch (e) {
             console.error('Error parsing order data from localStorage:', e);
@@ -294,14 +381,55 @@ const Checkout: React.FC = () => {
           }
           
           const orderData = JSON.parse(orderDataStr);
-          if (!orderData || !orderData.items || orderData.items.length === 0) {
+          // Check for any items - either regular items or photography items
+          if (!orderData || 
+              (!orderData.items || orderData.items.length === 0) && 
+              (!orderData.photographyItems || orderData.photographyItems.length === 0)) {
             throw new Error('Invalid order data in localStorage');
           }
           
-          // Tạo đơn hàng giả lập
-          const firstItem = orderData.items[0];
-          const mockStartDate = firstItem.startDate ? new Date(firstItem.startDate) : new Date();
-          const mockEndDate = firstItem.endDate ? new Date(firstItem.endDate) : new Date();
+          // Process items to ensure we have a valid array
+          let processedItems = [];
+          let mockStartDate = new Date();
+          let mockEndDate = new Date();
+          
+          // Add regular dress items if available
+          if (orderData.items && orderData.items.length > 0) {
+            processedItems = [...orderData.items];
+            // Get dates from first dress item if available
+            const firstItem = orderData.items[0];
+            mockStartDate = firstItem.startDate ? new Date(firstItem.startDate) : new Date();
+            mockEndDate = firstItem.endDate ? new Date(firstItem.endDate) : new Date();
+          }
+          
+          // Add photography items if available
+          if (orderData.photographyItems && orderData.photographyItems.length > 0) {
+            // Convert photography items to the right format
+            const processedPhotographyItems = orderData.photographyItems.map(item => ({
+              id: item.serviceId,
+              name: item.serviceName,
+              type: item.serviceType,
+              image: item.imageUrl,
+              price: item.price,
+              quantity: 1,
+              bookingDate: item.bookingDate,
+              location: item.location || 'Default location',
+              isPhotographyService: true
+            }));
+            
+            // Add to processed items
+            processedItems = [...processedItems, ...processedPhotographyItems];
+            
+            // Use booking date for photography items if no dress dates are set
+            if (!orderData.items || orderData.items.length === 0) {
+              const firstPhoto = orderData.photographyItems[0];
+              if (firstPhoto.bookingDate) {
+                const bookingDate = new Date(firstPhoto.bookingDate);
+                mockStartDate = bookingDate;
+                mockEndDate = bookingDate;
+              }
+            }
+          }
           
           if (summary === null) {
             throw new Error('Order summary not calculated');
@@ -311,13 +439,14 @@ const Checkout: React.FC = () => {
           newOrder = {
             _id: 'local_' + Date.now(),
             userId: 'current_user',
-            items: orderData.items,
+            items: processedItems,
             startDate: mockStartDate,
             endDate: mockEndDate,
             status: OrderStatus.CONFIRMED,
-            totalAmount: summary.initialDeposit, // Sử dụng số tiền đặt cọc 50%
+            totalAmount: summary.total,
+            depositAmount: summary.initialDeposit || (summary.total * 0.5), // Sử dụng số tiền đặt cọc 50%
             depositPaid: true, // Đánh dấu đã thanh toán đặt cọc
-            remainingPayment: summary.remainingPayment, // Lưu số tiền cần thanh toán còn lại
+            remainingPayment: summary.remainingPayment || (summary.total * 0.5), // Lưu số tiền cần thanh toán còn lại
             notes: 'Khách hàng đã thanh toán 50% đặt cọc. 50% còn lại sẽ thanh toán khi trả váy.',
             shippingAddress: shippingAddress || undefined,
             paymentMethod: paymentMethod,
@@ -427,6 +556,25 @@ const Checkout: React.FC = () => {
       </div>
     );
   }
+
+  // Add extra validation - if we somehow got here with no items, show an error
+  if (!isLoading && cartItems.length === 0) {
+    return (
+      <div className="container mx-auto px-4 py-8 max-w-6xl">
+        <CheckoutSteps currentStep="payment" completedSteps={['review', 'information', 'shipping']} />
+        <div className="bg-white rounded-lg shadow-md p-8 text-center">
+          <h2 className="text-2xl font-semibold mb-4">No items in your cart</h2>
+          <p className="text-gray-600 mb-6">Your cart appears to be empty. Please add some items before checkout.</p>
+          <button 
+            onClick={() => navigate('/cart')}
+            className="bg-[#c3937c] text-white px-6 py-2 rounded hover:bg-[#a67c66] transition-colors"
+          >
+            Return to cart
+          </button>
+        </div>
+      </div>
+    );
+  }
   
   return (
     <div className="container mx-auto px-4 py-8 max-w-6xl">
@@ -516,7 +664,39 @@ const Checkout: React.FC = () => {
             
             <div className="divide-y divide-gray-200">
               {cartItems.map((item, index) => {
-                // Calculate days
+                // Check if this is a photography service
+                if (item.isPhotographyService) {
+                  return (
+                    <div key={index} className="py-4 flex items-center">
+                      <div className="h-16 w-16 flex-shrink-0 overflow-hidden rounded-md border border-gray-200 relative">
+                        <img
+                          src={item.image || 'https://via.placeholder.com/150'}
+                          alt={item.name || 'Photography Service'}
+                          className="h-full w-full object-cover object-center"
+                        />
+                        <span className="absolute -top-2 -right-2 h-6 w-6 rounded-full bg-[#c3937c] text-white text-xs flex items-center justify-center">
+                          {item.quantity || 1}
+                        </span>
+                      </div>
+                      
+                      <div className="ml-4 flex-1">
+                        <h3 className="text-sm font-medium text-gray-900">{item.name}</h3>
+                        <p className="text-xs text-gray-500">{item.type}</p>
+                        <p className="text-xs text-gray-500">
+                          {item.bookingDate ? new Date(item.bookingDate).toLocaleDateString() : 'No date'} - {item.location}
+                        </p>
+                      </div>
+                      
+                      <div className="text-right">
+                        <p className="text-sm font-medium text-gray-900">
+                          {formatCurrency(item.price || 0)}
+                        </p>
+                      </div>
+                    </div>
+                  );
+                }
+                
+                // Regular dress items
                 const startDate = new Date(item.startDate || new Date());
                 const endDate = new Date(item.endDate || new Date());
                 const days = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)) + 1;
@@ -525,24 +705,26 @@ const Checkout: React.FC = () => {
                   <div key={index} className="py-4 flex items-center">
                     <div className="h-16 w-16 flex-shrink-0 overflow-hidden rounded-md border border-gray-200 relative">
                       <img
-                        src={item.image}
+                        src={item.image || 'https://via.placeholder.com/150'}
                         alt={item.name}
                         className="h-full w-full object-cover object-center"
                       />
                       <span className="absolute -top-2 -right-2 h-6 w-6 rounded-full bg-[#c3937c] text-white text-xs flex items-center justify-center">
-                        {item.quantity}
+                        {item.quantity || 1}
                       </span>
                     </div>
                     
                     <div className="ml-4 flex-1">
                       <h3 className="text-sm font-medium text-gray-900">{item.name}</h3>
-                      <p className="text-xs text-gray-500">{item.sizeName} · {item.colorName}</p>
+                      {item.sizeName && item.colorName && (
+                        <p className="text-xs text-gray-500">{item.sizeName} · {item.colorName}</p>
+                      )}
                       <p className="text-xs text-gray-500">{days} ngày thuê</p>
                     </div>
                     
                     <div className="text-right">
                       <p className="text-sm font-medium text-gray-900">
-                        {formatCurrency((item.pricePerDay || 0) * days * item.quantity)}
+                        {formatCurrency((item.pricePerDay || 0) * days * (item.quantity || 1))}
                       </p>
                     </div>
                   </div>

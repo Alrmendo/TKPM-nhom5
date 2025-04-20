@@ -265,10 +265,10 @@ export const ShoppingCart: React.FC = () => {
         await createOrder();
       }
       
-      // For now, we'll just clear the photography cart from localStorage
-      // In a real implementation, these should be sent to the backend
+      // For photography items, don't remove them yet but mark them as being processed
       if (photographyItems.length > 0) {
-        localStorage.removeItem('photography_cart_items');
+        // Mark that we've processed these items, but keep them in storage
+        localStorage.setItem('photography_items_in_process', 'true');
       }
       
       // Show success and navigate

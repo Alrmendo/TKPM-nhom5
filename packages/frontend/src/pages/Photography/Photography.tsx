@@ -287,12 +287,12 @@ const Photography = () => {
                                 </li>
                               )}
                             </ul>
-                            <Box sx={{ display: 'flex', gap: 2, mt: 'auto' }}>
+                            <Box sx={{ display: 'flex', mt: 'auto' }}>
                               <Button 
                                 variant="outlined" 
                                 onClick={() => navigate(`/photography/service-detail/${service._id}`)}
                                 sx={{ 
-                                  flex: 1,
+                                  width: '100%',
                                   borderColor: '#000',
                                   color: '#000',
                                   '&:hover': {
@@ -301,22 +301,9 @@ const Photography = () => {
                                   },
                                 }}
                               >
-                                View Details
-                              </Button>
-                              <Button 
-                                variant="contained" 
-                                onClick={() => handleSelectPackage(service._id)}
-                                sx={{ 
-                                  flex: 1,
-                                  backgroundColor: '#000',
-                                  '&:hover': {
-                                    backgroundColor: '#333',
-                                  },
-                                }}
-                              >
-                                Book Now
-                              </Button>
-                            </Box>
+                              View Details
+                            </Button>
+                          </Box>
                           </Box>
                         </Paper>
                       ))}
