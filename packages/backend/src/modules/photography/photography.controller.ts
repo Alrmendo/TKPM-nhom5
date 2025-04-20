@@ -20,7 +20,8 @@ import {
   UpdatePhotographyServiceDto, 
   CreatePhotographyBookingDto,
   UpdatePhotographyBookingDto,
-  PhotographyBookingQueryDto
+  PhotographyBookingQueryDto,
+  CreatePhotographyBookingWithPaymentDto
 } from './dto/photography.dto';
 import { JwtAuthGuard } from '../../guards/jwt-auth.guard';
 import { RolesGuard } from '../../guards/roles.guard';
@@ -53,6 +54,35 @@ export class PhotographyController {
   @Post('bookings')
   async createBooking(@Request() req, @Body() createDto: CreatePhotographyBookingDto) {
     return this.photographyService.createBooking(req.user.userId, createDto);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post('bookings/confirm-after-payment')
+  async createBookingAfterPayment(
+    @Request() req, 
+    @Body() bookingData: CreatePhotographyBookingWithPaymentDto
+  ) {
+    console.log('Received booking data:', JSON.stringify(bookingData));
+    console.log('User request object:', JSON.stringify(req.user));
+    
+    // The JWT strategy returns id, not userId (see jwt.strategy.ts)
+    const userId = req.user.id; 
+    
+    if (!userId) {
+      console.error('User ID is missing in the request');
+      throw new BadRequestException('User ID is required');
+    }
+    
+    console.log('Using User ID:', userId);
+    
+    try {
+      const result = await this.photographyService.createBookingAfterPayment(userId, bookingData);
+      console.log('Booking result:', JSON.stringify(result));
+      return result;
+    } catch (error) {
+      console.error('Error in createBookingAfterPayment controller:', error);
+      throw error;
+    }
   }
 
   @UseGuards(JwtAuthGuard)

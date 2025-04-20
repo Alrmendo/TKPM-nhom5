@@ -12,7 +12,8 @@ import {
   UpdatePhotographyServiceDto, 
   CreatePhotographyBookingDto,
   UpdatePhotographyBookingDto,
-  PhotographyBookingQueryDto
+  PhotographyBookingQueryDto,
+  CreatePhotographyBookingWithPaymentDto
 } from './dto/photography.dto';
 
 @Injectable()
@@ -222,6 +223,97 @@ export class PhotographyService {
     return updatedBooking;
   }
 
+  async createBookingAfterPayment(
+    userId: string, 
+    bookingData: CreatePhotographyBookingWithPaymentDto
+  ): Promise<any> {
+    try {
+      console.log('PhotographyService - Creating booking after payment for user:', userId);
+      console.log('PhotographyService - Booking data:', JSON.stringify(bookingData));
+      
+      // Validate userId with better error messaging
+      if (!userId) {
+        throw new BadRequestException('User ID is missing or undefined');
+      }
+      
+      try {
+        this.validateObjectId(userId);
+      } catch (error) {
+        console.error('Invalid userId format:', userId);
+        throw new BadRequestException(`Invalid user ID format: ${userId}`);
+      }
+      
+      const savedBookings = [];
+      
+      // Process each booking item one by one
+      for (const item of bookingData.bookingItems) {
+        // Validate serviceId with better error handling
+        if (!item.serviceId) {
+          throw new BadRequestException('Service ID is missing in booking item');
+        }
+        
+        try {
+          this.validateObjectId(item.serviceId);
+        } catch (error) {
+          console.error('Invalid serviceId format:', item.serviceId);
+          throw new BadRequestException(`Invalid service ID format: ${item.serviceId}`);
+        }
+        
+        // Validate service exists and get its price
+        const service = await this.photographyServiceModel.findById(item.serviceId);
+        if (!service) {
+          throw new NotFoundException(`Service with ID ${item.serviceId} not found`);
+        }
+        
+        console.log('PhotographyService - Found service:', service.name, 'price:', service.price);
+        
+        // Create booking document with correct structure
+        // Convert string IDs to MongoDB ObjectId
+        const newBooking = {
+          customerId: new Types.ObjectId(userId),
+          serviceId: new Types.ObjectId(item.serviceId),
+          bookingDate: new Date(),
+          shootingDate: new Date(item.shootingDate),
+          shootingTime: item.shootingTime || '10:00 AM',
+          shootingLocation: item.shootingLocation,
+          additionalRequests: item.additionalRequests || '',
+          status: BookingStatus.CONFIRMED,
+          paymentDetails: {
+            paymentMethod: bookingData.paymentDetails.paymentMethod,
+            totalAmount: service.price,
+            depositAmount: service.price * 0.5,
+            remainingAmount: service.price * 0.5,
+            depositPaid: true,
+            fullyPaid: false
+          }
+        };
+        
+        console.log('PhotographyService - Creating new booking with data:', JSON.stringify(newBooking));
+        
+        // Create and save booking directly
+        const booking = new this.photographyBookingModel(newBooking);
+        const savedBooking = await booking.save();
+        
+        if (!savedBooking) {
+          throw new Error(`Failed to save booking for service ${service.name}`);
+        }
+        
+        console.log('PhotographyService - Successfully saved booking with ID:', savedBooking._id);
+        savedBookings.push(savedBooking);
+      }
+      
+      console.log(`PhotographyService - Successfully created ${savedBookings.length} bookings`);
+      
+      return {
+        success: true,
+        bookings: savedBookings
+      };
+    } catch (error) {
+      console.error('PhotographyService - Error saving photography bookings:', error);
+      throw error;
+    }
+  }
+
   // STATISTICS AND ANALYTICS
 
   async getBookingStatistics() {
@@ -297,6 +389,10 @@ export class PhotographyService {
   // HELPER METHODS
   
   private validateObjectId(id: string): void {
+    if (!id) {
+      throw new BadRequestException(`ID is undefined or empty`);
+    }
+    
     if (!Types.ObjectId.isValid(id)) {
       throw new BadRequestException(`Invalid ID format: ${id}`);
     }

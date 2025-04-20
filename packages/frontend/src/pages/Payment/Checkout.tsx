@@ -361,18 +361,131 @@ const Checkout: React.FC = () => {
       };
       
       let newOrder: Order | null = null;
+      let hasPhotographyItems = false;
+      let hasDressItems = false;
       
       try {
-        // Thử tạo đơn hàng từ backend
-        try {
-          console.log('Attempting to create order from backend...');
-          newOrder = await PaymentApi.createOrder();
-          console.log('Order created from backend:', newOrder);
-        } catch (createOrderError: any) {
-          console.error('Error creating order from backend:', createOrderError);
+        // Check what types of items we have in the order
+        const orderDataStr = localStorage.getItem('currentOrder');
+        if (orderDataStr) {
+          const orderData = JSON.parse(orderDataStr);
           
-          // Nếu không thể tạo đơn hàng từ backend, sử dụng dữ liệu từ localStorage
-          console.log('Creating mock order from localStorage...');
+          // Check for photography items
+          if (orderData && orderData.photographyItems && orderData.photographyItems.length > 0) {
+            hasPhotographyItems = true;
+            console.log('Processing photography bookings...');
+            
+            // Process photography bookings with proper payment method
+            const photographyResult = await processPhotographyBookings(
+              orderData.photographyItems, 
+              paymentMethod
+            );
+            
+            console.log('Photography bookings processed:', photographyResult);
+          }
+          
+          // Check for regular dress items
+          if (orderData && orderData.items && orderData.items.length > 0) {
+            hasDressItems = true;
+          }
+        }
+      
+        // Continue with regular order processing only if we have dress items
+        if (hasDressItems) {
+          try {
+            console.log('Attempting to create order from backend...');
+            newOrder = await PaymentApi.createOrder();
+            console.log('Order created from backend:', newOrder);
+          } catch (createOrderError: any) {
+            console.error('Error creating order from backend:', createOrderError);
+            
+            // Nếu không thể tạo đơn hàng từ backend, sử dụng dữ liệu từ localStorage
+            console.log('Creating mock order from localStorage...');
+            
+            // Lấy dữ liệu từ localStorage
+            const orderDataStr = localStorage.getItem('currentOrder');
+            if (!orderDataStr) {
+              throw new Error('No order data found in localStorage');
+            }
+            
+            const orderData = JSON.parse(orderDataStr);
+            // Check for any items - either regular items or photography items
+            if (!orderData || 
+                (!orderData.items || orderData.items.length === 0) && 
+                (!orderData.photographyItems || orderData.photographyItems.length === 0)) {
+              throw new Error('Invalid order data in localStorage');
+            }
+            
+            // Process items to ensure we have a valid array
+            let processedItems = [];
+            let mockStartDate = new Date();
+            let mockEndDate = new Date();
+            
+            // Add regular dress items if available
+            if (orderData.items && orderData.items.length > 0) {
+              processedItems = [...orderData.items];
+              // Get dates from first dress item if available
+              const firstItem = orderData.items[0];
+              mockStartDate = firstItem.startDate ? new Date(firstItem.startDate) : new Date();
+              mockEndDate = firstItem.endDate ? new Date(firstItem.endDate) : new Date();
+            }
+            
+            // Add photography items if available
+            if (orderData.photographyItems && orderData.photographyItems.length > 0) {
+              // Convert photography items to the right format
+              const processedPhotographyItems = orderData.photographyItems.map(item => ({
+                id: item.serviceId,
+                name: item.serviceName,
+                type: item.serviceType,
+                image: item.imageUrl,
+                price: item.price,
+                quantity: 1,
+                bookingDate: item.bookingDate,
+                location: item.location || 'Default location',
+                isPhotographyService: true
+              }));
+              
+              // Add to processed items
+              processedItems = [...processedItems, ...processedPhotographyItems];
+              
+              // Use booking date for photography items if no dress dates are set
+              if (!orderData.items || orderData.items.length === 0) {
+                const firstPhoto = orderData.photographyItems[0];
+                if (firstPhoto.bookingDate) {
+                  const bookingDate = new Date(firstPhoto.bookingDate);
+                  mockStartDate = bookingDate;
+                  mockEndDate = bookingDate;
+                }
+              }
+            }
+            
+            if (summary === null) {
+              throw new Error('Order summary not calculated');
+            }
+            
+            // Tạo đơn hàng chỉ trên frontend - Sử dụng deposit amount (50%) thay vì full amount
+            newOrder = {
+              _id: 'local_' + Date.now(),
+              userId: 'current_user',
+              items: processedItems,
+              startDate: mockStartDate,
+              endDate: mockEndDate,
+              status: OrderStatus.CONFIRMED,
+              totalAmount: summary.total,
+              depositAmount: summary.initialDeposit || (summary.total * 0.5), // Sử dụng số tiền đặt cọc 50%
+              depositPaid: true, // Đánh dấu đã thanh toán đặt cọc
+              remainingPayment: summary.remainingPayment || (summary.total * 0.5), // Lưu số tiền cần thanh toán còn lại
+              notes: 'Khách hàng đã thanh toán 50% đặt cọc. 50% còn lại sẽ thanh toán khi trả váy.',
+              shippingAddress: shippingAddress || undefined,
+              paymentMethod: paymentMethod,
+              createdAt: new Date()
+            };
+            
+            console.log('Mock order created with 50% deposit:', newOrder);
+          }
+        } else if (hasPhotographyItems && !hasDressItems) {
+          // Create a simple mock order for photography items only
+          console.log('Creating photography-only mock order...');
           
           // Lấy dữ liệu từ localStorage
           const orderDataStr = localStorage.getItem('currentOrder');
@@ -381,79 +494,49 @@ const Checkout: React.FC = () => {
           }
           
           const orderData = JSON.parse(orderDataStr);
-          // Check for any items - either regular items or photography items
-          if (!orderData || 
-              (!orderData.items || orderData.items.length === 0) && 
-              (!orderData.photographyItems || orderData.photographyItems.length === 0)) {
-            throw new Error('Invalid order data in localStorage');
+          if (!orderData.photographyItems || orderData.photographyItems.length === 0) {
+            throw new Error('No photography items found in order data');
           }
           
-          // Process items to ensure we have a valid array
-          let processedItems = [];
-          let mockStartDate = new Date();
-          let mockEndDate = new Date();
+          // Convert photography items to the right format
+          const processedPhotographyItems = orderData.photographyItems.map(item => ({
+            id: item.serviceId,
+            name: item.serviceName,
+            type: item.serviceType,
+            image: item.imageUrl,
+            price: item.price,
+            quantity: 1,
+            bookingDate: item.bookingDate,
+            location: item.location || 'Default location',
+            isPhotographyService: true
+          }));
           
-          // Add regular dress items if available
-          if (orderData.items && orderData.items.length > 0) {
-            processedItems = [...orderData.items];
-            // Get dates from first dress item if available
-            const firstItem = orderData.items[0];
-            mockStartDate = firstItem.startDate ? new Date(firstItem.startDate) : new Date();
-            mockEndDate = firstItem.endDate ? new Date(firstItem.endDate) : new Date();
-          }
+          const totalAmount = processedPhotographyItems.reduce(
+            (sum, item) => sum + (item.price || 0), 0
+          );
           
-          // Add photography items if available
-          if (orderData.photographyItems && orderData.photographyItems.length > 0) {
-            // Convert photography items to the right format
-            const processedPhotographyItems = orderData.photographyItems.map(item => ({
-              id: item.serviceId,
-              name: item.serviceName,
-              type: item.serviceType,
-              image: item.imageUrl,
-              price: item.price,
-              quantity: 1,
-              bookingDate: item.bookingDate,
-              location: item.location || 'Default location',
-              isPhotographyService: true
-            }));
-            
-            // Add to processed items
-            processedItems = [...processedItems, ...processedPhotographyItems];
-            
-            // Use booking date for photography items if no dress dates are set
-            if (!orderData.items || orderData.items.length === 0) {
-              const firstPhoto = orderData.photographyItems[0];
-              if (firstPhoto.bookingDate) {
-                const bookingDate = new Date(firstPhoto.bookingDate);
-                mockStartDate = bookingDate;
-                mockEndDate = bookingDate;
-              }
-            }
-          }
-          
-          if (summary === null) {
-            throw new Error('Order summary not calculated');
-          }
-          
-          // Tạo đơn hàng chỉ trên frontend - Sử dụng deposit amount (50%) thay vì full amount
+          // Create simple mock order for UI display only
           newOrder = {
-            _id: 'local_' + Date.now(),
+            _id: 'photo_' + Date.now(),
             userId: 'current_user',
-            items: processedItems,
-            startDate: mockStartDate,
-            endDate: mockEndDate,
+            items: processedPhotographyItems,
+            startDate: new Date(),
+            endDate: new Date(),
             status: OrderStatus.CONFIRMED,
-            totalAmount: summary.total,
-            depositAmount: summary.initialDeposit || (summary.total * 0.5), // Sử dụng số tiền đặt cọc 50%
-            depositPaid: true, // Đánh dấu đã thanh toán đặt cọc
-            remainingPayment: summary.remainingPayment || (summary.total * 0.5), // Lưu số tiền cần thanh toán còn lại
-            notes: 'Khách hàng đã thanh toán 50% đặt cọc. 50% còn lại sẽ thanh toán khi trả váy.',
+            totalAmount: totalAmount,
+            depositAmount: totalAmount * 0.5,
+            depositPaid: true,
+            remainingPayment: totalAmount * 0.5,
+            notes: 'Photography services booking confirmed',
             shippingAddress: shippingAddress || undefined,
             paymentMethod: paymentMethod,
             createdAt: new Date()
           };
           
-          console.log('Mock order created with 50% deposit:', newOrder);
+          console.log('Photography-only mock order created:', newOrder);
+        } else {
+          console.error('No items found in cart (neither dresses nor photography services)');
+          throw new Error('Your cart is empty. Please add items before checkout.');
         }
         
         // Giả lập xử lý thanh toán (không cần gọi API, vì backend có vấn đề)
@@ -481,6 +564,126 @@ const Checkout: React.FC = () => {
       setShowErrorModal(true);
     } finally {
       setIsProcessingPayment(false);
+    }
+  };
+  
+  // Add new function to process photography bookings
+  const processPhotographyBookings = async (photographyItems: any[], paymentMethod: PaymentMethod) => {
+    try {
+      console.log('Processing photography bookings:', photographyItems);
+      
+      // Ensure we have valid photography items
+      if (!photographyItems || photographyItems.length === 0) {
+        console.error('No photography items to process');
+        throw new Error('No photography items to process');
+      }
+      
+      // Validate items have proper serviceId
+      photographyItems.forEach((item, index) => {
+        if (!item.serviceId && !item.id) {
+          console.error(`Missing serviceId in photography item at index ${index}:`, item);
+          throw new Error('Missing service ID in photography item');
+        }
+      });
+      
+      // Transform items to the format expected by the API
+      const bookingItems = photographyItems.map(item => ({
+        serviceId: item.serviceId || item.id, // Ensure we have serviceId
+        shootingDate: item.bookingDate || new Date().toISOString(),
+        shootingTime: '10:00 AM', // Default or from user input
+        shootingLocation: item.location || 'Studio',
+        additionalRequests: item.additionalRequests || ''
+      }));
+      
+      console.log('Transformed booking items:', bookingItems);
+      
+      // Additional validation for serviceId
+      bookingItems.forEach((item, index) => {
+        if (!item.serviceId) {
+          console.error(`Missing serviceId in transformed booking item at index ${index}:`, item);
+          throw new Error('Missing service ID in transformed booking item');
+        }
+      });
+      
+      // Calculate totals
+      const totalAmount = photographyItems.reduce((sum, item) => sum + (item.price || 0), 0);
+      
+      // Create booking request
+      const bookingRequest = {
+        bookingItems,
+        paymentDetails: {
+          paymentMethod,
+          totalAmount,
+          depositAmount: totalAmount * 0.5,
+          remainingAmount: totalAmount * 0.5
+        },
+        shippingAddress
+      };
+      
+      console.log('Sending photography booking request to backend:', JSON.stringify(bookingRequest));
+      
+      try {
+        // Send to backend
+        const response = await axios.post(
+          'http://localhost:3000/photography/bookings/confirm-after-payment',
+          bookingRequest,
+          { withCredentials: true }
+        );
+        
+        console.log('Photography bookings created successfully:', response.data);
+        return response.data;
+      } catch (apiError) {
+        console.error('Error creating photography bookings with API:', apiError);
+        console.error('Error details:', apiError.response?.data || 'No response data');
+        
+        // When in production mode, throw the error to be handled by caller
+        if (process.env.NODE_ENV === 'production') {
+          throw apiError;
+        }
+        
+        // Fallback to mock response if API fails (for development)
+        console.log('Creating mock photography bookings instead...');
+        
+        // Create mock booking data
+        const mockBookings = bookingItems.map((item, index) => {
+          const matchingItem = photographyItems.find(p => p.serviceId === item.serviceId || p.id === item.serviceId);
+          if (!matchingItem) {
+            console.error(`Cannot find matching photography item for booking item at index ${index}:`, item);
+            throw new Error('Cannot find matching photography item for booking');
+          }
+          
+          return {
+            _id: `mock_booking_${Date.now()}_${index}`,
+            customerId: 'current_user',
+            serviceId: {
+              _id: item.serviceId,
+              name: matchingItem.serviceName || matchingItem.name,
+              price: matchingItem.price,
+              packageType: matchingItem.serviceType || matchingItem.type
+            },
+            bookingDate: new Date(),
+            shootingDate: new Date(item.shootingDate),
+            shootingTime: item.shootingTime,
+            shootingLocation: item.shootingLocation,
+            status: 'Confirmed',
+            paymentDetails: {
+              paymentMethod,
+              totalAmount: matchingItem.price,
+              depositAmount: matchingItem.price * 0.5,
+              remainingAmount: matchingItem.price * 0.5,
+              depositPaid: true
+            }
+          };
+        });
+        
+        return {
+          success: true,
+          bookings: mockBookings
+        };
+      }
+    } catch (error) {
+      console.error('Photography booking processing error:', error);
+      throw error;
     }
   };
   
