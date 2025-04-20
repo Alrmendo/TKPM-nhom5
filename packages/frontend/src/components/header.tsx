@@ -236,7 +236,7 @@ const Header: React.FC<NavigationProps> = ({ isSticky = false }) => {
 
         {/* Mobile Menu Dropdown - Positioned Absolutely */}
         <div
-          className={`md:hidden absolute top-25 left-0 right-0 bg-[#fdfcf9] border border-[#EAEAEA] rounded-lg mt-2 shadow-lg transition-all duration-300 overflow-hidden z-50 ${
+          className={`md:hidden absolute top-32 left-0 right-0 bg-[#fdfcf9] border border-[#EAEAEA] rounded-lg mt-2 shadow-lg transition-all duration-300 overflow-hidden z-50 ${
             isMenuOpen
               ? 'max-h-screen opacity-100'
               : 'max-h-0 opacity-0 pointer-events-none'

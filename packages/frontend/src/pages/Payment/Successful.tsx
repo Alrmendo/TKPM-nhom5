@@ -1,7 +1,19 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 
 const Successful: React.FC = () => {
+
+  useEffect(() => {
+    // Clean up all temporary checkout data
+    localStorage.removeItem('currentOrder');
+    localStorage.removeItem('photography_cart_items');
+    localStorage.removeItem('photography_items_in_process');
+    sessionStorage.removeItem('shippingAddress');
+    
+    // Other cleanup that might be needed
+    console.log('Cleaned up checkout data after successful payment');
+  }, []);
+  
   return (
     <div className="container mx-auto px-4 py-12 max-w-4xl">
       <div className="bg-white rounded-lg shadow-lg p-8 text-center">

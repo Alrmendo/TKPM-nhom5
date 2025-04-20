@@ -278,10 +278,13 @@ export class AdminController {
         status: 'pending'
       });
 
+      // Chỉ tính doanh thu từ các đơn hàng đã thanh toán và không bị hủy
       const orderRevenue = await this.orderModel.aggregate([
         {
           $match: {
-            createdAt: { $gte: startDate.toDate(), $lte: endDate.toDate() }
+            createdAt: { $gte: startDate.toDate(), $lte: endDate.toDate() },
+            paymentStatus: 'paid',  // Chỉ tính các đơn hàng đã thanh toán
+            status: { $ne: 'cancelled' }  // Loại trừ các đơn hàng bị hủy
           }
         },
         {
@@ -311,10 +314,13 @@ export class AdminController {
         status: 'pending'
       });
 
+      // Chỉ tính doanh thu từ các đơn hàng đã thanh toán và không bị hủy (cho giai đoạn trước)
       const previousRevenue = await this.orderModel.aggregate([
         {
           $match: {
-            createdAt: { $gte: previousStartDate.toDate(), $lte: previousEndDate.toDate() }
+            createdAt: { $gte: previousStartDate.toDate(), $lte: previousEndDate.toDate() },
+            paymentStatus: 'paid',  // Chỉ tính các đơn hàng đã thanh toán
+            status: { $ne: 'cancelled' }  // Loại trừ các đơn hàng bị hủy
           }
         },
         {
@@ -452,6 +458,252 @@ export class AdminController {
       return {
         success: false,
         message: error.message || 'Failed to fetch top products'
+      };
+    }
+  }
+
+  @Post('sizes')
+  @Roles('admin')
+  async createSize(@Body() data: { label: string }) {
+    try {
+      const { label } = data;
+      
+      if (!label || label.trim() === '') {
+        throw new HttpException('Size label is required', HttpStatus.BAD_REQUEST);
+      }
+      
+      // Kiểm tra size đã tồn tại chưa
+      const existingSize = await this.sizeModel.findOne({ label }).exec();
+      if (existingSize) {
+        throw new HttpException('Size already exists', HttpStatus.CONFLICT);
+      }
+      
+      const newSize = new this.sizeModel({ label });
+      const savedSize = await newSize.save();
+      
+      return {
+        success: true,
+        data: savedSize,
+        message: 'Size created successfully'
+      };
+    } catch (error) {
+      return {
+        success: false,
+        message: error.message || 'Failed to create size',
+        status: error instanceof HttpException ? error.getStatus() : HttpStatus.INTERNAL_SERVER_ERROR
+      };
+    }
+  }
+  
+  @Put('sizes/:id')
+  @Roles('admin')
+  async updateSize(@Param('id') id: string, @Body() data: { label: string }) {
+    try {
+      const { label } = data;
+      
+      if (!label || label.trim() === '') {
+        throw new HttpException('Size label is required', HttpStatus.BAD_REQUEST);
+      }
+      
+      // Kiểm tra size tồn tại không
+      const size = await this.sizeModel.findById(id).exec();
+      if (!size) {
+        throw new NotFoundException('Size not found');
+      }
+      
+      // Kiểm tra tên mới đã tồn tại chưa (nếu khác với tên hiện tại)
+      if (size.label !== label) {
+        const existingSize = await this.sizeModel.findOne({ label }).exec();
+        if (existingSize) {
+          throw new HttpException('Size with this label already exists', HttpStatus.CONFLICT);
+        }
+      }
+      
+      size.label = label;
+      const updatedSize = await size.save();
+      
+      return {
+        success: true,
+        data: updatedSize,
+        message: 'Size updated successfully'
+      };
+    } catch (error) {
+      return {
+        success: false,
+        message: error.message || 'Failed to update size',
+        status: error instanceof HttpException ? error.getStatus() : HttpStatus.INTERNAL_SERVER_ERROR
+      };
+    }
+  }
+  
+  @Delete('sizes/:id')
+  @Roles('admin')
+  async deleteSize(@Param('id') id: string) {
+    try {
+      // Kiểm tra size tồn tại không
+      const size = await this.sizeModel.findById(id).exec();
+      if (!size) {
+        throw new NotFoundException('Size not found');
+      }
+      
+      // Kiểm tra xem size này có đang được sử dụng trong bất kỳ dress nào không
+      const usedInDress = await this.dressModel.exists({
+        'variants.size': id
+      });
+      
+      if (usedInDress) {
+        throw new HttpException('Cannot delete size that is used by dresses', HttpStatus.CONFLICT);
+      }
+      
+      await this.sizeModel.findByIdAndDelete(id).exec();
+      
+      return {
+        success: true,
+        message: 'Size deleted successfully'
+      };
+    } catch (error) {
+      return {
+        success: false,
+        message: error.message || 'Failed to delete size',
+        status: error instanceof HttpException ? error.getStatus() : HttpStatus.INTERNAL_SERVER_ERROR
+      };
+    }
+  }
+  
+  @Post('colors')
+  @Roles('admin')
+  async createColor(@Body() data: { name: string; hexCode: string }) {
+    try {
+      const { name, hexCode } = data;
+      
+      if (!name || name.trim() === '') {
+        throw new HttpException('Color name is required', HttpStatus.BAD_REQUEST);
+      }
+      
+      if (!hexCode || !/^#[0-9A-F]{6}$/i.test(hexCode)) {
+        throw new HttpException('Valid hex code is required (format: #RRGGBB)', HttpStatus.BAD_REQUEST);
+      }
+      
+      // Kiểm tra color đã tồn tại chưa
+      const existingColor = await this.colorModel.findOne({ 
+        $or: [{ name }, { hexCode }] 
+      }).exec();
+      
+      if (existingColor) {
+        throw new HttpException(
+          `Color with this ${existingColor.name === name ? 'name' : 'hex code'} already exists`, 
+          HttpStatus.CONFLICT
+        );
+      }
+      
+      const newColor = new this.colorModel({ name, hexCode });
+      const savedColor = await newColor.save();
+      
+      return {
+        success: true,
+        data: savedColor,
+        message: 'Color created successfully'
+      };
+    } catch (error) {
+      return {
+        success: false,
+        message: error.message || 'Failed to create color',
+        status: error instanceof HttpException ? error.getStatus() : HttpStatus.INTERNAL_SERVER_ERROR
+      };
+    }
+  }
+  
+  @Put('colors/:id')
+  @Roles('admin')
+  async updateColor(@Param('id') id: string, @Body() data: { name?: string; hexCode?: string }) {
+    try {
+      const { name, hexCode } = data;
+      
+      // Kiểm tra ít nhất một trường được cung cấp
+      if ((!name || name.trim() === '') && (!hexCode || hexCode.trim() === '')) {
+        throw new HttpException('Either name or hex code must be provided', HttpStatus.BAD_REQUEST);
+      }
+      
+      // Kiểm tra format của hex code nếu được cung cấp
+      if (hexCode && !/^#[0-9A-F]{6}$/i.test(hexCode)) {
+        throw new HttpException('Valid hex code is required (format: #RRGGBB)', HttpStatus.BAD_REQUEST);
+      }
+      
+      // Kiểm tra color tồn tại không
+      const color = await this.colorModel.findById(id).exec();
+      if (!color) {
+        throw new NotFoundException('Color not found');
+      }
+      
+      // Kiểm tra tên mới hoặc mã màu mới đã tồn tại chưa
+      if ((name && name !== color.name) || (hexCode && hexCode !== color.hexCode)) {
+        const query: any = { _id: { $ne: id } };
+        
+        if (name && name !== color.name) {
+          query.name = name;
+        }
+        
+        if (hexCode && hexCode !== color.hexCode) {
+          query.hexCode = hexCode;
+        }
+        
+        const existingColor = await this.colorModel.findOne(query).exec();
+        if (existingColor) {
+          const dupField = existingColor.name === name ? 'name' : 'hex code';
+          throw new HttpException(`Color with this ${dupField} already exists`, HttpStatus.CONFLICT);
+        }
+      }
+      
+      // Cập nhật thông tin
+      if (name) color.name = name;
+      if (hexCode) color.hexCode = hexCode;
+      
+      const updatedColor = await color.save();
+      
+      return {
+        success: true,
+        data: updatedColor,
+        message: 'Color updated successfully'
+      };
+    } catch (error) {
+      return {
+        success: false,
+        message: error.message || 'Failed to update color',
+        status: error instanceof HttpException ? error.getStatus() : HttpStatus.INTERNAL_SERVER_ERROR
+      };
+    }
+  }
+  
+  @Delete('colors/:id')
+  @Roles('admin')
+  async deleteColor(@Param('id') id: string) {
+    try {
+      // Kiểm tra color tồn tại không
+      const color = await this.colorModel.findById(id).exec();
+      if (!color) {
+        throw new NotFoundException('Color not found');
+      }
+      
+      // Kiểm tra xem color này có đang được sử dụng trong bất kỳ dress nào không
+      const usedInDress = await this.dressModel.exists({
+        'variants.color': id
+      });
+      
+      if (usedInDress) {
+        throw new HttpException('Cannot delete color that is used by dresses', HttpStatus.CONFLICT);
+      }
+      
+      await this.colorModel.findByIdAndDelete(id).exec();
+      
+      return {
+        success: true,
+        message: 'Color deleted successfully'
+      };
+    } catch (error) {
+      return {
+        success: false,
+        message: error.message || 'Failed to delete color',
+        status: error instanceof HttpException ? error.getStatus() : HttpStatus.INTERNAL_SERVER_ERROR
       };
     }
   }

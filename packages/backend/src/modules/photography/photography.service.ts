@@ -222,6 +222,78 @@ export class PhotographyService {
     return updatedBooking;
   }
 
+  // STATISTICS AND ANALYTICS
+
+  async getBookingStatistics() {
+    // Total bookings
+    const totalBookings = await this.photographyBookingModel.countDocuments();
+    
+    // Bookings by status
+    const statusCounts = await this.photographyBookingModel.aggregate([
+      { $group: { _id: '$status', count: { $sum: 1 } } }
+    ]);
+    
+    // Organize status counts
+    const bookingsByStatus = {};
+    statusCounts.forEach(item => {
+      bookingsByStatus[item._id] = item.count;
+    });
+    
+    // Bookings by package type (requires a lookup to get the package type)
+    const bookingsByPackageType = await this.photographyBookingModel.aggregate([
+      {
+        $lookup: {
+          from: 'photographyservices',
+          localField: 'serviceId',
+          foreignField: '_id',
+          as: 'service'
+        }
+      },
+      { $unwind: '$service' },
+      { $group: { _id: '$service.packageType', count: { $sum: 1 } } }
+    ]);
+    
+    // Bookings by month (for the current year)
+    const currentYear = new Date().getFullYear();
+    const bookingsByMonth = await this.photographyBookingModel.aggregate([
+      {
+        $match: {
+          $expr: {
+            $eq: [{ $year: '$bookingDate' }, currentYear]
+          }
+        }
+      },
+      {
+        $group: {
+          _id: { $month: '$bookingDate' },
+          count: { $sum: 1 }
+        }
+      },
+      { $sort: { _id: 1 } }
+    ]);
+    
+    // Recent bookings
+    const recentBookings = await this.photographyBookingModel.find()
+      .populate('serviceId')
+      .populate('customerId', 'name email')
+      .sort({ bookingDate: -1 })
+      .limit(5)
+      .exec();
+      
+    // Average bookings per month
+    const avgBookingsPerMonth = totalBookings / 12; // Simple calculation, can be improved
+    
+    // Return compiled statistics
+    return {
+      totalBookings,
+      bookingsByStatus,
+      bookingsByPackageType,
+      bookingsByMonth,
+      recentBookings,
+      avgBookingsPerMonth
+    };
+  }
+
   // HELPER METHODS
   
   private validateObjectId(id: string): void {

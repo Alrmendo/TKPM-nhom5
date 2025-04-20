@@ -76,6 +76,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
     { text: 'Appointments', path: '/admin/appointments', icon: <CalendarMonth /> },
     { text: 'Contacts', path: '/admin/contacts', icon: <ContactMail /> },
     { text: 'Photography', path: '/admin/photography', icon: <Photo /> },
+    { text: 'Photography Stats', path: '/admin/photography-statistics', icon: <BarChart /> },
     { text: 'Customer Fitting', path: '/admin/customer-fitting', icon: <FeaturedPlayList /> },
     { text: 'Statistics', path: '/admin/statistics', icon: <BarChart /> },
     { text: 'Settings', path: '/admin/settings', icon: <Settings /> },

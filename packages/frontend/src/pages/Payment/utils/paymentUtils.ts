@@ -48,12 +48,15 @@ export const calculateOrderSummary = (
   const tax = calculateTax(subtotal, taxRate);
   const shipping = calculateShipping(subtotal);
   const total = subtotal + tax + shipping;
+  const initialDeposit = total * 0.5; // 50% deposit
   
   return {
     subtotal,
     tax,
     shipping,
     total,
+    initialDeposit,
+    remainingPayment: total - initialDeposit,
     currency: 'USD',
   };
 };

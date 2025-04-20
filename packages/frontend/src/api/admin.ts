@@ -201,6 +201,42 @@ export const getTopProducts = async (limit: number = 5): Promise<TopProduct[]> =
   }
 };
 
+// Photography booking statistics interfaces
+export interface PhotographyBooking {
+  _id: string;
+  customerId: any; // Could be expanded to a User object when populated
+  serviceId: any; // Could be expanded to a PhotographyService object when populated
+  bookingDate: string;
+  shootingDate: string;
+  shootingTime: string;
+  shootingLocation: string;
+  additionalRequests?: string;
+  status: 'Pending' | 'Confirmed' | 'Cancelled' | 'Completed';
+  notes?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface PhotographyBookingStatistics {
+  totalBookings: number;
+  bookingsByStatus: Record<string, number>;
+  bookingsByPackageType: Array<{_id: string; count: number}>;
+  bookingsByMonth: Array<{_id: number; count: number}>;
+  recentBookings: PhotographyBooking[];
+  avgBookingsPerMonth: number;
+}
+
+// Get photography booking statistics
+export const getPhotographyBookingStatistics = async (): Promise<PhotographyBookingStatistics> => {
+  try {
+    const response = await API.get('/admin/photography/bookings/statistics');
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching photography booking statistics:', error);
+    throw error;
+  }
+};
+
 // Contact API functions
 export const getAllContacts = async () => {
   try {

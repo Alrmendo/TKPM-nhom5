@@ -8,6 +8,7 @@ import { useAuth } from '../../context/AuthContext';
 import { getUserProfile } from '../../api/user';
 import { getUserOrders, cancelOrder } from '../../api/order';
 import { getCart, clearCart } from '../../api/cart';
+import { getPhotographyCart } from '../../api/photographyCart';
 import { UserProfile } from '../../api/user';
 import { format, differenceInDays } from 'date-fns';
 import { toast } from 'react-hot-toast';
@@ -100,6 +101,7 @@ const CurrentOrdersPage: React.FC = () => {
                 arrivalDate: new Date(order.arrivalDate || order.startDate).toLocaleDateString(),
                 returnDate: new Date(order.returnDate || order.endDate).toLocaleDateString(),
                 status: mappedStatus,
+                purchaseType: firstItem.purchaseType || 'rent', // Lấy thông tin loại giao dịch từ đơn hàng
               });
             }
           });
@@ -131,12 +133,41 @@ const CurrentOrdersPage: React.FC = () => {
                   arrivalDate: format(startDate, 'MM/dd/yyyy'),
                   returnDate: format(endDate, 'MM/dd/yyyy'),
                   status: 'pending',
-                  isCartItem: true
+                  isCartItem: true,
+                  purchaseType: item.purchaseType || 'rent'  // Lấy thông tin loại giao dịch từ giỏ hàng
                 });
               });
             }
           } catch (cartErr) {
             console.error('Error fetching cart:', cartErr);
+          }
+          
+          // Get photography cart items and display them in Current Orders
+          try {
+            const photographyItems = getPhotographyCart();
+            console.log('Found photography items in cart:', photographyItems);
+            
+            if (photographyItems && photographyItems.length > 0) {
+              // Add photography items as "pending" orders
+              photographyItems.forEach((item, index) => {
+                formattedOrders.push({
+                  id: `photography-item-${index}`,
+                  name: item.serviceName,
+                  image: item.imageUrl,
+                  size: item.serviceType,
+                  color: item.location || 'Standard',
+                  rentalDuration: 'Photography Service',
+                  arrivalDate: new Date(item.bookingDate).toLocaleDateString(),
+                  returnDate: new Date(item.bookingDate).toLocaleDateString(),
+                  status: 'pending',
+                  isCartItem: true,
+                  isPhotographyService: true,
+                  purchaseType: 'service'
+                });
+              });
+            }
+          } catch (photoCartErr) {
+            console.error('Error fetching photography cart:', photoCartErr);
           }
         }
         

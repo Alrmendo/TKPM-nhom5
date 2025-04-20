@@ -49,37 +49,236 @@ const Shipping: React.FC = () => {
   
   // Fetch cart data and get shipping address from session storage
   useEffect(() => {
+    console.log('Shipping component mounted');
+    
     const fetchData = async () => {
+      console.log('Shipping - fetchData starting');
       try {
         setIsLoading(true);
         
         // Get shipping address from session storage
         const savedAddress = sessionStorage.getItem('shippingAddress');
-        if (!savedAddress) {
-          setError('No shipping address found');
-          setTimeout(() => {
-            navigate('/payment-information');
-          }, 2000);
-          return;
+        console.log('Retrieved from sessionStorage - shippingAddress:', savedAddress);
+        
+        let addressData = null;
+        if (savedAddress) {
+          try {
+            addressData = JSON.parse(savedAddress);
+            setShippingAddress(addressData);
+          } catch (e) {
+            console.error('Error parsing shipping address from session storage:', e);
+            // Continue without redirecting, we'll try to recover
+          }
         }
         
-        setShippingAddress(JSON.parse(savedAddress));
+        if (!addressData) {
+          console.warn('No valid shipping address found in sessionStorage or failed to parse');
+          // Instead of immediate redirect, we'll continue loading cart data
+          // and only redirect if we have no fallback mechanism
+          
+          // Check if we can get address data from localStorage as a fallback
+          const userProfile = localStorage.getItem('user_profile');
+          if (userProfile) {
+            try {
+              const profileData = JSON.parse(userProfile);
+              if (profileData && profileData.defaultAddress) {
+                console.log('Using default address from user profile as fallback');
+                setShippingAddress(profileData.defaultAddress);
+                // Also save to session storage for future steps
+                sessionStorage.setItem('shippingAddress', JSON.stringify(profileData.defaultAddress));
+                addressData = profileData.defaultAddress;
+              }
+            } catch (e) {
+              console.error('Error accessing fallback address:', e);
+            }
+          }
+          
+          // If we still have no address data after fallback attempts, redirect
+          if (!addressData) {
+            setError('No shipping address found');
+            setTimeout(() => {
+              navigate('/payment-information');
+            }, 2000);
+            return;
+          }
+        }
         
-        // Fetch cart data
+        // Kiểm tra dữ liệu đơn hàng trong localStorage trước
+        const orderDataStr = localStorage.getItem('currentOrder');
+        console.log('Retrieved from localStorage - currentOrder:', orderDataStr);
+        
+        if (orderDataStr) {
+          try {
+            const orderData = JSON.parse(orderDataStr);
+            console.log('Order data from localStorage in Shipping page:', orderData);
+            
+            let hasItems = false;
+            
+            // Check for regular dress items
+            if (orderData && orderData.items && orderData.items.length > 0) {
+              setCartItems(orderData.items);
+              hasItems = true;
+              
+              const firstItem = orderData.items[0];
+              let itemStartDate = firstItem.startDate ? new Date(firstItem.startDate) : new Date();
+              let itemEndDate = firstItem.endDate ? new Date(firstItem.endDate) : new Date();
+              
+              // Đảm bảo ngày hợp lệ
+              if (isNaN(itemStartDate.getTime())) itemStartDate = new Date();
+              if (isNaN(itemEndDate.getTime())) itemEndDate = new Date();
+              
+              const calculatedSummary = calculateOrderSummary(
+                orderData.items,
+                itemStartDate,
+                itemEndDate
+              );
+              setSummary(calculatedSummary);
+              
+              // Cập nhật shipping cost dựa trên lựa chọn hiện tại
+              const selectedOption = shippingOptions.find(option => option.id === selectedShippingOption);
+              if (selectedOption) {
+                setSummary(prevSummary => ({
+                  ...prevSummary,
+                  shipping: selectedOption.price,
+                  total: prevSummary.subtotal + prevSummary.tax + selectedOption.price
+                }));
+              }
+            }
+            
+            // Check for photography items
+            if (orderData && orderData.photographyItems && orderData.photographyItems.length > 0) {
+              console.log('Photography items found in order:', orderData.photographyItems);
+              console.log('Current hasItems status:', hasItems);
+              
+              // Convert photography items to cart item format
+              const processedPhotographyItems = orderData.photographyItems.map((item) => ({
+                id: item.serviceId,
+                name: item.serviceName,
+                type: item.serviceType,
+                image: item.imageUrl,
+                price: item.price,
+                quantity: 1,
+                bookingDate: item.bookingDate,
+                location: item.location || 'Default location',
+                isPhotographyService: true
+              }));
+              
+              console.log('Processed photography items:', processedPhotographyItems);
+              
+              // If we already have dress items, merge the arrays; otherwise, set cartItems directly
+              if (hasItems) {
+                setCartItems(prev => [...prev, ...processedPhotographyItems]);
+              } else {
+                setCartItems(processedPhotographyItems);
+              }
+              
+              hasItems = true;
+              
+              // Calculate summary for photography services
+              const totalAmount = processedPhotographyItems.reduce(
+                (sum, item) => sum + (item.price || 0), 0
+              );
+              
+              console.log('Photography items total amount:', totalAmount);
+              
+              // Update the summary with photography items
+              setSummary(prev => {
+                const updatedSummary = {...prev};
+                updatedSummary.subtotal += totalAmount;
+                updatedSummary.tax += totalAmount * 0.1; // 10% tax
+                updatedSummary.total = updatedSummary.subtotal + updatedSummary.tax;
+                
+                // Apply current shipping option
+                const selectedOption = shippingOptions.find(option => option.id === selectedShippingOption);
+                if (selectedOption) {
+                  updatedSummary.shipping = selectedOption.price;
+                  updatedSummary.total += selectedOption.price;
+                }
+                
+                console.log('Updated summary with photography items:', updatedSummary);
+                return updatedSummary;
+              });
+            }
+            
+            // If we have any items (dress or photography), exit early
+            if (hasItems) {
+              console.log('Items found in cart, proceeding with checkout');
+              setIsLoading(false);
+              return; // Thoát luôn nếu đã có dữ liệu trong localStorage
+            } else {
+              console.error('No items found in order data');
+            }
+          } catch (e) {
+            console.error('Error parsing order data from localStorage:', e);
+          }
+        }
+        
+        // Nếu không có dữ liệu trong localStorage, thực hiện logic cũ
         const cartResponse = await axios.get('http://localhost:3000/cart', { withCredentials: true });
         
         if (cartResponse.data.success && cartResponse.data.data) {
-          setCartItems(cartResponse.data.data.items || []);
+          const cartItems = cartResponse.data.data.items || [];
           
-          // Calculate order summary if there are items
-          if (cartResponse.data.data.items && cartResponse.data.data.items.length > 0) {
-            const firstItem = cartResponse.data.data.items[0];
+          // Chuyển đổi dữ liệu giỏ hàng thành định dạng đơn hàng
+          const processedItems = cartItems.map((item: any) => {
+            return {
+              dressId: typeof item.dress === 'object' ? item.dress._id : (item.dressId || item.dress),
+              name: typeof item.dress === 'object' ? item.dress.name : item.name,
+              image: typeof item.dress === 'object' && item.dress.images ? item.dress.images[0] : item.image,
+              size: typeof item.size === 'object' ? item.size.name : item.sizeName,
+              color: typeof item.color === 'object' ? item.color.name : item.colorName,
+              quantity: item.quantity,
+              pricePerDay: typeof item.dress === 'object' && item.dress.dailyRentalPrice ? 
+                item.dress.dailyRentalPrice : (item.pricePerDay || 0),
+              startDate: item.startDate,
+              endDate: item.endDate
+            };
+          });
+          
+          if (processedItems.length > 0) {
+            const firstItem = processedItems[0];
+            // Sử dụng startDate và endDate từ giỏ hàng hoặc giá trị mặc định
+            const today = new Date();
+            const tomorrow = new Date(today);
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            
+            let itemStartDate = firstItem.startDate ? new Date(firstItem.startDate) : today;
+            let itemEndDate = firstItem.endDate ? new Date(firstItem.endDate) : tomorrow;
+            
+            // Đảm bảo ngày hợp lệ
+            if (isNaN(itemStartDate.getTime())) itemStartDate = today;
+            if (isNaN(itemEndDate.getTime())) itemEndDate = tomorrow;
+            
             const calculatedSummary = calculateOrderSummary(
-              cartResponse.data.data.items,
-              new Date(firstItem.startDate),
-              new Date(firstItem.endDate)
+              processedItems,
+              itemStartDate,
+              itemEndDate
             );
+            
             setSummary(calculatedSummary);
+            
+            // Cập nhật shipping cost dựa trên lựa chọn hiện tại
+            const selectedOption = shippingOptions.find(option => option.id === selectedShippingOption);
+            if (selectedOption) {
+              setSummary(prevSummary => ({
+                ...prevSummary,
+                shipping: selectedOption.price,
+                total: prevSummary.subtotal + prevSummary.tax + selectedOption.price
+              }));
+            }
+            
+            // Lưu dữ liệu đã xử lý vào localStorage
+            const orderData = {
+              items: processedItems
+            };
+            localStorage.setItem('currentOrder', JSON.stringify(orderData));
+            setCartItems(processedItems);
+          } else {
+            setError('No items in cart');
+            setTimeout(() => {
+              navigate('/cart');
+            }, 2000);
+            return;
           }
         } else {
           setError('No items in cart');
@@ -88,10 +287,11 @@ const Shipping: React.FC = () => {
           }, 2000);
           return;
         }
+        
+        setIsLoading(false);
       } catch (error) {
         console.error('Error fetching data:', error);
         setError('Failed to load required data');
-      } finally {
         setIsLoading(false);
       }
     };
@@ -157,6 +357,25 @@ const Shipping: React.FC = () => {
           <h2 className="text-2xl font-semibold mb-4">Error</h2>
           <p className="text-gray-600 mb-6">{error}</p>
           <p className="text-gray-600 mb-6">Redirecting...</p>
+        </div>
+      </div>
+    );
+  }
+  
+  // Add extra validation - if we somehow got here with no items, show an error
+  if (!isLoading && cartItems.length === 0) {
+    return (
+      <div className="container mx-auto px-4 py-8 max-w-6xl">
+        <CheckoutSteps currentStep="shipping" completedSteps={['review', 'information']} />
+        <div className="bg-white rounded-lg shadow-md p-8 text-center">
+          <h2 className="text-2xl font-semibold mb-4">No items in your cart</h2>
+          <p className="text-gray-600 mb-6">Your cart appears to be empty. Please add some items before checkout.</p>
+          <button 
+            onClick={() => navigate('/cart')}
+            className="bg-[#c3937c] text-white px-6 py-2 rounded hover:bg-[#a67c66] transition-colors"
+          >
+            Return to cart
+          </button>
         </div>
       </div>
     );
@@ -264,33 +483,67 @@ const Shipping: React.FC = () => {
             
             <div className="divide-y divide-gray-200">
               {cartItems.map((item, index) => {
-                // Calculate days
-                const startDate = new Date(item.startDate);
-                const endDate = new Date(item.endDate);
+                // Check if this is a photography service
+                if (item.isPhotographyService) {
+                  return (
+                    <div key={index} className="py-4 flex items-center">
+                      <div className="h-16 w-16 flex-shrink-0 overflow-hidden rounded-md border border-gray-200 relative">
+                        <img
+                          src={item.image}
+                          alt={item.name}
+                          className="h-full w-full object-cover object-center"
+                        />
+                        <span className="absolute -top-2 -right-2 h-6 w-6 rounded-full bg-[#c3937c] text-white text-xs flex items-center justify-center">
+                          {item.quantity || 1}
+                        </span>
+                      </div>
+                      
+                      <div className="ml-4 flex-1">
+                        <h3 className="text-sm font-medium text-gray-900">{item.name}</h3>
+                        <p className="text-xs text-gray-500">{item.type}</p>
+                        <p className="text-xs text-gray-500">
+                          {item.bookingDate ? new Date(item.bookingDate).toLocaleDateString() : 'No date'} - {item.location}
+                        </p>
+                      </div>
+                      
+                      <div className="text-right">
+                        <p className="text-sm font-medium text-gray-900">
+                          {formatCurrency(item.price)}
+                        </p>
+                      </div>
+                    </div>
+                  );
+                }
+                
+                // Regular dress items
+                const startDate = item.startDate ? new Date(item.startDate) : new Date();
+                const endDate = item.endDate ? new Date(item.endDate) : new Date();
                 const days = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)) + 1;
                 
                 return (
                   <div key={index} className="py-4 flex items-center">
                     <div className="h-16 w-16 flex-shrink-0 overflow-hidden rounded-md border border-gray-200 relative">
                       <img
-                        src={item.image}
-                        alt={item.name}
+                        src={item.image || 'https://via.placeholder.com/150'}
+                        alt={item.name || 'Product'}
                         className="h-full w-full object-cover object-center"
                       />
                       <span className="absolute -top-2 -right-2 h-6 w-6 rounded-full bg-[#c3937c] text-white text-xs flex items-center justify-center">
-                        {item.quantity}
+                        {item.quantity || 1}
                       </span>
                     </div>
                     
                     <div className="ml-4 flex-1">
-                      <h3 className="text-sm font-medium text-gray-900">{item.name}</h3>
-                      <p className="text-xs text-gray-500">{item.sizeName} · {item.colorName}</p>
+                      <h3 className="text-sm font-medium text-gray-900">{item.name || 'Product'}</h3>
+                      {item.sizeName && item.colorName && (
+                        <p className="text-xs text-gray-500">{item.sizeName} · {item.colorName}</p>
+                      )}
                       <p className="text-xs text-gray-500">{days} days rental</p>
                     </div>
                     
                     <div className="text-right">
                       <p className="text-sm font-medium text-gray-900">
-                        {formatCurrency(item.pricePerDay * days * item.quantity)}
+                        {formatCurrency((item.pricePerDay || 0) * days * (item.quantity || 1))}
                       </p>
                     </div>
                   </div>
@@ -333,4 +586,4 @@ const Shipping: React.FC = () => {
   );
 };
 
-export default Shipping; 
+export default Shipping;

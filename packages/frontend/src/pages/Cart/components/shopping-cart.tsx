@@ -20,6 +20,7 @@ interface CartItem {
     _id: string;
     name: string;
     dailyRentalPrice?: number;  // Make this optional
+    purchasePrice?: number;     // Add purchase price for buying items
     images?: string[];
   } | string;  // The dress could also be just an ID string
   dressId?: string;  // In case it's stored directly
@@ -38,7 +39,8 @@ interface CartItem {
   colorId?: string;
   colorName?: string;
   quantity: number;
-  pricePerDay?: number;  // Add this field from the backend
+  pricePerDay?: number;      // Add this field from the backend
+  purchaseType?: 'buy' | 'rent'; // Distinguish between buying and renting
   startDate: string;
   endDate: string;
 }
@@ -235,20 +237,43 @@ export const ShoppingCart: React.FC = () => {
         return;
       }
       
+      // Chuyển đổi dữ liệu giỏ hàng sang định dạng phù hợp cho trang Review
+      const convertedCartItems = cartItems.map(item => {
+        // Chuyển đổi từ định dạng CartItem sang OrderItem
+        return {
+          dressId: typeof item.dress === 'object' ? item.dress._id : item.dressId || item.dress,
+          name: typeof item.dress === 'object' ? item.dress.name : item.name,
+          image: typeof item.dress === 'object' && item.dress.images ? item.dress.images[0] : item.image,
+          size: typeof item.size === 'object' ? item.size.name : item.sizeName,
+          color: typeof item.color === 'object' ? item.color.name : item.colorName,
+          quantity: item.quantity,
+          pricePerDay: typeof item.dress === 'object' ? item.dress.dailyRentalPrice : item.pricePerDay,
+          startDate: item.startDate,
+          endDate: item.endDate
+        };
+      });
+      
+      // Lưu dữ liệu đã chuyển đổi vào localStorage
+      const orderData = {
+        items: convertedCartItems,
+        photographyItems: photographyItems
+      };
+      localStorage.setItem('currentOrder', JSON.stringify(orderData));
+      
       // Create order with backend items first
       if (cartItems.length > 0) {
         await createOrder();
       }
       
-      // For now, we'll just clear the photography cart from localStorage
-      // In a real implementation, these should be sent to the backend
+      // For photography items, don't remove them yet but mark them as being processed
       if (photographyItems.length > 0) {
-        localStorage.removeItem('photography_cart_items');
+        // Mark that we've processed these items, but keep them in storage
+        localStorage.setItem('photography_items_in_process', 'true');
       }
       
       // Show success and navigate
       toast.success('Order created successfully!');
-      navigate('/order-success');
+      navigate('/payment-review');
     } catch (error: any) {
       console.error('Failed to create order:', error);
       toast.error(error.message || 'Failed to create order. Please try again.');
@@ -287,9 +312,16 @@ export const ShoppingCart: React.FC = () => {
   // Calculate total for a single item
   const calculateItemTotal = (item: CartItem): number => {
     try {
-      const rentalDays = getRentalDays(item);
-      const pricePerDay = getPricePerDay(item);
-      return pricePerDay * rentalDays * item.quantity;
+      if (item.purchaseType === 'buy') {
+        // Nếu mua sản phẩm, giá mua = giá thuê hàng ngày * 10 (hoặc lấy giá mua nếu có)
+        const purchasePrice = getPricePerDay(item) * 10; // Giá mặc định nếu không có giá mua
+        return purchasePrice * item.quantity;
+      } else {
+        // Nếu thuê sản phẩm, tính theo số ngày thuê
+        const rentalDays = getRentalDays(item);
+        const pricePerDay = getPricePerDay(item);
+        return pricePerDay * rentalDays * item.quantity;
+      }
     } catch (err) {
       console.error('Error calculating item total:', err, item);
       return 0;
@@ -354,12 +386,23 @@ export const ShoppingCart: React.FC = () => {
                     <div className="mt-4 space-y-1 text-[#404040]">
                       <p>Size: {getSizeName(item)}</p>
                       <p>Color: {getColorName(item)}</p>
-                      <p>Price: ${getPricePerDay(item)} per night</p>
-                      <p>
-                        Rental fee for {getRentalDays(item)} nights: $
-                        {calculateItemTotal(item)}
-                      </p>
-                      <p>Quantity: {item.quantity}</p>
+                      {item.purchaseType === 'buy' ? (
+                        <>
+                          <p>Loại giao dịch: <span className="font-medium text-[#c3937c]">Mua sản phẩm</span></p>
+                          <p>Giá: ${getPricePerDay(item) * 10} (giá mua)</p>
+                          <p>Tổng: ${calculateItemTotal(item)}</p>
+                        </>
+                      ) : (
+                        <>
+                          <p>Loại giao dịch: <span className="font-medium text-[#c3937c]">Thuê sản phẩm</span></p>
+                          <p>Giá thuê: ${getPricePerDay(item)} mỗi ngày</p>
+                          <p>
+                            Phí thuê cho {getRentalDays(item)} ngày: $
+                            {calculateItemTotal(item)}
+                          </p>
+                        </>
+                      )}
+                      <p>Số lượng: {item.quantity}</p>
                     </div>
                   </div>
 
@@ -374,37 +417,68 @@ export const ShoppingCart: React.FC = () => {
                 </div>
 
                 <div className="mt-6 flex flex-col md:flex-row gap-4">
-                  <div className="flex items-center gap-2 bg-[#f8f3ee] rounded-full px-4 py-2">
-                    <span className="text-[#c3937c]">
-                      <i className="fas fa-calendar text-sm"></i>
-                    </span>
-                    <span>Arrives: {format(new Date(item.startDate), 'dd/MM/yyyy')}</span>
-                    <span className="mx-2">|</span>
-                    <span className="text-[#c3937c]">
-                      <i className="fas fa-clock text-sm"></i>
-                    </span>
-                    <span>Time: 8 to 10 am</span>
-                  </div>
-
-                  <div className="flex items-center gap-2 bg-[#f8f3ee] rounded-full px-4 py-2">
-                    <span className="text-[#c3937c]">
-                      <i className="fas fa-calendar text-sm"></i>
-                    </span>
-                    <span>Returns: {format(new Date(item.endDate), 'dd/MM/yyyy')}</span>
-                    <span className="mx-2">|</span>
-                    <span className="text-[#c3937c]">
-                      <i className="fas fa-clock text-sm"></i>
-                    </span>
-                    <span>Time: 8 to 10 am</span>
-                  </div>
+                  {item.purchaseType === 'buy' ? (
+                    <div className="flex items-center gap-2 bg-[#f8f3ee] rounded-full px-4 py-2">
+                      <span className="text-[#c3937c]">
+                        Ngày giao hàng:
+                      </span>
+                      <span>
+                        {new Date(item.startDate).toLocaleDateString('vi-VN', {
+                          day: '2-digit',
+                          month: '2-digit',
+                          year: 'numeric'
+                        })}
+                      </span>
+                      <span className="mx-1">|</span>
+                      <span>
+                        Thời gian: 8 - 10 giờ sáng
+                      </span>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="flex items-center gap-2 bg-[#f8f3ee] rounded-full px-4 py-2">
+                        <span className="text-[#c3937c]">
+                          Ngày nhận:
+                        </span>
+                        <span>
+                          {new Date(item.startDate).toLocaleDateString('vi-VN', {
+                            day: '2-digit',
+                            month: '2-digit',
+                            year: 'numeric'
+                          })}
+                        </span>
+                        <span className="mx-1">|</span>
+                        <span>
+                          Thời gian: 8 - 10 giờ sáng
+                        </span>
+                      </div>
+                      
+                      <div className="flex items-center gap-2 bg-[#f8f3ee] rounded-full px-4 py-2">
+                        <span className="text-[#c3937c]">
+                          Ngày trả:
+                        </span>
+                        <span>
+                          {new Date(item.endDate).toLocaleDateString('vi-VN', {
+                            day: '2-digit',
+                            month: '2-digit',
+                            year: 'numeric'
+                          })}
+                        </span>
+                        <span className="mx-1">|</span>
+                        <span>
+                          Thời gian: 8 - 10 giờ sáng
+                        </span>
+                      </div>
+                    </>
+                  )}
                 </div>
 
                 {editingItem === item._id ? (
                   <div className="mt-4 space-y-4">
-                    <div className="flex flex-col md:flex-row gap-4">
-                      <div className="relative">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
                         <DatePicker
-                          label="Start Date"
+                          label={item.purchaseType === 'buy' ? "Ngày giao hàng" : "Ngày nhận"}
                           selectedDate={newStartDate || new Date(item.startDate)}
                           onDateChange={handleStartDateChange}
                           showPicker={showStartDatePicker}
@@ -412,49 +486,51 @@ export const ShoppingCart: React.FC = () => {
                           minDate={new Date()}
                         />
                       </div>
-                      <div className="relative">
-                        <DatePicker
-                          label="End Date"
-                          selectedDate={newEndDate || new Date(item.endDate)}
-                          onDateChange={handleEndDateChange}
-                          showPicker={showEndDatePicker}
-                          onPickerChange={setShowEndDatePicker}
-                          minDate={newStartDate || new Date(item.startDate)}
-                        />
-                      </div>
+                      {item.purchaseType !== 'buy' && (
+                        <div>
+                          <DatePicker
+                            label="Ngày trả"
+                            selectedDate={newEndDate || new Date(item.endDate)}
+                            onDateChange={handleEndDateChange}
+                            showPicker={showEndDatePicker}
+                            onPickerChange={setShowEndDatePicker}
+                            minDate={newStartDate || new Date(item.startDate)}
+                          />
+                        </div>
+                      )}
                     </div>
-                    <div className="flex gap-2">
+                    <div className="flex gap-2 justify-end">
                       <button
-                        className="bg-[#c3937c] hover:bg-[#a67563] text-white px-4 py-2 rounded-md"
-                        onClick={() => handleUpdateDates(index)}
-                      >
-                        Update Dates
-                      </button>
-                      <button
-                        className="border border-gray-300 px-4 py-2 rounded-md"
+                        className="px-4 py-2 border border-gray-300 rounded-md text-gray-600"
                         onClick={() => {
                           setEditingItem(null);
                           setNewStartDate(null);
                           setNewEndDate(null);
                         }}
                       >
-                        Cancel
+                        Hủy
+                      </button>
+                      <button
+                        className="px-4 py-2 bg-[#c3937c] text-white rounded-md"
+                        onClick={() => handleUpdateDates(index)}
+                      >
+                        {item.purchaseType === 'buy' ? 'Cập nhật ngày giao' : 'Cập nhật ngày thuê'}
                       </button>
                     </div>
                   </div>
                 ) : (
-                <div className="mt-4">
-                    <button 
-                      className="text-[#c3937c] hover:text-[#a67563] font-medium"
+                  <div className="mt-4">
+                    <button
+                      className="text-[#c3937c] font-medium underline"
                       onClick={() => {
                         setEditingItem(item._id);
                         setNewStartDate(new Date(item.startDate));
                         setNewEndDate(new Date(item.endDate));
                       }}
                     >
-                    Change Date
-                  </button>
-                </div>
+                      {item.purchaseType === 'buy' ? 'Thay đổi ngày giao' : 'Thay đổi ngày thuê'}
+                    </button>
+                  </div>
                 )}
               </div>
             </div>
@@ -511,13 +587,7 @@ export const ShoppingCart: React.FC = () => {
                         minDate={new Date()}
                       />
                     </div>
-                    <div className="flex gap-2">
-                      <button
-                        className="bg-[#c3937c] hover:bg-[#a67563] text-white px-4 py-2 rounded-md"
-                        onClick={() => handleUpdatePhotoDate(item.serviceId)}
-                      >
-                        Update Date
-                      </button>
+                    <div className="flex gap-2 justify-end">
                       <button
                         className="border border-gray-300 px-4 py-2 rounded-md"
                         onClick={() => {
@@ -525,7 +595,13 @@ export const ShoppingCart: React.FC = () => {
                           setNewPhotoDate(null);
                         }}
                       >
-                        Cancel
+                        Hủy
+                      </button>
+                      <button
+                        className="bg-[#c3937c] hover:bg-[#a67563] text-white px-4 py-2 rounded-md"
+                        onClick={() => handleUpdatePhotoDate(item.serviceId)}
+                      >
+                        Cập nhật ngày
                       </button>
                     </div>
                   </div>
@@ -555,7 +631,10 @@ export const ShoppingCart: React.FC = () => {
           {cartItems.map((item) => (
             <div key={item._id} className="flex justify-between">
               <span>
-                {getDressName(item)} ({getRentalDays(item)} nights)
+                {getDressName(item)}
+                {item.quantity > 1 && ` (x${item.quantity})`}
+                {item.purchaseType === 'rent' && ` (${getRentalDays(item)} ngày)`}
+                {item.purchaseType === 'buy' && ` (Mua)`}
               </span>
               <span>${calculateItemTotal(item)}</span>
             </div>

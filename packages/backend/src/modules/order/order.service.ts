@@ -43,7 +43,8 @@ export class OrderService {
         size: item.sizeName,
         color: item.colorName,
         quantity: item.quantity,
-        pricePerDay: item.pricePerDay
+        pricePerDay: item.pricePerDay,
+        purchaseType: item.purchaseType || 'rent'  // Thêm trường purchaseType
       });
       
       // Update dress stock
@@ -73,8 +74,8 @@ export class OrderService {
       totalAmount
     });
     
-    // Clear cart after successful order creation
-    await this.cartService.clearCart(userId);
+    // Không xóa giỏ hàng khi tạo đơn hàng để người dùng có thể quay lại
+    // await this.cartService.clearCart(userId);
     
     return order;
   }
@@ -179,4 +180,233 @@ export class OrderService {
       { new: true }
     );
   }
-} 
+
+  async updatePaymentStatus(orderId: string, paymentStatus: string): Promise<Order> {
+    const order = await this.getOrderById(orderId);
+    
+    console.log(`Updating payment status for order ${orderId} to ${paymentStatus}`);
+    
+    // Perform payment status-specific operations if needed
+    if (paymentStatus === 'paid') {
+      // Handle paid logic - could trigger shipping, notify user, etc.
+      console.log(`Order ${orderId} payment marked as paid`);
+    } else if (paymentStatus === 'refunded') {
+      // Handle refund logic - could update inventory, etc.
+      console.log(`Order ${orderId} payment marked as refunded`);
+    }
+    
+    // Update the payment status
+    return await this.orderModel.findByIdAndUpdate(
+      orderId,
+      { paymentStatus: paymentStatus },
+      { new: true }
+    );
+  }
+  
+  // Xử lý đơn hàng trả lại
+  async processReturn(orderId: string, returnData: {
+    condition: 'perfect' | 'good' | 'damaged',
+    damageDescription?: string,
+    additionalCharges?: number,
+    sendPaymentReminder: boolean
+  }): Promise<Order> {
+    try {
+      console.log(`Processing return for order ${orderId}`, returnData);
+      const order = await this.getOrderById(orderId);
+      
+      // Kiểm tra các điều kiện hợp lệ
+      if (order.status === OrderStatus.RETURNED) {
+        throw new Error('Order has already been returned');
+      }
+      
+      if (returnData.condition === 'damaged' && !returnData.damageDescription) {
+        throw new Error('Damage description is required for damaged items');
+      }
+      
+      // Tính toán phí phụ thu (additional charges) nếu có
+      let remainingPayment = 0;
+      if (returnData.additionalCharges && returnData.additionalCharges > 0) {
+        remainingPayment = returnData.additionalCharges;
+      }
+      
+      // Cập nhật trạng thái đơn hàng
+      const updatedOrder = await this.orderModel.findByIdAndUpdate(
+        orderId,
+        {
+          status: OrderStatus.RETURNED,
+          returnCondition: returnData.condition,
+          damageDescription: returnData.damageDescription || '',
+          additionalCharges: returnData.additionalCharges || 0,
+          remainingPayment: remainingPayment,
+          returnDate: new Date()
+        },
+        { new: true }
+      );
+      
+      // Gửi email nhắc nhở thanh toán (nếu có)
+      if (returnData.sendPaymentReminder && remainingPayment > 0) {
+        // Logic gửi email ở đây
+        console.log(`Sending payment reminder email for order ${orderId} with remaining payment of ${remainingPayment}`);
+        // TODO: Implement email sending
+      }
+      
+      // Trả về kết quả
+      return updatedOrder;
+    } catch (error) {
+      console.error(`Error processing return for order ${orderId}:`, error);
+      throw error;
+    }
+  }
+
+  // Phương thức tra cứu đơn hàng theo mã đơn hàng
+  async trackOrder(orderCode: string): Promise<any> {
+    try {
+      console.log(`Tìm kiếm đơn hàng với mã đơn hàng: ${orderCode}`);
+      // Tìm đơn hàng bằng mã đơn hàng
+      const order = await this.orderModel.findOne({ orderNumber: orderCode })
+        .populate({
+          path: 'userId',
+          select: 'name email firstName lastName username'
+        })
+        .populate({
+          path: 'items.dressId',
+          select: 'name images'
+        })
+        .exec();
+      
+      if (!order) {
+        throw new NotFoundException(`Không tìm thấy đơn hàng với mã '${orderCode}'`);
+      }
+      
+      // Chuyển document Mongoose thành JavaScript object
+      const orderData = JSON.parse(JSON.stringify(order));
+      
+      // Xử lý và định dạng dữ liệu trả về cho API
+      return this.formatOrderTracking(orderData);
+    } catch (error) {
+      console.error(`Lỗi khi tìm đơn hàng theo mã ${orderCode}:`, error);
+      throw error;
+    }
+  }
+  
+  // Phương thức tra cứu đơn hàng theo số điện thoại
+  async trackOrderByPhone(phone: string): Promise<any[]> {
+    try {
+      console.log(`Tìm kiếm đơn hàng với số điện thoại: ${phone}`);
+      // Chuẩn hóa số điện thoại để tìm kiếm (loại bỏ dấu cách, dấu +, dấu gạch nối)
+      const formattedPhone = phone.replace(/[\s+\-]/g, '');
+      
+      // Tìm kiếm đơn hàng có số điện thoại này trong phần shippingAddress
+      const query = { 'shippingAddress.phone': { $regex: formattedPhone, $options: 'i' } };
+      
+      console.log('Query:', JSON.stringify(query));
+      
+      // Tìm các đơn hàng có số điện thoại này
+      const orders = await this.orderModel.find(query)
+        .populate({
+          path: 'userId',
+          select: 'name email firstName lastName username phone'
+        })
+        .populate({
+          path: 'items.dressId',
+          select: 'name images'
+        })
+        .sort({ createdAt: -1 })
+        .exec();
+      
+      console.log(`Tìm thấy ${orders.length} đơn hàng`);
+        
+      if (!orders || orders.length === 0) {
+        throw new NotFoundException(`Không tìm thấy đơn hàng với số điện thoại '${phone}'`);
+      }
+      
+      // Chuyển và định dạng mỗi đơn hàng tìm được
+      const formattedOrders = orders.map(order => {
+        const orderData = JSON.parse(JSON.stringify(order));
+        return this.formatOrderTracking(orderData, phone);
+      });
+      
+      return formattedOrders;
+    } catch (error) {
+      console.error(`Lỗi khi tìm đơn hàng theo số điện thoại ${phone}:`, error);
+      throw error;
+    }
+  }
+  
+  // Phương thức định dạng dữ liệu đơn hàng cho API theo dõi
+  private formatOrderTracking(orderData: any, phone?: string): any {
+    // Tạo dữ liệu trạng thái vận chuyển
+    let trackingStatus = 'processing';
+    let trackingInfo = null;
+    
+    // Map trạng thái đơn hàng sang trạng thái tiến trình
+    switch (orderData.status) {
+      case OrderStatus.PENDING:
+        trackingStatus = 'processing';
+        break;
+      case OrderStatus.CONFIRMED:
+        trackingStatus = 'packed';
+        break;
+      case OrderStatus.SHIPPED:
+        trackingStatus = 'shipped';
+        break;
+      case OrderStatus.DELIVERED:
+        trackingStatus = 'delivered';
+        break;
+      case OrderStatus.RETURNED:
+        trackingStatus = 'returned';
+        break;
+      default:
+        trackingStatus = 'processing';
+    }
+    
+    // Nếu đơn hàng đã được giao hoặc đang được vận chuyển, tạo thông tin vận chuyển
+    if (orderData.status === OrderStatus.SHIPPED || 
+        orderData.status === OrderStatus.DELIVERED || 
+        orderData.status === OrderStatus.RETURNED) {
+      trackingInfo = {
+        trackingNumber: orderData.trackingNumber || `TK-${orderData.orderNumber?.substring(0, 6) || '000000'}`,
+        carrier: 'VietNam Express',
+        deliveryDate: orderData.arrivalDate || 
+                    (orderData.status === OrderStatus.DELIVERED ? new Date() : null)
+      };
+    }
+    
+    // Lấy thông tin người dùng (nếu có)
+    const userData = orderData.userId || {};
+    const userName = userData.firstName && userData.lastName 
+      ? `${userData.firstName} ${userData.lastName}` 
+      : userData.name || userData.username || 'Unknown';
+    
+    // Định dạng các item trong đơn hàng
+    const formattedItems = Array.isArray(orderData.items) ? orderData.items.map(item => {
+      return {
+        id: item._id || 'unknown',
+        orderCode: orderData.orderNumber,
+        productName: item.name || 'Unknown Product',
+        quantity: item.quantity || 1,
+        price: item.pricePerDay || 0,
+        status: orderData.status
+      };
+    }) : [];
+    
+    // Trả về dữ liệu được định dạng
+    return {
+      orderCode: orderData.orderNumber || `ORD-${orderData._id?.substring(0, 6) || '000000'}`,
+      status: trackingStatus,
+      trackingInfo,
+      createdAt: orderData.createdAt || new Date(),
+      updatedAt: orderData.updatedAt || new Date(),
+      totalAmount: orderData.totalAmount || 0,
+      items: formattedItems,
+      customerInfo: {
+        name: userName,
+        email: userData.email || 'Unknown',
+        address: orderData.shippingAddress ? 
+              `${orderData.shippingAddress.address || ''}, ${orderData.shippingAddress.city || ''}, ${orderData.shippingAddress.province || ''}` : 
+              'No address provided',
+        phone: orderData.shippingAddress?.phone || phone || 'Unknown'
+      }
+    };
+  }
+}

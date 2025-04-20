@@ -34,6 +34,8 @@ export interface OrderSummary {
   tax: number;
   shipping: number;
   total: number;
+  initialDeposit: number; // 50% deposit amount
+  remainingPayment: number; // 50% remaining to be paid after returning
   currency: string;
 }
 
@@ -64,6 +66,8 @@ export interface Order {
   returnDate?: Date;
   status: OrderStatus;
   totalAmount: number;
+  depositPaid?: boolean; // Flag to indicate if deposit is paid
+  remainingPayment?: number; // Amount remaining to be paid
   notes?: string;
   shippingAddress?: Address;
   paymentMethod?: PaymentMethod;
@@ -72,17 +76,29 @@ export interface Order {
 }
 
 export interface CartItem {
-  dressId: string;
+  // Common properties
   name: string;
   image: string;
-  sizeId: string;
-  sizeName: string;
-  colorId: string;
-  colorName: string;
   quantity: number;
-  pricePerDay: number;
-  startDate: Date;
-  endDate: Date;
+  
+  // Dress rental specific properties
+  dressId?: string;
+  sizeId?: string;
+  sizeName?: string;
+  colorId?: string;
+  colorName?: string;
+  pricePerDay?: number;
+  startDate?: Date;
+  endDate?: Date;
   arrivalDate?: Date;
   returnDate?: Date;
+  
+  // Photography service specific properties
+  isPhotographyService?: boolean;
+  serviceId?: string;
+  serviceName?: string;
+  type?: string;
+  price?: number;
+  bookingDate?: string | Date;
+  location?: string;
 } 

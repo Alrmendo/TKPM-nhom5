@@ -6,10 +6,20 @@ export type OrderDocument = Order & Document;
 export enum OrderStatus {
   PENDING = 'pending',
   CONFIRMED = 'confirmed',
-  CANCELLED = 'cancelled',
+  SHIPPED = 'shipped',
   DELIVERED = 'delivered',
+  CANCELLED = 'cancelled',
   RETURNED = 'returned',
   UNDER_REVIEW = 'under-review'
+}
+
+export enum PaymentStatus {
+  PENDING = 'pending',
+  PROCESSING = 'processing',
+  PAID = 'paid',
+  FAILED = 'failed',
+  REFUNDED = 'refunded',
+  PARTIALLY_REFUNDED = 'partially_refunded'
 }
 
 @Schema()
@@ -34,6 +44,9 @@ export class OrderItem {
 
   @Prop({ required: true })
   pricePerDay: number;
+  
+  @Prop({ type: String, default: 'rent', enum: ['rent', 'buy'] })
+  purchaseType: string;
 }
 
 export const OrderItemSchema = SchemaFactory.createForClass(OrderItem);
@@ -98,6 +111,9 @@ export class Order {
   @Prop({ type: Types.ObjectId, ref: 'User', required: true })
   userId: Types.ObjectId;
 
+  @Prop()
+  orderNumber: string;
+
   @Prop({ 
     type: [{ 
       type: OrderItemSchema 
@@ -121,8 +137,23 @@ export class Order {
   @Prop({ enum: OrderStatus, default: OrderStatus.PENDING })
   status: OrderStatus;
 
+  @Prop({ enum: PaymentStatus, default: PaymentStatus.PENDING })
+  paymentStatus: PaymentStatus;
+
   @Prop({ required: true })
   totalAmount: number;
+  
+  @Prop()
+  remainingPayment: number;
+  
+  @Prop({ enum: ['perfect', 'good', 'damaged'] })
+  returnCondition: string;
+  
+  @Prop()
+  damageDescription: string;
+  
+  @Prop()
+  additionalCharges: number;
 
   @Prop()
   notes: string;
@@ -134,4 +165,4 @@ export class Order {
   paymentMethod: PaymentMethod;
 }
 
-export const OrderSchema = SchemaFactory.createForClass(Order); 
+export const OrderSchema = SchemaFactory.createForClass(Order);
