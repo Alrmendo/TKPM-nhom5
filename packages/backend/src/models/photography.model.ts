@@ -1,6 +1,7 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, Schema as MongooseSchema } from 'mongoose';
 import { User } from './entities/user.entity';
+import { PaymentMethod, PaymentMethodSchema } from './entities/order.entity';
 
 export enum PhotographyPackageType {
   PRE_WEDDING = 'Pre-Wedding',
@@ -64,6 +65,29 @@ export class PhotographyService extends Document {
   features: string[];
 }
 
+@Schema()
+export class PaymentDetails {
+  @Prop({ type: PaymentMethodSchema })
+  paymentMethod: PaymentMethod;
+
+  @Prop({ required: true })
+  totalAmount: number;
+  
+  @Prop({ required: true })
+  depositAmount: number;
+  
+  @Prop({ required: true })
+  remainingAmount: number;
+  
+  @Prop({ default: true })
+  depositPaid: boolean;
+  
+  @Prop({ default: false })
+  fullyPaid: boolean;
+}
+
+export const PaymentDetailsSchema = SchemaFactory.createForClass(PaymentDetails);
+
 @Schema({ timestamps: true })
 export class PhotographyBooking extends Document {
   @Prop({ required: true, type: MongooseSchema.Types.ObjectId, ref: 'User' })
@@ -96,6 +120,9 @@ export class PhotographyBooking extends Document {
 
   @Prop()
   notes: string;
+  
+  @Prop({ type: PaymentDetailsSchema })
+  paymentDetails: PaymentDetails;
 }
 
 export const PhotographyServiceSchema = SchemaFactory.createForClass(PhotographyService);
