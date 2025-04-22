@@ -1,4 +1,4 @@
-import { IsArray, IsDateString, IsEnum, IsMongoId, IsNotEmpty, IsNumber, IsOptional, IsString } from 'class-validator';
+import { IsArray, IsDateString, IsEnum, IsMongoId, IsNotEmpty, IsNumber, IsObject, IsOptional, IsString, ValidateNested } from 'class-validator';
 import { PhotographyPackageType, PhotographyServiceStatus, BookingStatus } from '../../../models/photography.model';
 import { Type } from 'class-transformer';
 
@@ -154,4 +154,61 @@ export class PhotographyBookingQueryDto {
   @IsOptional()
   @IsEnum(BookingStatus)
   status?: BookingStatus;
+}
+
+export class PhotoServiceBookingItem {
+  @IsNotEmpty()
+  @IsMongoId()
+  serviceId: string;
+
+  @IsNotEmpty()
+  @IsDateString()
+  shootingDate: string;
+
+  @IsOptional()
+  @IsString()
+  shootingTime?: string;
+
+  @IsNotEmpty()
+  @IsString()
+  shootingLocation: string;
+
+  @IsOptional()
+  @IsString()
+  additionalRequests?: string;
+}
+
+export class PaymentDetailsDto {
+  @IsNotEmpty()
+  @IsObject()
+  paymentMethod: any;
+
+  @IsNotEmpty()
+  @IsNumber()
+  totalAmount: number;
+
+  @IsNotEmpty()
+  @IsNumber()
+  depositAmount: number;
+
+  @IsNotEmpty()
+  @IsNumber()
+  remainingAmount: number;
+}
+
+export class CreatePhotographyBookingWithPaymentDto {
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => PhotoServiceBookingItem)
+  bookingItems: PhotoServiceBookingItem[];
+
+  @IsNotEmpty()
+  @IsObject()
+  @ValidateNested()
+  @Type(() => PaymentDetailsDto)
+  paymentDetails: PaymentDetailsDto;
+
+  @IsNotEmpty()
+  @IsObject()
+  shippingAddress: any; // Same structure as order address
 }

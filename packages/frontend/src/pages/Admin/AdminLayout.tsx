@@ -128,7 +128,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
             <MenuIcon />
           </IconButton>
           <Typography variant="h6" noWrap component="div" sx={{ flexGrow: 1 }}>
-            Wedding Dress Management
+            Photography Bookings Management
           </Typography>
           <IconButton
             size="large"
