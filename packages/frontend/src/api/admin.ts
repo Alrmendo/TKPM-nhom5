@@ -237,6 +237,17 @@ export const getPhotographyBookingStatistics = async (): Promise<PhotographyBook
   }
 };
 
+// Update photography booking status
+export const updatePhotographyBookingStatus = async (bookingId: string, status: string): Promise<PhotographyBooking> => {
+  try {
+    const response = await API.put(`/admin/photography/bookings/${bookingId}/status`, { status });
+    return response.data;
+  } catch (error) {
+    console.error('Error updating photography booking status:', error);
+    throw error;
+  }
+};
+
 // Contact API functions
 export const getAllContacts = async () => {
   try {

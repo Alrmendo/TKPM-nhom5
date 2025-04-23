@@ -13,17 +13,24 @@ import {
   TableHead,
   TableRow,
   Chip,
-  Divider
+  Divider,
+  Menu,
+  MenuItem,
+  Button,
+  IconButton,
+  Snackbar,
+  Alert
 } from '@mui/material';
 import { 
   CameraAlt, 
   CheckCircle, 
   Cancel, 
   Schedule, 
-  Done
+  Done,
+  MoreVert
 } from '@mui/icons-material';
 import { Bar, Pie } from 'react-chartjs-2';
-import { getPhotographyBookingStatistics, PhotographyBookingStatistics } from '../../api/admin';
+import { getPhotographyBookingStatistics, updatePhotographyBookingStatus, PhotographyBookingStatistics } from '../../api/admin';
 import AdminLayout from './AdminLayout';
 import { 
   Chart as ChartJS, 
@@ -67,6 +74,9 @@ const statusColors = {
   'Completed': '#2196F3'
 };
 
+// Available status options
+const statusOptions = ['Pending', 'Confirmed', 'Cancelled', 'Completed'];
+
 // Month names
 const monthNames = [
   'Tháng 1', 'Tháng 2', 'Tháng 3', 'Tháng 4', 'Tháng 5', 'Tháng 6',
@@ -77,22 +87,34 @@ const PhotographyStatistics: React.FC = () => {
   const [statistics, setStatistics] = useState<PhotographyBookingStatistics | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  
+  // Add state for status menu
+  const [statusMenuAnchorEl, setStatusMenuAnchorEl] = useState<null | HTMLElement>(null);
+  const [selectedBookingId, setSelectedBookingId] = useState<string | null>(null);
+  
+  // Add state for snackbar
+  const [snackbar, setSnackbar] = useState({
+    open: false,
+    message: '',
+    severity: 'success' as 'success' | 'error' | 'info' | 'warning'
+  });
+
+  // Fetch statistics function
+  const fetchStatistics = async () => {
+    try {
+      setLoading(true);
+      const data = await getPhotographyBookingStatistics();
+      setStatistics(data);
+      setError(null);
+    } catch (err) {
+      console.error('Error fetching statistics:', err);
+      setError('Không thể tải dữ liệu thống kê. Vui lòng thử lại sau.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchStatistics = async () => {
-      try {
-        setLoading(true);
-        const data = await getPhotographyBookingStatistics();
-        setStatistics(data);
-        setError(null);
-      } catch (err) {
-        console.error('Error fetching statistics:', err);
-        setError('Không thể tải dữ liệu thống kê. Vui lòng thử lại sau.');
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchStatistics();
   }, []);
 
@@ -186,6 +208,54 @@ const PhotographyStatistics: React.FC = () => {
     }
   };
 
+  // Handle opening the status menu
+  const handleStatusMenuOpen = (event: React.MouseEvent<HTMLElement>, bookingId: string) => {
+    setStatusMenuAnchorEl(event.currentTarget);
+    setSelectedBookingId(bookingId);
+  };
+
+  // Handle closing the status menu
+  const handleStatusMenuClose = () => {
+    setStatusMenuAnchorEl(null);
+    setSelectedBookingId(null);
+  };
+
+  // Handle changing booking status
+  const handleChangeStatus = async (newStatus: string) => {
+    if (!selectedBookingId) return;
+    
+    try {
+      await updatePhotographyBookingStatus(selectedBookingId, newStatus);
+      
+      // Close menu
+      handleStatusMenuClose();
+      
+      // Show success message
+      setSnackbar({
+        open: true,
+        message: `Trạng thái đơn đặt chụp đã được cập nhật thành ${newStatus}`,
+        severity: 'success'
+      });
+      
+      // Refresh statistics
+      fetchStatistics();
+    } catch (err) {
+      console.error('Error updating booking status:', err);
+      
+      // Show error message
+      setSnackbar({
+        open: true,
+        message: 'Không thể cập nhật trạng thái đơn đặt chụp',
+        severity: 'error'
+      });
+    }
+  };
+
+  // Handle closing snackbar
+  const handleSnackbarClose = () => {
+    setSnackbar(prev => ({ ...prev, open: false }));
+  };
+
   if (loading) {
     return (
       <AdminLayout>
@@ -252,6 +322,20 @@ const PhotographyStatistics: React.FC = () => {
                     <Typography variant="h4">{statistics?.bookingsByStatus?.Confirmed || 0}</Typography>
                   </div>
                   <CheckCircle fontSize="large" />
+                </Box>
+              </CardContent>
+            </Card>
+          </Box>
+          
+          <Box sx={{ flex: '1 1 200px', minWidth: '200px' }}>
+            <Card sx={{ bgcolor: statusColors.Cancelled, color: 'white' }}>
+              <CardContent>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <div>
+                    <Typography variant="body2">Đơn bị hủy</Typography>
+                    <Typography variant="h4">{statistics?.bookingsByStatus?.Cancelled || 0}</Typography>
+                  </div>
+                  <Cancel fontSize="large" />
                 </Box>
               </CardContent>
             </Card>
@@ -402,6 +486,7 @@ const PhotographyStatistics: React.FC = () => {
                   <TableCell>Ngày chụp</TableCell>
                   <TableCell>Địa điểm</TableCell>
                   <TableCell>Trạng thái</TableCell>
+                  <TableCell>Thao tác</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -430,11 +515,19 @@ const PhotographyStatistics: React.FC = () => {
                           size="small"
                         />
                       </TableCell>
+                      <TableCell>
+                        <IconButton 
+                          size="small"
+                          onClick={(e) => handleStatusMenuOpen(e, booking._id)}
+                        >
+                          <MoreVert />
+                        </IconButton>
+                      </TableCell>
                     </TableRow>
                   ))
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={7} align="center">
+                    <TableCell colSpan={8} align="center">
                       Không có đơn đặt chụp gần đây
                     </TableCell>
                   </TableRow>
@@ -444,6 +537,59 @@ const PhotographyStatistics: React.FC = () => {
           </TableContainer>
         </Paper>
       </Box>
+
+      {/* Status Change Menu */}
+      <Menu
+        anchorEl={statusMenuAnchorEl}
+        open={Boolean(statusMenuAnchorEl)}
+        onClose={handleStatusMenuClose}
+      >
+        <Typography variant="subtitle2" sx={{ px: 2, py: 1, fontWeight: 'bold' }}>
+          Thay đổi trạng thái
+        </Typography>
+        <Divider />
+        {statusOptions.map((status) => (
+          <MenuItem
+            key={status}
+            onClick={() => handleChangeStatus(status)}
+            sx={{
+              '&:hover': {
+                bgcolor: `${statusColors[status as keyof typeof statusColors]}20`,
+              }
+            }}
+          >
+            <Box sx={{ display: 'flex', alignItems: 'center' }}>
+              {getStatusIcon(status)}
+              <Typography 
+                variant="body2" 
+                sx={{ 
+                  ml: 1,
+                  color: statusColors[status as keyof typeof statusColors],
+                  fontWeight: 'medium'
+                }}
+              >
+                {status}
+              </Typography>
+            </Box>
+          </MenuItem>
+        ))}
+      </Menu>
+
+      {/* Snackbar for notifications */}
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={5000}
+        onClose={handleSnackbarClose}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+      >
+        <Alert 
+          onClose={handleSnackbarClose} 
+          severity={snackbar.severity}
+          sx={{ width: '100%' }}
+        >
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </AdminLayout>
   );
 };
