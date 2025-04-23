@@ -19,7 +19,10 @@ import {
   Button,
   IconButton,
   Snackbar,
-  Alert
+  Alert,
+  TablePagination,
+  TextField,
+  InputAdornment
 } from '@mui/material';
 import { 
   CameraAlt, 
@@ -27,10 +30,17 @@ import {
   Cancel, 
   Schedule, 
   Done,
-  MoreVert
+  MoreVert,
+  Search
 } from '@mui/icons-material';
 import { Bar, Pie } from 'react-chartjs-2';
-import { getPhotographyBookingStatistics, updatePhotographyBookingStatus, PhotographyBookingStatistics } from '../../api/admin';
+import { 
+  getPhotographyBookingStatistics, 
+  updatePhotographyBookingStatus, 
+  getAllPhotographyBookings,
+  PhotographyBookingStatistics, 
+  PhotographyBooking 
+} from '../../api/admin';
 import AdminLayout from './AdminLayout';
 import { 
   Chart as ChartJS, 
@@ -99,6 +109,14 @@ const PhotographyStatistics: React.FC = () => {
     severity: 'success' as 'success' | 'error' | 'info' | 'warning'
   });
 
+  // Add state for pagination and search
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(5);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filteredBookings, setFilteredBookings] = useState<PhotographyBooking[]>([]);
+  const [allBookings, setAllBookings] = useState<PhotographyBooking[]>([]);
+  const [loadingBookings, setLoadingBookings] = useState(false);
+
   // Fetch statistics function
   const fetchStatistics = async () => {
     try {
@@ -114,9 +132,62 @@ const PhotographyStatistics: React.FC = () => {
     }
   };
 
+  // Fetch all bookings
+  const fetchAllBookings = async () => {
+    try {
+      setLoadingBookings(true);
+      const bookings = await getAllPhotographyBookings();
+      setAllBookings(bookings);
+      setFilteredBookings(bookings);
+    } catch (err) {
+      console.error('Error fetching all bookings:', err);
+      setSnackbar({
+        open: true,
+        message: 'Không thể tải danh sách đơn đặt chụp',
+        severity: 'error'
+      });
+    } finally {
+      setLoadingBookings(false);
+    }
+  };
+
   useEffect(() => {
     fetchStatistics();
+    fetchAllBookings();
   }, []);
+
+  // Filter bookings based on search query
+  useEffect(() => {
+    if (allBookings.length > 0) {
+      if (searchQuery.trim() === '') {
+        // If search is empty, use all bookings
+        setFilteredBookings(allBookings);
+      } else {
+        // Otherwise filter by customer name
+        const filtered = allBookings.filter(booking => {
+          const customerName = booking.customerId?.name || booking.customerId?.email || '';
+          return customerName.toLowerCase().includes(searchQuery.toLowerCase());
+        });
+        setFilteredBookings(filtered);
+      }
+      setPage(0); // Reset to first page when search changes
+    }
+  }, [allBookings, searchQuery]);
+
+  // Handle pagination change
+  const handleChangePage = (event: unknown, newPage: number) => {
+    setPage(newPage);
+  };
+
+  const handleChangeRowsPerPage = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setRowsPerPage(parseInt(event.target.value, 10));
+    setPage(0);
+  };
+
+  // Handle search input change
+  const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchQuery(event.target.value);
+  };
 
   // Prepare data for status chart
   const prepareStatusChartData = () => {
@@ -237,8 +308,9 @@ const PhotographyStatistics: React.FC = () => {
         severity: 'success'
       });
       
-      // Refresh statistics
+      // Refresh data
       fetchStatistics();
+      fetchAllBookings();
     } catch (err) {
       console.error('Error updating booking status:', err);
       
@@ -471,9 +543,25 @@ const PhotographyStatistics: React.FC = () => {
 
         {/* Recent Bookings */}
         <Paper sx={{ p: 3 }}>
-          <Typography variant="h6" gutterBottom>
-            Các đơn đặt chụp gần đây
-          </Typography>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+            <Typography variant="h6">
+              Danh sách đơn đặt chụp
+            </Typography>
+            <TextField
+              placeholder="Tìm kiếm theo tên khách hàng"
+              size="small"
+              value={searchQuery}
+              onChange={handleSearchChange}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <Search />
+                  </InputAdornment>
+                ),
+              }}
+              sx={{ width: 300 }}
+            />
+          </Box>
           <Divider sx={{ mb: 2 }} />
           <TableContainer>
             <Table>
@@ -490,51 +578,72 @@ const PhotographyStatistics: React.FC = () => {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {statistics?.recentBookings && statistics.recentBookings.length > 0 ? (
-                  statistics.recentBookings.map((booking) => (
-                    <TableRow key={booking._id}>
-                      <TableCell>{booking._id.substring(0, 8)}...</TableCell>
-                      <TableCell>
-                        {booking.customerId?.name || booking.customerId?.email || 'N/A'}
-                      </TableCell>
-                      <TableCell>
-                        {booking.serviceId?.name || 'N/A'}
-                      </TableCell>
-                      <TableCell>{formatDate(booking.bookingDate)}</TableCell>
-                      <TableCell>{formatDate(booking.shootingDate)}</TableCell>
-                      <TableCell>{booking.shootingLocation}</TableCell>
-                      <TableCell>
-                        <Chip
-                          {...(getStatusIcon(booking.status) && { icon: getStatusIcon(booking.status) })}
-                          label={booking.status}
-                          sx={{
-                            bgcolor: `${statusColors[booking.status as keyof typeof statusColors]}20`,
-                            color: statusColors[booking.status as keyof typeof statusColors],
-                            fontWeight: 'bold'
-                          }}
-                          size="small"
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <IconButton 
-                          size="small"
-                          onClick={(e) => handleStatusMenuOpen(e, booking._id)}
-                        >
-                          <MoreVert />
-                        </IconButton>
-                      </TableCell>
-                    </TableRow>
-                  ))
+                {loadingBookings ? (
+                  <TableRow>
+                    <TableCell colSpan={8} align="center">
+                      <CircularProgress size={24} />
+                    </TableCell>
+                  </TableRow>
+                ) : filteredBookings.length > 0 ? (
+                  filteredBookings
+                    .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+                    .map((booking) => (
+                      <TableRow key={booking._id}>
+                        <TableCell>{booking._id.substring(0, 8)}...</TableCell>
+                        <TableCell>
+                          {booking.customerId?.name || booking.customerId?.email || 'N/A'}
+                        </TableCell>
+                        <TableCell>
+                          {booking.serviceId?.name || 'N/A'}
+                        </TableCell>
+                        <TableCell>{formatDate(booking.bookingDate)}</TableCell>
+                        <TableCell>{formatDate(booking.shootingDate)}</TableCell>
+                        <TableCell>{booking.shootingLocation}</TableCell>
+                        <TableCell>
+                          <Chip
+                            {...(getStatusIcon(booking.status) && { icon: getStatusIcon(booking.status) })}
+                            label={booking.status}
+                            sx={{
+                              bgcolor: `${statusColors[booking.status as keyof typeof statusColors]}20`,
+                              color: statusColors[booking.status as keyof typeof statusColors],
+                              fontWeight: 'bold'
+                            }}
+                            size="small"
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <IconButton 
+                            size="small"
+                            onClick={(e) => handleStatusMenuOpen(e, booking._id)}
+                          >
+                            <MoreVert />
+                          </IconButton>
+                        </TableCell>
+                      </TableRow>
+                    ))
                 ) : (
                   <TableRow>
                     <TableCell colSpan={8} align="center">
-                      Không có đơn đặt chụp gần đây
+                      {searchQuery
+                        ? 'Không tìm thấy đơn đặt chụp nào phù hợp'
+                        : 'Không có đơn đặt chụp nào'}
                     </TableCell>
                   </TableRow>
                 )}
               </TableBody>
             </Table>
           </TableContainer>
+          <TablePagination
+            component="div"
+            count={filteredBookings.length}
+            page={page}
+            onPageChange={handleChangePage}
+            rowsPerPage={rowsPerPage}
+            onRowsPerPageChange={handleChangeRowsPerPage}
+            rowsPerPageOptions={[5, 10, 25]}
+            labelRowsPerPage="Số dòng mỗi trang:"
+            labelDisplayedRows={({ from, to, count }) => `${from}-${to} trên ${count !== -1 ? count : 'nhiều hơn ' + to}`}
+          />
         </Paper>
       </Box>
 

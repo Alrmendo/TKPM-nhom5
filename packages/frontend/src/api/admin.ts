@@ -237,6 +237,29 @@ export const getPhotographyBookingStatistics = async (): Promise<PhotographyBook
   }
 };
 
+// Get all photography bookings
+export const getAllPhotographyBookings = async (params?: { 
+  customerId?: string; 
+  serviceId?: string; 
+  status?: string;
+}): Promise<PhotographyBooking[]> => {
+  try {
+    const queryParams = new URLSearchParams();
+    if (params?.customerId) queryParams.append('customerId', params.customerId);
+    if (params?.serviceId) queryParams.append('serviceId', params.serviceId);
+    if (params?.status) queryParams.append('status', params.status);
+    
+    const queryString = queryParams.toString();
+    const url = `/admin/photography/bookings${queryString ? `?${queryString}` : ''}`;
+    
+    const response = await API.get(url);
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching all photography bookings:', error);
+    throw error;
+  }
+};
+
 // Update photography booking status
 export const updatePhotographyBookingStatus = async (bookingId: string, status: string): Promise<PhotographyBooking> => {
   try {
