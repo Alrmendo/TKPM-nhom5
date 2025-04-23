@@ -14,7 +14,7 @@ import { UserProfile } from '../../api/user';
 import { format, differenceInDays } from 'date-fns';
 import { toast } from 'react-hot-toast';
 
-type OrderFilterTab = 'current' | 'previous' | 'canceled';
+type OrderFilterTab = 'current' | 'previous' | 'canceled' | 'all';
 
 // Map backend status to frontend status
 const mapOrderStatus = (backendStatus: string): 'done' | 'pending' | 'under-review' | 'canceled' => {
@@ -175,31 +175,30 @@ const CurrentOrdersPage: React.FC = () => {
         // Fetch photography bookings
         try {
           const photographyBookings = await getUserPhotographyBookings();
-          console.log('User photography bookings:', photographyBookings);
+          console.log('===DEBUG=== Photography bookings from API:', photographyBookings);
           
           if (photographyBookings && photographyBookings.length > 0) {
             photographyBookings.forEach(booking => {
               // Map photography booking status to frontend status
               // Just use the original status without mapping
               const statusMapping = booking.status;
+              console.log('===DEBUG=== Processing booking:', booking._id, 'with status:', statusMapping);
               
-              // Only add bookings with payment details 
-              if (booking.paymentDetails) {
-                formattedOrders.push({
-                  id: booking._id,
-                  name: booking.serviceId?.name || 'Photography Service',
-                  image: booking.serviceId?.coverImage || '/placeholder-photography.jpg',
-                  size: booking.serviceId?.packageType || 'Standard',
-                  color: booking.shootingLocation || 'Studio',
-                  rentalDuration: 'Photography Service',
-                  arrivalDate: new Date(booking.shootingDate).toLocaleDateString(),
-                  returnDate: new Date(booking.shootingDate).toLocaleDateString(),
-                  status: statusMapping,
-                  isPhotographyService: true,
-                  purchaseType: 'service',
-                  additionalDetails: booking.additionalRequests
-                });
-              }
+              // Show all photography bookings, not just ones with payment details
+              formattedOrders.push({
+                id: booking._id,
+                name: booking.serviceId?.name || 'Photography Service',
+                image: booking.serviceId?.imageUrls?.[0] || booking.serviceId?.images?.[0] || booking.serviceId?.coverImage || '/placeholder-photography.jpg',
+                size: booking.serviceId?.packageType || 'Standard',
+                color: booking.shootingLocation || 'Studio',
+                rentalDuration: 'Photography Service',
+                arrivalDate: new Date(booking.shootingDate).toLocaleDateString(),
+                returnDate: new Date(booking.shootingDate).toLocaleDateString(),
+                status: statusMapping,
+                isPhotographyService: true,
+                purchaseType: 'service',
+                additionalDetails: booking.additionalRequests
+              });
             });
           }
         } catch (photoBookingsErr) {
@@ -207,7 +206,29 @@ const CurrentOrdersPage: React.FC = () => {
         }
         
         console.log('Final formatted orders:', formattedOrders);
-        setOrders(formattedOrders);
+        
+        // Use different deduplication strategies for different order types
+        const uniqueOrderMap = new Map();
+        formattedOrders.forEach(order => {
+          // For photography services, use ID as unique key to preserve all bookings
+          if (order.isPhotographyService) {
+            const key = order.id;
+            uniqueOrderMap.set(key, order);
+          } else {
+            // For wedding dresses, use name+size+color as key to prevent duplicates
+            const key = `${order.name}-${order.size}-${order.color}`;
+            // If we already have this item, only replace if it's not a cart item
+            if (!uniqueOrderMap.has(key) || (uniqueOrderMap.get(key).isCartItem && !order.isCartItem)) {
+              uniqueOrderMap.set(key, order);
+            }
+          }
+        });
+        
+        // Convert back to array
+        const deduplicatedOrders = Array.from(uniqueOrderMap.values());
+        console.log('Deduplicated orders:', deduplicatedOrders);
+        
+        setOrders(deduplicatedOrders);
       } catch (err) {
         console.error('Error fetching orders:', err);
         if (err instanceof Error) {
@@ -224,12 +245,19 @@ const CurrentOrdersPage: React.FC = () => {
 
   // Filter orders based on active tab
   const filteredOrders = orders.filter(order => {
-    // For photography services, use the original backend status
+    // For photography services, debug the status check
     if (order.isPhotographyService) {
-      if (activeTab === 'current') return order.status === 'Pending' || order.status === 'Confirmed';
-      if (activeTab === 'previous') return order.status === 'Completed';
-      if (activeTab === 'canceled') return order.status === 'Cancelled';
-      return true;
+      const status = order.status ? order.status.toLowerCase() : '';
+      console.log('===DEBUG=== Filtering photo order:', order.id, 'Status:', order.status, 'Tab:', activeTab);
+      
+      let shouldShow = false;
+      if (activeTab === 'current') shouldShow = status === 'pending' || status === 'confirmed';
+      if (activeTab === 'previous') shouldShow = status === 'completed';
+      if (activeTab === 'canceled') shouldShow = status === 'cancelled' || status === 'canceled';
+      if (activeTab === 'all') shouldShow = true;
+      
+      console.log('===DEBUG=== Should show?', shouldShow);
+      return shouldShow;
     }
     
     // For regular orders and cart items, use the existing logic
@@ -241,9 +269,9 @@ const CurrentOrdersPage: React.FC = () => {
     if (activeTab === 'canceled') return order.status === 'canceled';
     return true;
   });
-
-  console.log('Active tab:', activeTab);
-  console.log('Number of filtered orders:', filteredOrders.length);
+  
+  console.log('===DEBUG=== Active tab:', activeTab);
+  console.log('===DEBUG=== Final filtered orders:', filteredOrders);
 
   // Handle canceling/deleting an order
   const handleDeleteOrder = async (orderId: string) => {

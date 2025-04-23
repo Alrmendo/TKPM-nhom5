@@ -11,7 +11,7 @@ import { getUserPhotographyBookings, PhotographyBooking } from '../../api/photog
 import { UserProfile } from '../../api/user';
 import { format, differenceInDays } from 'date-fns';
 
-type OrderFilterTab = 'current' | 'previous' | 'canceled';
+type OrderFilterTab = 'current' | 'previous' | 'canceled' | 'all';
 
 // Map backend status to frontend status
 const mapOrderStatus = (backendStatus: string): 'done' | 'pending' | 'under-review' | 'canceled' => {
@@ -102,33 +102,53 @@ export default function OrderHistory(): JSX.Element {
         // Fetch photography bookings
         try {
           const photographyBookings = await getUserPhotographyBookings();
+          console.log('===DEBUG=== Photography bookings from API:', photographyBookings);
           
           if (photographyBookings && photographyBookings.length > 0) {
-            // Filter only bookings with payment details
-            photographyBookings
-              .filter(booking => booking.paymentDetails)
-              .forEach(booking => {
+            // Show all photography bookings, not just ones with payment details
+            photographyBookings.forEach(booking => {
+                console.log('===DEBUG=== Processing booking:', booking._id, 'with status:', booking.status);
                 formattedOrders.push({
                   id: booking._id,
                   name: booking.serviceId?.name || 'Photography Service',
-                  image: booking.serviceId?.coverImage || '/placeholder-photography.jpg',
+                  image: booking.serviceId?.imageUrls?.[0] || booking.serviceId?.images?.[0] || booking.serviceId?.coverImage || '/placeholder-photography.jpg',
                   size: booking.serviceId?.packageType || 'Standard Package',
                   color: booking.shootingLocation || 'Studio',
                   rentalDuration: 'Photography Service',
                   arrivalDate: new Date(booking.shootingDate).toLocaleDateString(),
                   returnDate: new Date(booking.shootingDate).toLocaleDateString(),
-                  status: mapPhotographyStatus(booking.status),
+                  status: booking.status, // Use status directly without mapping
                   isPhotographyService: true,
                   purchaseType: 'service',
                   additionalDetails: booking.additionalRequests
                 });
-              });
+            });
           }
         } catch (photoErr) {
           console.error('Error fetching photography bookings:', photoErr);
         }
         
-        setOrders(formattedOrders);
+        // Use different deduplication strategies for different order types
+        const uniqueOrderMap = new Map();
+        formattedOrders.forEach(order => {
+          // For photography services, use ID as unique key to preserve all bookings
+          if (order.isPhotographyService) {
+            const key = order.id;
+            uniqueOrderMap.set(key, order);
+          } else {
+            // For wedding dresses, use name+size+color as key to prevent duplicates
+            const key = `${order.name}-${order.size}-${order.color}`;
+            // If we already have this item, only replace if it's not a cart item
+            if (!uniqueOrderMap.has(key) || (uniqueOrderMap.get(key).isCartItem && !order.isCartItem)) {
+              uniqueOrderMap.set(key, order);
+            }
+          }
+        });
+        
+        // Convert back to array
+        const deduplicatedOrders = Array.from(uniqueOrderMap.values());
+        
+        setOrders(deduplicatedOrders);
       } catch (err) {
         console.error('Error fetching orders:', err);
       } finally {
@@ -141,12 +161,19 @@ export default function OrderHistory(): JSX.Element {
 
   // Filter orders based on active tab
   const filteredOrders = orders.filter(order => {
-    // For photography services, use the original backend status
+    // For photography services, debug the status check
     if (order.isPhotographyService) {
-      if (activeTab === 'current') return order.status === 'Pending' || order.status === 'Confirmed';
-      if (activeTab === 'previous') return order.status === 'Completed';
-      if (activeTab === 'canceled') return order.status === 'Cancelled';
-      return true;
+      const status = order.status ? order.status.toLowerCase() : '';
+      console.log('===DEBUG=== Filtering photo order:', order.id, 'Status:', order.status, 'Tab:', activeTab);
+      
+      let shouldShow = false;
+      if (activeTab === 'current') shouldShow = status === 'pending' || status === 'confirmed';
+      if (activeTab === 'previous') shouldShow = status === 'completed';
+      if (activeTab === 'canceled') shouldShow = status === 'cancelled' || status === 'canceled';
+      if (activeTab === 'all') shouldShow = true;
+      
+      console.log('===DEBUG=== Should show?', shouldShow);
+      return shouldShow;
     }
     
     // For regular orders, use the existing logic
@@ -155,6 +182,8 @@ export default function OrderHistory(): JSX.Element {
     if (activeTab === 'canceled') return order.status === 'canceled';
     return true;
   });
+  
+  console.log('===DEBUG=== Final filtered orders:', filteredOrders);
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
