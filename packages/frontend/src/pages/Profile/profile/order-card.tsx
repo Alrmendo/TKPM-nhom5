@@ -11,11 +11,12 @@ export interface OrderItem {
   rentalDuration: string;
   arrivalDate: string;
   returnDate: string;
-  status: 'done' | 'pending' | 'under-review' | 'canceled' | 'confirmed';
+  status: 'done' | 'pending' | 'under-review' | 'canceled' | 'confirmed' | 'Pending' | 'Confirmed' | 'Cancelled' | 'Completed';
   isCartItem?: boolean;
   isPaid?: boolean;
   purchaseType?: 'rent' | 'buy' | 'service';  // Thêm 'service' cho dịch vụ nhiếp ảnh
   isPhotographyService?: boolean;  // Flag để nhận biết đây là dịch vụ nhiếp ảnh
+  additionalDetails?: string;
 }
 
 interface OrderCardProps {
@@ -25,6 +26,23 @@ interface OrderCardProps {
 
 export function OrderCard({ order, onDelete }: OrderCardProps): JSX.Element {
   const getStatusIcon = () => {
+    // Special handling for photography bookings with original backend status names
+    if (order.isPhotographyService) {
+      switch (order.status) {
+        case 'Completed':
+          return <CheckCircle className="h-5 w-5 text-green-600" />;
+        case 'Confirmed':
+          return <Hourglass className="h-5 w-5 text-amber-500" />;
+        case 'Pending':
+          return <Clock className="h-5 w-5 text-amber-500" />;
+        case 'Cancelled':
+          return <XCircle className="h-5 w-5 text-red-500" />;
+        default:
+          return null;
+      }
+    }
+    
+    // Existing logic for regular orders
     switch (order.status) {
       case 'done':
         return <CheckCircle className="h-5 w-5 text-green-600" />;
@@ -46,6 +64,11 @@ export function OrderCard({ order, onDelete }: OrderCardProps): JSX.Element {
       return 'Paid';
     }
     
+    // Special handling for photography bookings
+    if (order.isPhotographyService) {
+      return order.status; // Just return the original status
+    }
+    
     switch (order.status) {
       case 'done':
         return 'Done';
@@ -59,6 +82,31 @@ export function OrderCard({ order, onDelete }: OrderCardProps): JSX.Element {
         return 'Canceled';
       default:
         return '';
+    }
+  };
+
+  const getStatusColor = () => {
+    // Special handling for photography bookings
+    if (order.isPhotographyService) {
+      switch (order.status) {
+        case 'Completed':
+          return 'text-green-600';
+        case 'Cancelled':
+          return 'text-red-500';
+        default:
+          return 'text-amber-500';
+      }
+    }
+    
+    // Existing logic for regular orders
+    switch (order.status) {
+      case 'done':
+      case 'confirmed':
+        return 'text-green-600';
+      case 'canceled':
+        return 'text-red-500';
+      default:
+        return 'text-amber-500';
     }
   };
 
@@ -119,13 +167,7 @@ export function OrderCard({ order, onDelete }: OrderCardProps): JSX.Element {
           <div className="flex items-center">
             {getStatusIcon()}
             <span
-              className={`ml-1 ${
-                order.status === 'done' || order.status === 'confirmed'
-                  ? 'text-green-600'
-                  : order.status === 'canceled'
-                  ? 'text-red-500'
-                  : 'text-amber-500'
-              }`}
+              className={`ml-1 ${getStatusColor()}`}
             >
               {getStatusText()}
             </span>
