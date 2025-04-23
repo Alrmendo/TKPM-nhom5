@@ -9,6 +9,7 @@ import { getUserProfile } from '../../api/user';
 import { getUserOrders, cancelOrder } from '../../api/order';
 import { getCart, clearCart } from '../../api/cart';
 import { getPhotographyCart } from '../../api/photographyCart';
+import { getUserPhotographyBookings, PhotographyBooking } from '../../api/photography';
 import { UserProfile } from '../../api/user';
 import { format, differenceInDays } from 'date-fns';
 import { toast } from 'react-hot-toast';
@@ -171,6 +172,55 @@ const CurrentOrdersPage: React.FC = () => {
           }
         }
         
+        // Fetch photography bookings
+        try {
+          const photographyBookings = await getUserPhotographyBookings();
+          console.log('User photography bookings:', photographyBookings);
+          
+          if (photographyBookings && photographyBookings.length > 0) {
+            photographyBookings.forEach(booking => {
+              // Map photography booking status to frontend status
+              let statusMapping: 'done' | 'pending' | 'under-review' | 'canceled';
+              switch (booking.status) {
+                case 'Pending':
+                  statusMapping = 'pending';
+                  break;
+                case 'Confirmed':
+                  statusMapping = 'under-review';
+                  break;
+                case 'Completed':
+                  statusMapping = 'done';
+                  break;
+                case 'Cancelled':
+                  statusMapping = 'canceled';
+                  break;
+                default:
+                  statusMapping = 'pending';
+              }
+              
+              // Only add bookings with payment details 
+              if (booking.paymentDetails) {
+                formattedOrders.push({
+                  id: booking._id,
+                  name: booking.serviceId?.name || 'Photography Service',
+                  image: booking.serviceId?.coverImage || '/placeholder-photography.jpg',
+                  size: booking.serviceId?.packageType || 'Standard',
+                  color: booking.shootingLocation || 'Studio',
+                  rentalDuration: 'Photography Service',
+                  arrivalDate: new Date(booking.shootingDate).toLocaleDateString(),
+                  returnDate: new Date(booking.shootingDate).toLocaleDateString(),
+                  status: statusMapping,
+                  isPhotographyService: true,
+                  purchaseType: 'service',
+                  additionalDetails: booking.additionalRequests
+                });
+              }
+            });
+          }
+        } catch (photoBookingsErr) {
+          console.error('Error fetching photography bookings:', photoBookingsErr);
+        }
+        
         console.log('Final formatted orders:', formattedOrders);
         setOrders(formattedOrders);
       } catch (err) {
@@ -193,7 +243,7 @@ const CurrentOrdersPage: React.FC = () => {
       // Only show pending and under-review in current orders
       return order.status === 'pending' || order.status === 'under-review' || order.isCartItem === true;
     }
-    if (activeTab === 'previous') return order.status === 'done' || order.status === 'confirmed' || order.status === 'paid';
+    if (activeTab === 'previous') return order.status === 'done';
     if (activeTab === 'canceled') return order.status === 'canceled';
     return true;
   });

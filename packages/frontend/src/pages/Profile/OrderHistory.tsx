@@ -7,6 +7,7 @@ import Footer from '../../components/footer';
 import { useAuth } from '../../context/AuthContext';
 import { getUserProfile } from '../../api/user';
 import { getUserOrders } from '../../api/order';
+import { getUserPhotographyBookings, PhotographyBooking } from '../../api/photography';
 import { UserProfile } from '../../api/user';
 import { format, differenceInDays } from 'date-fns';
 
@@ -26,6 +27,22 @@ const mapOrderStatus = (backendStatus: string): 'done' | 'pending' | 'under-revi
   };
   
   return statusMap[backendStatus.toLowerCase()] || 'pending'; // Default to pending if status unknown
+};
+
+// Map photography booking status to frontend status
+const mapPhotographyStatus = (status: string): 'done' | 'pending' | 'under-review' | 'canceled' => {
+  switch (status) {
+    case 'Pending':
+      return 'pending';
+    case 'Confirmed':
+      return 'under-review';
+    case 'Completed':
+      return 'done';
+    case 'Cancelled':
+      return 'canceled';
+    default:
+      return 'pending';
+  }
 };
 
 export default function OrderHistory(): JSX.Element {
@@ -92,6 +109,35 @@ export default function OrderHistory(): JSX.Element {
           });
         }
         
+        // Fetch photography bookings
+        try {
+          const photographyBookings = await getUserPhotographyBookings();
+          
+          if (photographyBookings && photographyBookings.length > 0) {
+            // Filter only bookings with payment details
+            photographyBookings
+              .filter(booking => booking.paymentDetails)
+              .forEach(booking => {
+                formattedOrders.push({
+                  id: booking._id,
+                  name: booking.serviceId?.name || 'Photography Service',
+                  image: booking.serviceId?.coverImage || '/placeholder-photography.jpg',
+                  size: booking.serviceId?.packageType || 'Standard Package',
+                  color: booking.shootingLocation || 'Studio',
+                  rentalDuration: 'Photography Service',
+                  arrivalDate: new Date(booking.shootingDate).toLocaleDateString(),
+                  returnDate: new Date(booking.shootingDate).toLocaleDateString(),
+                  status: mapPhotographyStatus(booking.status),
+                  isPhotographyService: true,
+                  purchaseType: 'service',
+                  additionalDetails: booking.additionalRequests
+                });
+              });
+          }
+        } catch (photoErr) {
+          console.error('Error fetching photography bookings:', photoErr);
+        }
+        
         setOrders(formattedOrders);
       } catch (err) {
         console.error('Error fetching orders:', err);
@@ -106,7 +152,7 @@ export default function OrderHistory(): JSX.Element {
   // Filter orders based on active tab
   const filteredOrders = orders.filter(order => {
     if (activeTab === 'current') return order.status === 'pending' || order.status === 'under-review';
-    if (activeTab === 'previous') return order.status === 'done' || order.status === 'confirmed' || order.status === 'paid' || order.isPaid;
+    if (activeTab === 'previous') return order.status === 'done';
     if (activeTab === 'canceled') return order.status === 'canceled';
     return true;
   });

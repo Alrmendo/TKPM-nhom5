@@ -2,12 +2,13 @@ import React, { useEffect, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import Header from '../../components/header';
 import ProfileSidebar from './profile/sidebar';
-import { ChevronLeft, CheckCircle, Clock, Hourglass, XCircle } from 'lucide-react';
+import { ChevronLeft, CheckCircle, Clock, Hourglass, XCircle, Camera } from 'lucide-react';
 import type { OrderItem } from './profile/order-card';
 import Footer from '../../components/footer';
 import { useAuth } from '../../context/AuthContext';
 import { getUserProfile } from '../../api/user';
 import { cancelOrder } from '../../api/order';
+import { getPhotographyBookingById } from '../../api/photography';
 import { UserProfile } from '../../api/user';
 import { toast } from 'react-hot-toast';
 
@@ -72,8 +73,68 @@ const OrderDetailsPage: React.FC = () => {
   }, [isAuthenticated]);
 
   useEffect(() => {
-    const foundOrder = mockOrders.find(o => o.id === id);
-    setOrder(foundOrder);
+    const fetchOrderDetails = async () => {
+      if (!id) return;
+      
+      setLoading(true);
+      try {
+        // Check if this is a photography booking ID
+        if (id.startsWith('photography-') || id.length === 24) { // MongoDB ObjectIDs are 24 chars
+          try {
+            // Try to fetch as photography booking
+            const photographyBooking = await getPhotographyBookingById(id.replace('photography-', ''));
+            
+            // Map photography booking to OrderItem format
+            let statusMapping: 'done' | 'pending' | 'under-review' | 'canceled';
+            switch (photographyBooking.status) {
+              case 'Pending':
+                statusMapping = 'pending';
+                break;
+              case 'Confirmed':
+                statusMapping = 'under-review';
+                break;
+              case 'Completed':
+                statusMapping = 'done';
+                break;
+              case 'Cancelled':
+                statusMapping = 'canceled';
+                break;
+              default:
+                statusMapping = 'pending';
+            }
+            
+            setOrder({
+              id: photographyBooking._id,
+              name: photographyBooking.serviceId?.name || 'Photography Service',
+              image: photographyBooking.serviceId?.coverImage || '/placeholder-photography.jpg',
+              size: photographyBooking.serviceId?.packageType || 'Standard Package',
+              color: photographyBooking.shootingLocation || 'Studio',
+              rentalDuration: 'Photography Service',
+              arrivalDate: new Date(photographyBooking.shootingDate).toLocaleDateString(),
+              returnDate: new Date(photographyBooking.shootingDate).toLocaleDateString(),
+              status: statusMapping,
+              isPhotographyService: true,
+              purchaseType: 'service',
+              additionalDetails: photographyBooking.additionalRequests
+            });
+            return;
+          } catch (photoErr) {
+            console.log('Not a photography booking or error fetching:', photoErr);
+            // Continue to check regular orders
+          }
+        }
+        
+        // If not a photography booking, use mock data for now
+        const foundOrder = mockOrders.find(o => o.id === id);
+        setOrder(foundOrder);
+      } catch (err) {
+        console.error('Error fetching order details:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchOrderDetails();
   }, [id]);
 
   const getStatusIcon = () => {
@@ -223,7 +284,6 @@ const OrderDetailsPage: React.FC = () => {
 
             <div className="grid md:grid-cols-2 gap-6">
               <div>
-                {/* Sử dụng thẻ img thay thế cho next/image */}
                 <img
                   src={order.image || '/placeholder.svg'}
                   alt={order.name}
@@ -237,47 +297,50 @@ const OrderDetailsPage: React.FC = () => {
                 <div>
                   <h2 className="text-2xl font-medium">{order.name}</h2>
                   <p className="text-gray-600">
-                    {order.size} / {order.color} / {order.rentalDuration}
+                    {order.isPhotographyService ? (
+                      <>Photography Service / {order.size}</>
+                    ) : (
+                      <>{order.size} / {order.color} / {order.rentalDuration}</>
+                    )}
                   </p>
                 </div>
 
                 <div className="border-t pt-4">
-                  <h3 className="font-medium mb-2">Delivery Information</h3>
-                  <p className="text-gray-600">Arrives by {order.arrivalDate}</p>
-                  <p className="text-gray-600">Returns by {order.returnDate}</p>
+                  <h3 className="font-medium mb-2">
+                    {order.isPhotographyService ? 'Service Information' : 'Delivery Information'}
+                  </h3>
+                  {order.isPhotographyService ? (
+                    <>
+                      <p className="text-gray-600">Shooting Date: {order.arrivalDate}</p>
+                      <p className="text-gray-600">Location: {order.color}</p>
+                      {order.additionalDetails && (
+                        <p className="text-gray-600">Special Requests: {order.additionalDetails}</p>
+                      )}
+                    </>
+                  ) : (
+                    <>
+                      <p className="text-gray-600">Arrives by {order.arrivalDate}</p>
+                      <p className="text-gray-600">Returns by {order.returnDate}</p>
+                    </>
+                  )}
                 </div>
 
                 <div className="border-t pt-4">
-                  <h3 className="font-medium mb-2">Order Summary</h3>
-                  <div className="flex justify-between text-gray-600">
-                    <span>Rental Fee</span>
-                    <span>$120.00</span>
-                  </div>
-                  <div className="flex justify-between text-gray-600">
-                    <span>Insurance</span>
-                    <span>$15.00</span>
-                  </div>
-                  <div className="flex justify-between text-gray-600">
-                    <span>Shipping</span>
-                    <span>$10.00</span>
-                  </div>
-                  <div className="flex justify-between font-medium mt-2 pt-2 border-t">
-                    <span>Total</span>
-                    <span>$145.00</span>
-                  </div>
+                  <h3 className="font-medium mb-2">Order ID</h3>
+                  <p className="text-gray-600 break-all">{order.id}</p>
                 </div>
 
-                {(order.status === 'pending' || order.status === 'under-review') && (
-                  <div className="pt-4">
-                    <button 
+                <div className="border-t pt-4">
+                  {order.status === 'pending' || order.status === 'under-review' ? (
+                    <button
                       onClick={handleCancelOrder}
                       disabled={loading}
-                      className="w-full py-2 px-4 bg-red-500 text-white rounded-md hover:bg-red-600 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
+                      className="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 w-full disabled:opacity-50"
                     >
-                      {loading ? 'Canceling...' : 'Cancel Order'}
+                      {loading ? 'Processing...' : 'Cancel Order'}
                     </button>
-                  </div>
-                )}
+                  ) : null}
+                </div>
               </div>
             </div>
           </div>
