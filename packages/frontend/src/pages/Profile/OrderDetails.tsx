@@ -2,7 +2,15 @@ import React, { useEffect, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import Header from '../../components/header';
 import ProfileSidebar from './profile/sidebar';
-import { ChevronLeft, CheckCircle, Clock, Hourglass, XCircle, Camera } from 'lucide-react';
+import {
+  ChevronLeft,
+  CheckCircle,
+  Clock,
+  Hourglass,
+  XCircle,
+  Package2,
+  Camera,
+} from 'lucide-react';
 import type { OrderItem } from './profile/order-card';
 import Footer from '../../components/footer';
 import { useAuth } from '../../context/AuthContext';
@@ -56,7 +64,7 @@ const OrderDetailsPage: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const { isAuthenticated } = useAuth();
   const navigate = useNavigate();
-  
+
   useEffect(() => {
     const fetchUserData = async () => {
       try {
@@ -75,41 +83,54 @@ const OrderDetailsPage: React.FC = () => {
   useEffect(() => {
     const fetchOrderDetails = async () => {
       if (!id) return;
-      
+
       setLoading(true);
       try {
         // Check if this is a photography booking ID
-        if (id.startsWith('photography-') || id.length === 24) { // MongoDB ObjectIDs are 24 chars
+        if (id.startsWith('photography-') || id.length === 24) {
+          // MongoDB ObjectIDs are 24 chars
           try {
             // Try to fetch as photography booking
-            const photographyBooking = await getPhotographyBookingById(id.replace('photography-', ''));
-            
+            const photographyBooking = await getPhotographyBookingById(
+              id.replace('photography-', ''),
+            );
+
             // Use original backend status for photography bookings
             const statusMapping = photographyBooking.status;
-            
+
             setOrder({
               id: photographyBooking._id,
               name: photographyBooking.serviceId?.name || 'Photography Service',
-              image: photographyBooking.serviceId?.coverImage || '/placeholder-photography.jpg',
-              size: photographyBooking.serviceId?.packageType || 'Standard Package',
+              image:
+                photographyBooking.serviceId?.coverImage ||
+                '/placeholder-photography.jpg',
+              size:
+                photographyBooking.serviceId?.packageType || 'Standard Package',
               color: photographyBooking.shootingLocation || 'Studio',
               rentalDuration: 'Photography Service',
-              arrivalDate: new Date(photographyBooking.shootingDate).toLocaleDateString(),
-              returnDate: new Date(photographyBooking.shootingDate).toLocaleDateString(),
+              arrivalDate: new Date(
+                photographyBooking.shootingDate,
+              ).toLocaleDateString(),
+              returnDate: new Date(
+                photographyBooking.shootingDate,
+              ).toLocaleDateString(),
               status: statusMapping,
               isPhotographyService: true,
               purchaseType: 'service',
-              additionalDetails: photographyBooking.additionalRequests
+              additionalDetails: photographyBooking.additionalRequests,
             });
             return;
           } catch (photoErr) {
-            console.log('Not a photography booking or error fetching:', photoErr);
+            console.log(
+              'Not a photography booking or error fetching:',
+              photoErr,
+            );
             // Continue to check regular orders
           }
         }
-        
+
         // If not a photography booking, use mock data for now
-        const foundOrder = mockOrders.find(o => o.id === id);
+        const foundOrder = mockOrders.find((o) => o.id === id);
         setOrder(foundOrder);
       } catch (err) {
         console.error('Error fetching order details:', err);
@@ -146,9 +167,18 @@ const OrderDetailsPage: React.FC = () => {
         return <CheckCircle className="h-5 w-5 text-green-600" />;
       case 'pending':
         return <Clock className="h-5 w-5 text-amber-500" />;
+      case 'confirmed':
+        return <CheckCircle className="h-5 w-5 text-blue-500" />;
+      case 'shipped':
+        return <Package2 className="h-5 w-5 text-purple-600" />;
+      case 'delivered':
+        return <CheckCircle className="h-5 w-5 text-green-600" />;
+      case 'returned':
+        return <CheckCircle className="h-5 w-5 text-purple-600" />;
       case 'under-review':
         return <Hourglass className="h-5 w-5 text-amber-500" />;
       case 'canceled':
+      case 'cancelled':
         return <XCircle className="h-5 w-5 text-red-500" />;
       default:
         return null;
@@ -169,9 +199,18 @@ const OrderDetailsPage: React.FC = () => {
         return 'Done';
       case 'pending':
         return 'Pending';
+      case 'confirmed':
+        return 'Confirmed';
+      case 'shipped':
+        return 'Shipped';
+      case 'delivered':
+        return 'Delivered';
+      case 'returned':
+        return 'Returned';
       case 'under-review':
-        return 'Under review';
+        return 'Under Review';
       case 'canceled':
+      case 'cancelled':
         return 'Canceled';
       default:
         return '';
@@ -196,8 +235,15 @@ const OrderDetailsPage: React.FC = () => {
     // For regular orders
     switch (order.status) {
       case 'done':
+      case 'delivered':
         return 'text-green-600';
+      case 'confirmed':
+        return 'text-blue-500';
+      case 'shipped':
+      case 'returned':
+        return 'text-purple-600';
       case 'canceled':
+      case 'cancelled':
         return 'text-red-500';
       default:
         return 'text-amber-500';
@@ -206,7 +252,7 @@ const OrderDetailsPage: React.FC = () => {
 
   const getBackLink = () => {
     if (!order) return '/order-history';
-    
+
     // For photography bookings
     if (order.isPhotographyService) {
       if (order.status === 'Completed') {
@@ -217,7 +263,7 @@ const OrderDetailsPage: React.FC = () => {
         return '/current-orders';
       }
     }
-    
+
     // For regular orders
     if (order.status === 'done') {
       return '/order-history';
@@ -230,7 +276,7 @@ const OrderDetailsPage: React.FC = () => {
 
   const getActiveTab = () => {
     if (!order) return 'order-history';
-    
+
     // For photography bookings
     if (order.isPhotographyService) {
       if (order.status === 'Completed' || order.status === 'Cancelled') {
@@ -239,7 +285,7 @@ const OrderDetailsPage: React.FC = () => {
         return 'current-orders';
       }
     }
-    
+
     // For regular orders
     if (order.status === 'done' || order.status === 'canceled') {
       return 'order-history';
@@ -250,12 +296,12 @@ const OrderDetailsPage: React.FC = () => {
 
   const handleCancelOrder = async () => {
     if (!id) return;
-    
+
     try {
       setLoading(true);
       await cancelOrder(id);
       toast.success('Order canceled successfully');
-      
+
       // Navigate back to current orders page
       navigate('/current-orders');
     } catch (err: any) {
@@ -278,12 +324,19 @@ const OrderDetailsPage: React.FC = () => {
                 activeTab="order-history"
                 userName={userData ? userData.username : 'User'}
                 userImage={userData?.profileImageUrl}
-                fullName={userData ? `${userData.firstName} ${userData.lastName}` : undefined}
+                fullName={
+                  userData
+                    ? `${userData.firstName} ${userData.lastName}`
+                    : undefined
+                }
               />
             </div>
 
             <div className="md:col-span-2 bg-white rounded-lg border p-6">
-              <Link to="/order-history" className="flex items-center text-gray-600 mb-6">
+              <Link
+                to="/order-history"
+                className="flex items-center text-gray-600 mb-6"
+              >
                 <ChevronLeft className="h-4 w-4 mr-1" />
                 Back to Order History
               </Link>
@@ -311,21 +364,33 @@ const OrderDetailsPage: React.FC = () => {
               activeTab={getActiveTab()}
               userName={userData ? userData.username : 'User'}
               userImage={userData?.profileImageUrl}
-              fullName={userData ? `${userData.firstName} ${userData.lastName}` : undefined}
+              fullName={
+                userData
+                  ? `${userData.firstName} ${userData.lastName}`
+                  : undefined
+              }
             />
           </div>
 
           <div className="md:col-span-2 bg-white rounded-lg border p-6">
-            <Link to={getBackLink()} className="flex items-center text-gray-600 mb-6">
+            <Link
+              to={getBackLink()}
+              className="flex items-center text-gray-600 mb-6"
+            >
               <ChevronLeft className="h-4 w-4 mr-1" />
-              Back to {order.status === 'done' || order.status === 'canceled' ? 'Order History' : 'Current Orders'}
+              Back to{' '}
+              {order.status === 'done' || order.status === 'canceled'
+                ? 'Order History'
+                : 'Current Orders'}
             </Link>
 
             <div className="flex justify-between items-start mb-6">
               <h1 className="text-xl font-medium">Order Details</h1>
               <div className="flex items-center">
                 {getStatusIcon()}
-                <span className={`ml-1 ${getStatusColor()}`}>{getStatusText()}</span>
+                <span className={`ml-1 ${getStatusColor()}`}>
+                  {getStatusText()}
+                </span>
               </div>
             </div>
 
@@ -347,27 +412,39 @@ const OrderDetailsPage: React.FC = () => {
                     {order.isPhotographyService ? (
                       <>Photography Service / {order.size}</>
                     ) : (
-                      <>{order.size} / {order.color} / {order.rentalDuration}</>
+                      <>
+                        {order.size} / {order.color} / {order.rentalDuration}
+                      </>
                     )}
                   </p>
                 </div>
 
                 <div className="border-t pt-4">
                   <h3 className="font-medium mb-2">
-                    {order.isPhotographyService ? 'Service Information' : 'Delivery Information'}
+                    {order.isPhotographyService
+                      ? 'Service Information'
+                      : 'Delivery Information'}
                   </h3>
                   {order.isPhotographyService ? (
                     <>
-                      <p className="text-gray-600">Shooting Date: {order.arrivalDate}</p>
+                      <p className="text-gray-600">
+                        Shooting Date: {order.arrivalDate}
+                      </p>
                       <p className="text-gray-600">Location: {order.color}</p>
                       {order.additionalDetails && (
-                        <p className="text-gray-600">Special Requests: {order.additionalDetails}</p>
+                        <p className="text-gray-600">
+                          Special Requests: {order.additionalDetails}
+                        </p>
                       )}
                     </>
                   ) : (
                     <>
-                      <p className="text-gray-600">Arrives by {order.arrivalDate}</p>
-                      <p className="text-gray-600">Returns by {order.returnDate}</p>
+                      <p className="text-gray-600">
+                        Arrives by {order.arrivalDate}
+                      </p>
+                      <p className="text-gray-600">
+                        Returns by {order.returnDate}
+                      </p>
                     </>
                   )}
                 </div>
@@ -378,7 +455,8 @@ const OrderDetailsPage: React.FC = () => {
                 </div>
 
                 <div className="border-t pt-4">
-                  {order.status === 'pending' || order.status === 'under-review' ? (
+                  {order.status === 'pending' ||
+                  order.status === 'under-review' ? (
                     <button
                       onClick={handleCancelOrder}
                       disabled={loading}
@@ -389,6 +467,19 @@ const OrderDetailsPage: React.FC = () => {
                   ) : null}
                 </div>
               </div>
+            </div>
+
+            <div className="mt-8">
+              <Link
+                to={getBackLink()}
+                className="inline-flex items-center text-blue-600"
+              >
+                <ChevronLeft className="h-4 w-4 mr-1" />
+                Back to{' '}
+                {getActiveTab() === 'order-history'
+                  ? 'Order History'
+                  : 'Current Orders'}
+              </Link>
             </div>
           </div>
         </div>
