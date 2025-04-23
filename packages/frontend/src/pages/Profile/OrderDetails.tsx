@@ -84,24 +84,8 @@ const OrderDetailsPage: React.FC = () => {
             // Try to fetch as photography booking
             const photographyBooking = await getPhotographyBookingById(id.replace('photography-', ''));
             
-            // Map photography booking to OrderItem format
-            let statusMapping: 'done' | 'pending' | 'under-review' | 'canceled';
-            switch (photographyBooking.status) {
-              case 'Pending':
-                statusMapping = 'pending';
-                break;
-              case 'Confirmed':
-                statusMapping = 'under-review';
-                break;
-              case 'Completed':
-                statusMapping = 'done';
-                break;
-              case 'Cancelled':
-                statusMapping = 'canceled';
-                break;
-              default:
-                statusMapping = 'pending';
-            }
+            // Use original backend status for photography bookings
+            const statusMapping = photographyBooking.status;
             
             setOrder({
               id: photographyBooking._id,
@@ -139,6 +123,24 @@ const OrderDetailsPage: React.FC = () => {
 
   const getStatusIcon = () => {
     if (!order) return null;
+
+    // For photography bookings
+    if (order.isPhotographyService) {
+      switch (order.status) {
+        case 'Completed':
+          return <CheckCircle className="h-5 w-5 text-green-600" />;
+        case 'Pending':
+          return <Clock className="h-5 w-5 text-amber-500" />;
+        case 'Confirmed':
+          return <Hourglass className="h-5 w-5 text-amber-500" />;
+        case 'Cancelled':
+          return <XCircle className="h-5 w-5 text-red-500" />;
+        default:
+          return null;
+      }
+    }
+
+    // For regular orders
     switch (order.status) {
       case 'done':
         return <CheckCircle className="h-5 w-5 text-green-600" />;
@@ -155,6 +157,13 @@ const OrderDetailsPage: React.FC = () => {
 
   const getStatusText = () => {
     if (!order) return '';
+
+    // For photography bookings
+    if (order.isPhotographyService) {
+      return order.status; // Display original status
+    }
+
+    // For regular orders
     switch (order.status) {
       case 'done':
         return 'Done';
@@ -171,6 +180,20 @@ const OrderDetailsPage: React.FC = () => {
 
   const getStatusColor = () => {
     if (!order) return '';
+
+    // For photography bookings
+    if (order.isPhotographyService) {
+      switch (order.status) {
+        case 'Completed':
+          return 'text-green-600';
+        case 'Cancelled':
+          return 'text-red-500';
+        default:
+          return 'text-amber-500';
+      }
+    }
+
+    // For regular orders
     switch (order.status) {
       case 'done':
         return 'text-green-600';
@@ -183,6 +206,19 @@ const OrderDetailsPage: React.FC = () => {
 
   const getBackLink = () => {
     if (!order) return '/order-history';
+    
+    // For photography bookings
+    if (order.isPhotographyService) {
+      if (order.status === 'Completed') {
+        return '/order-history';
+      } else if (order.status === 'Cancelled') {
+        return '/order-history?tab=canceled';
+      } else {
+        return '/current-orders';
+      }
+    }
+    
+    // For regular orders
     if (order.status === 'done') {
       return '/order-history';
     } else if (order.status === 'canceled') {
@@ -194,6 +230,17 @@ const OrderDetailsPage: React.FC = () => {
 
   const getActiveTab = () => {
     if (!order) return 'order-history';
+    
+    // For photography bookings
+    if (order.isPhotographyService) {
+      if (order.status === 'Completed' || order.status === 'Cancelled') {
+        return 'order-history';
+      } else {
+        return 'current-orders';
+      }
+    }
+    
+    // For regular orders
     if (order.status === 'done' || order.status === 'canceled') {
       return 'order-history';
     } else {

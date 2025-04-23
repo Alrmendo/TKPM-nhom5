@@ -30,19 +30,9 @@ const mapOrderStatus = (backendStatus: string): 'done' | 'pending' | 'under-revi
 };
 
 // Map photography booking status to frontend status
-const mapPhotographyStatus = (status: string): 'done' | 'pending' | 'under-review' | 'canceled' => {
-  switch (status) {
-    case 'Pending':
-      return 'pending';
-    case 'Confirmed':
-      return 'under-review';
-    case 'Completed':
-      return 'done';
-    case 'Cancelled':
-      return 'canceled';
-    default:
-      return 'pending';
-  }
+const mapPhotographyStatus = (status: string): string => {
+  // Just return the original status without mapping
+  return status;
 };
 
 export default function OrderHistory(): JSX.Element {
@@ -151,6 +141,15 @@ export default function OrderHistory(): JSX.Element {
 
   // Filter orders based on active tab
   const filteredOrders = orders.filter(order => {
+    // For photography services, use the original backend status
+    if (order.isPhotographyService) {
+      if (activeTab === 'current') return order.status === 'Pending' || order.status === 'Confirmed';
+      if (activeTab === 'previous') return order.status === 'Completed';
+      if (activeTab === 'canceled') return order.status === 'Cancelled';
+      return true;
+    }
+    
+    // For regular orders, use the existing logic
     if (activeTab === 'current') return order.status === 'pending' || order.status === 'under-review';
     if (activeTab === 'previous') return order.status === 'done';
     if (activeTab === 'canceled') return order.status === 'canceled';

@@ -180,23 +180,8 @@ const CurrentOrdersPage: React.FC = () => {
           if (photographyBookings && photographyBookings.length > 0) {
             photographyBookings.forEach(booking => {
               // Map photography booking status to frontend status
-              let statusMapping: 'done' | 'pending' | 'under-review' | 'canceled';
-              switch (booking.status) {
-                case 'Pending':
-                  statusMapping = 'pending';
-                  break;
-                case 'Confirmed':
-                  statusMapping = 'under-review';
-                  break;
-                case 'Completed':
-                  statusMapping = 'done';
-                  break;
-                case 'Cancelled':
-                  statusMapping = 'canceled';
-                  break;
-                default:
-                  statusMapping = 'pending';
-              }
+              // Just use the original status without mapping
+              const statusMapping = booking.status;
               
               // Only add bookings with payment details 
               if (booking.paymentDetails) {
@@ -239,6 +224,15 @@ const CurrentOrdersPage: React.FC = () => {
 
   // Filter orders based on active tab
   const filteredOrders = orders.filter(order => {
+    // For photography services, use the original backend status
+    if (order.isPhotographyService) {
+      if (activeTab === 'current') return order.status === 'Pending' || order.status === 'Confirmed';
+      if (activeTab === 'previous') return order.status === 'Completed';
+      if (activeTab === 'canceled') return order.status === 'Cancelled';
+      return true;
+    }
+    
+    // For regular orders and cart items, use the existing logic
     if (activeTab === 'current') {
       // Only show pending and under-review in current orders
       return order.status === 'pending' || order.status === 'under-review' || order.isCartItem === true;
