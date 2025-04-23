@@ -7,10 +7,14 @@ import Footer from '../../components/footer';
 import { useAuth } from '../../context/AuthContext';
 import { getUserProfile } from '../../api/user';
 import { getUserOrders } from '../../api/order';
+import {
+  getUserPhotographyBookings,
+  PhotographyBooking,
+} from '../../api/photography';
 import { UserProfile } from '../../api/user';
 import { format, differenceInDays } from 'date-fns';
 
-type OrderFilterTab = 'current' | 'previous' | 'canceled';
+type OrderFilterTab = 'current' | 'previous' | 'canceled' | 'all';
 
 // Map backend status to frontend status
 const mapOrderStatus = (
@@ -48,6 +52,12 @@ const mapOrderStatus = (
   };
 
   return statusMap[backendStatus.toLowerCase()] || 'pending';
+};
+
+// Map photography booking status to frontend status
+const mapPhotographyStatus = (status: string): string => {
+  // Just return the original status without mapping
+  return status;
 };
 
 export default function OrderHistory(): JSX.Element {
@@ -121,7 +131,73 @@ export default function OrderHistory(): JSX.Element {
           });
         }
 
-        setOrders(formattedOrders);
+        // Fetch photography bookings
+        try {
+          const photographyBookings = await getUserPhotographyBookings();
+          console.log(
+            '===DEBUG=== Photography bookings from API:',
+            photographyBookings,
+          );
+
+          if (photographyBookings && photographyBookings.length > 0) {
+            // Show all photography bookings, not just ones with payment details
+            photographyBookings.forEach((booking) => {
+              console.log(
+                '===DEBUG=== Processing booking:',
+                booking._id,
+                'with status:',
+                booking.status,
+              );
+              formattedOrders.push({
+                id: booking._id,
+                name: booking.serviceId?.name || 'Photography Service',
+                image:
+                  booking.serviceId?.imageUrls?.[0] ||
+                  booking.serviceId?.images?.[0] ||
+                  booking.serviceId?.coverImage ||
+                  '/placeholder-photography.jpg',
+                size: booking.serviceId?.packageType || 'Standard Package',
+                color: booking.shootingLocation || 'Studio',
+                rentalDuration: 'Photography Service',
+                arrivalDate: new Date(
+                  booking.shootingDate,
+                ).toLocaleDateString(),
+                returnDate: new Date(booking.shootingDate).toLocaleDateString(),
+                status: booking.status, // Use status directly without mapping
+                isPhotographyService: true,
+                purchaseType: 'service',
+                additionalDetails: booking.additionalRequests,
+              });
+            });
+          }
+        } catch (photoErr) {
+          console.error('Error fetching photography bookings:', photoErr);
+        }
+
+        // Use different deduplication strategies for different order types
+        const uniqueOrderMap = new Map();
+        formattedOrders.forEach((order) => {
+          // For photography services, use ID as unique key to preserve all bookings
+          if (order.isPhotographyService) {
+            const key = order.id;
+            uniqueOrderMap.set(key, order);
+          } else {
+            // For wedding dresses, use name+size+color as key to prevent duplicates
+            const key = `${order.name}-${order.size}-${order.color}`;
+            // If we already have this item, only replace if it's not a cart item
+            if (
+              !uniqueOrderMap.has(key) ||
+              (uniqueOrderMap.get(key).isCartItem && !order.isCartItem)
+            ) {
+              uniqueOrderMap.set(key, order);
+            }
+          }
+        });
+
+        // Convert back to array
+        const deduplicatedOrders = Array.from(uniqueOrderMap.values());
+
+        setOrders(deduplicatedOrders);
       } catch (err) {
         console.error('Error fetching orders:', err);
       } finally {
@@ -133,7 +209,32 @@ export default function OrderHistory(): JSX.Element {
   }, [isAuthenticated, activeTab]);
 
   // Filter orders based on active tab
-  const filteredOrders = orders.filter((order: OrderItem) => {
+  const filteredOrders = orders.filter((order) => {
+    // For photography services, debug the status check
+    if (order.isPhotographyService) {
+      const status = order.status ? order.status.toLowerCase() : '';
+      console.log(
+        '===DEBUG=== Filtering photo order:',
+        order.id,
+        'Status:',
+        order.status,
+        'Tab:',
+        activeTab,
+      );
+
+      let shouldShow = false;
+      if (activeTab === 'current')
+        shouldShow = status === 'pending' || status === 'confirmed';
+      if (activeTab === 'previous') shouldShow = status === 'completed';
+      if (activeTab === 'canceled')
+        shouldShow = status === 'cancelled' || status === 'canceled';
+      if (activeTab === 'all') shouldShow = true;
+
+      console.log('===DEBUG=== Should show?', shouldShow);
+      return shouldShow;
+    }
+
+    // For regular orders, use the existing logic
     if (activeTab === 'current')
       return (
         order.status === 'pending' ||
@@ -152,6 +253,8 @@ export default function OrderHistory(): JSX.Element {
       return order.status === 'canceled' || order.status === 'cancelled';
     return true;
   });
+
+  console.log('===DEBUG=== Final filtered orders:', filteredOrders);
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">

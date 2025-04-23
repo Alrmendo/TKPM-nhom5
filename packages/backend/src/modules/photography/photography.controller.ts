@@ -53,7 +53,8 @@ export class PhotographyController {
   @UseGuards(JwtAuthGuard)
   @Post('bookings')
   async createBooking(@Request() req, @Body() createDto: CreatePhotographyBookingDto) {
-    return this.photographyService.createBooking(req.user.userId, createDto);
+    // The JWT strategy returns id, not userId (see jwt.strategy.ts)
+    return this.photographyService.createBooking(req.user.id, createDto);
   }
 
   @UseGuards(JwtAuthGuard)
@@ -88,7 +89,8 @@ export class PhotographyController {
   @UseGuards(JwtAuthGuard)
   @Get('bookings/my-bookings')
   async getMyBookings(@Request() req) {
-    return this.photographyService.getCustomerBookings(req.user.userId);
+    // The JWT strategy returns id, not userId (see jwt.strategy.ts)
+    return this.photographyService.getCustomerBookings(req.user.id);
   }
 
   @UseGuards(JwtAuthGuard)
@@ -96,7 +98,7 @@ export class PhotographyController {
   async getBookingById(@Request() req, @Param('id') id: string) {
     const booking = await this.photographyService.getBookingById(id);
     // Simple security check to ensure users can only view their own bookings
-    if (booking.customerId.toString() !== req.user.userId && req.user.role !== 'admin') {
+    if (booking.customerId.toString() !== req.user.id && req.user.role !== 'admin') {
       return { error: 'You do not have permission to view this booking' };
     }
     return booking;
@@ -109,13 +111,14 @@ export class PhotographyController {
     @Param('id') id: string, 
     @Body() updateDto: UpdatePhotographyBookingDto
   ) {
-    return this.photographyService.updateBooking(id, req.user.userId, updateDto);
+    // The JWT strategy returns id, not userId (see jwt.strategy.ts)
+    return this.photographyService.updateBooking(id, req.user.id, updateDto);
   }
 
   @UseGuards(JwtAuthGuard)
   @Delete('bookings/:id/cancel')
   async cancelBooking(@Request() req, @Param('id') id: string) {
-    return this.photographyService.cancelBooking(id, req.user.userId);
+    return this.photographyService.cancelBooking(id, req.user.id);
   }
 }
 
