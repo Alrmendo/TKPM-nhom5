@@ -41,7 +41,8 @@ export interface OrderItem {
     | 'Pending'
     | 'Confirmed'
     | 'Cancelled'
-    | 'Completed';
+    | 'Completed'
+    | 'In Cart';
   isCartItem?: boolean;
   isPaid?: boolean;
   purchaseType?: 'rent' | 'buy' | 'service';
@@ -199,10 +200,10 @@ const CurrentOrdersPage: React.FC = () => {
                   rentalDuration: 'Photography Service',
                   arrivalDate: new Date(item.bookingDate).toLocaleDateString(),
                   returnDate: new Date(item.bookingDate).toLocaleDateString(),
-                  status: 'Pending',
+                  status: 'In Cart',
                   isCartItem: true,
                   isPhotographyService: true,
-                  purchaseType: 'service',
+                  purchaseType: 'service'
                 });
               });
             }
@@ -320,7 +321,7 @@ const CurrentOrdersPage: React.FC = () => {
 
       let shouldShow = false;
       if (activeTab === 'current')
-        shouldShow = status === 'pending' || status === 'confirmed';
+        shouldShow = status === 'pending' || status === 'confirmed' || order.isCartItem === true || status === 'in cart';
       if (activeTab === 'previous') shouldShow = status === 'completed';
       if (activeTab === 'canceled')
         shouldShow = status === 'cancelled' || status === 'canceled';

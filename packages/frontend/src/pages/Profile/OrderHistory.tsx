@@ -175,6 +175,35 @@ export default function OrderHistory(): JSX.Element {
           console.error('Error fetching photography bookings:', photoErr);
         }
 
+        // Add photography cart items
+        try {
+          const { getPhotographyCart } = await import('../../api/photographyCart');
+          const photographyCartItems = await getPhotographyCart();
+          console.log('Photography cart items:', photographyCartItems);
+          
+          if (photographyCartItems && photographyCartItems.length > 0) {
+            // Add photography items as cart items with "In Cart" status
+            photographyCartItems.forEach((item) => {
+              formattedOrders.push({
+                id: `photography-cart-item-${item.serviceId}`,
+                name: item.serviceName,
+                image: item.imageUrl,
+                size: item.serviceType,
+                color: item.location || 'Studio',
+                rentalDuration: 'Photography Service',
+                arrivalDate: new Date(item.bookingDate).toLocaleDateString(),
+                returnDate: new Date(item.bookingDate).toLocaleDateString(),
+                status: 'In Cart', // Set status explicitly to "In Cart"
+                isCartItem: true,
+                isPhotographyService: true,
+                purchaseType: 'service'
+              });
+            });
+          }
+        } catch (photoCartErr) {
+          console.error('Error fetching photography cart items:', photoCartErr);
+        }
+
         // Use different deduplication strategies for different order types
         const uniqueOrderMap = new Map();
         formattedOrders.forEach((order) => {
@@ -225,7 +254,7 @@ export default function OrderHistory(): JSX.Element {
 
       let shouldShow = false;
       if (activeTab === 'current')
-        shouldShow = status === 'pending' || status === 'confirmed';
+        shouldShow = status === 'pending' || status === 'confirmed' || order.isCartItem === true;
       if (activeTab === 'previous') shouldShow = status === 'completed';
       if (activeTab === 'canceled')
         shouldShow = status === 'cancelled' || status === 'canceled';
@@ -257,12 +286,12 @@ export default function OrderHistory(): JSX.Element {
 
   console.log('===DEBUG=== Final filtered orders:', filteredOrders);
 
-  // Handle canceling/deleting an order
+  // Handle deleting photography cart items
   const handleDeleteOrder = async (orderId: string) => {
     try {
       setLoading(true);
       
-      // Check if this is a cart item
+      // Check if this is a photography cart item
       if (orderId.startsWith('photography-cart-item-')) {
         // Extract the serviceId from the photography-cart-item-X pattern
         const serviceId = orderId.replace('photography-cart-item-', '');
@@ -279,6 +308,7 @@ export default function OrderHistory(): JSX.Element {
       }
     } catch (err: any) {
       console.error('Failed to delete item:', err);
+      toast.error(err.message || 'Failed to delete item');
     } finally {
       setLoading(false);
     }
@@ -316,7 +346,11 @@ export default function OrderHistory(): JSX.Element {
                 </div>
               ) : filteredOrders.length > 0 ? (
                 filteredOrders.map((order) => (
-                  <OrderCard key={order.id} order={order} />
+                  <OrderCard 
+                    key={order.id} 
+                    order={order} 
+                    onDelete={activeTab === 'current' && order.isCartItem ? handleDeleteOrder : undefined}
+                  />
                 ))
               ) : (
                 <div className="bg-white rounded-lg border p-8 text-center">

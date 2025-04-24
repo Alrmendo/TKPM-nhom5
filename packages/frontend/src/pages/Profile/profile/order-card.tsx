@@ -31,7 +31,8 @@ export interface OrderItem {
     | 'Pending'
     | 'Confirmed'
     | 'Cancelled'
-    | 'Completed';
+    | 'Completed'
+    | 'In Cart';
   isCartItem?: boolean;
   isPaid?: boolean;
   purchaseType?: 'rent' | 'buy' | 'service'; // Thêm 'service' cho dịch vụ nhiếp ảnh
@@ -98,6 +99,11 @@ export function OrderCard({ order, onDelete }: OrderCardProps): JSX.Element {
   const getStatusText = () => {
     if (order.isPaid) {
       return 'Paid';
+    }
+
+    // Check for cart items first
+    if (order.isCartItem || order.status === 'In Cart') {
+      return 'In Cart';
     }
 
     // Special handling for photography bookings
