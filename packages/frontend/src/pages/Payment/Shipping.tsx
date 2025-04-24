@@ -52,54 +52,160 @@ const Shipping: React.FC = () => {
     console.log('Shipping component mounted');
     
     const fetchData = async () => {
-      console.log('Shipping - fetchData starting');
       try {
+        console.log('Fetching data in Shipping component...');
         setIsLoading(true);
         
-        // Get shipping address from session storage
-        const savedAddress = sessionStorage.getItem('shippingAddress');
-        console.log('Retrieved from sessionStorage - shippingAddress:', savedAddress);
-        
-        let addressData = null;
-        if (savedAddress) {
+        // Determine delivery method from localStorage
+        const savedMethodStr = localStorage.getItem('deliveryMethod');
+        if (savedMethodStr) {
           try {
-            addressData = JSON.parse(savedAddress);
-            setShippingAddress(addressData);
+            setDeliveryMethod(JSON.parse(savedMethodStr));
           } catch (e) {
-            console.error('Error parsing shipping address from session storage:', e);
-            // Continue without redirecting, we'll try to recover
+            console.error('Error parsing delivery method from localStorage:', e);
           }
         }
         
-        if (!addressData) {
-          console.warn('No valid shipping address found in sessionStorage or failed to parse');
-          // Instead of immediate redirect, we'll continue loading cart data
-          // and only redirect if we have no fallback mechanism
-          
-          // Check if we can get address data from localStorage as a fallback
-          const userProfile = localStorage.getItem('user_profile');
-          if (userProfile) {
-            try {
-              const profileData = JSON.parse(userProfile);
-              if (profileData && profileData.defaultAddress) {
-                console.log('Using default address from user profile as fallback');
-                setShippingAddress(profileData.defaultAddress);
-                // Also save to session storage for future steps
-                sessionStorage.setItem('shippingAddress', JSON.stringify(profileData.defaultAddress));
-                addressData = profileData.defaultAddress;
+        let hasItems = false;
+        
+        // Check for order data in localStorage
+        const orderStr = localStorage.getItem('currentOrder');
+        if (orderStr) {
+          try {
+            const orderData = JSON.parse(orderStr);
+            console.log('Order data from localStorage in Shipping:', orderData);
+            let allCartItems = [];
+            
+            // Process dress items
+            if (orderData && orderData.items && orderData.items.length > 0) {
+              console.log('Dress items found in order:', orderData.items);
+              allCartItems = [...orderData.items];
+              
+              // Get customer information
+              const customerInfoStr = localStorage.getItem('customerInfo');
+              if (customerInfoStr) {
+                try {
+                  const customerInfo = JSON.parse(customerInfoStr);
+                  setCustomerInfo(customerInfo);
+                } catch (e) {
+                  console.error('Error parsing customer info from localStorage:', e);
+                }
               }
-            } catch (e) {
-              console.error('Error accessing fallback address:', e);
+              
+              // Calculate summary for dress items
+              const firstItem = orderData.items[0];
+              const startDate = new Date(firstItem.startDate);
+              const endDate = new Date(firstItem.endDate);
+              
+              if (!isNaN(startDate.getTime()) && !isNaN(endDate.getTime())) {
+                const dressItemsSummary = calculateOrderSummary(
+                  orderData.items,
+                  startDate,
+                  endDate
+                );
+                setSummary(dressItemsSummary);
+              }
+              
+              hasItems = true;
             }
+            
+            // Process photography items
+            if (orderData && orderData.photographyItems && orderData.photographyItems.length > 0) {
+              console.log('Photography items found in order:', orderData.photographyItems);
+              console.log('Current hasItems status:', hasItems);
+              
+              // Convert photography items to cart item format
+              const processedPhotographyItems = orderData.photographyItems.map((item) => ({
+                id: item.serviceId,
+                name: item.serviceName,
+                type: item.serviceType,
+                image: item.imageUrl,
+                price: item.price,
+                quantity: 1,
+                bookingDate: item.bookingDate,
+                location: item.location || 'Default location',
+                isPhotographyService: true
+              }));
+              
+              console.log('Processed photography items:', processedPhotographyItems);
+              
+              // Combine with any existing dress items
+              allCartItems = [...allCartItems, ...processedPhotographyItems];
+              
+              // Calculate summary for photography services
+              const totalAmount = processedPhotographyItems.reduce(
+                (sum, item) => sum + (item.price || 0), 0
+              );
+              
+              console.log('Photography items total amount:', totalAmount);
+              
+              // Update summary with photography items
+              setSummary(prev => {
+                const updatedSummary = {...prev};
+                updatedSummary.subtotal += totalAmount;
+                updatedSummary.tax += totalAmount * 0.1; // 10% tax
+                updatedSummary.total += totalAmount + (totalAmount * 0.1);
+                return updatedSummary;
+              });
+              
+              hasItems = true;
+            }
+            
+            if (hasItems) {
+              setCartItems(allCartItems);
+              setIsLoading(false);
+              return; // Exit if we have any items
+            }
+          } catch (e) {
+            console.error('Error parsing order data from localStorage:', e);
           }
-          
-          // If we still have no address data after fallback attempts, redirect
-          if (!addressData) {
-            setError('No shipping address found');
-            setTimeout(() => {
-              navigate('/payment-information');
-            }, 2000);
-            return;
+        }
+
+        // If no order data found, fallback to separate photography cart
+        const photographyCartStr = localStorage.getItem('photography_cart_items');
+        
+        if (photographyCartStr) {
+          try {
+            const photographyCartItems = JSON.parse(photographyCartStr);
+            console.log('Photography cart items found in localStorage:', photographyCartItems);
+            
+            // Convert photography cart items to cart item format
+            const processedPhotographyCartItems = photographyCartItems.map((item: any) => ({
+              id: item.serviceId,
+              name: item.serviceName,
+              type: item.serviceType,
+              image: item.imageUrl,
+              price: item.price,
+              quantity: 1,
+              bookingDate: item.bookingDate,
+              location: item.location || 'Default location',
+              isPhotographyService: true
+            }));
+            
+            console.log('Processed photography cart items:', processedPhotographyCartItems);
+            
+            // Combine with any existing dress items
+            allCartItems = [...allCartItems, ...processedPhotographyCartItems];
+            
+            // Calculate summary for photography services
+            const totalAmount = processedPhotographyCartItems.reduce(
+              (sum, item) => sum + (item.price || 0), 0
+            );
+            
+            console.log('Photography cart items total amount:', totalAmount);
+            
+            // Update summary with photography items
+            setSummary(prev => {
+              const updatedSummary = {...prev};
+              updatedSummary.subtotal += totalAmount;
+              updatedSummary.tax += totalAmount * 0.1; // 10% tax
+              updatedSummary.total += totalAmount + (totalAmount * 0.1);
+              return updatedSummary;
+            });
+            
+            hasItems = true;
+          } catch (e) {
+            console.error('Error parsing photography cart items from localStorage:', e);
           }
         }
         

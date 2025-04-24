@@ -25,8 +25,9 @@ const Review: React.FC = () => {
     const fetchCart = async () => {
       try {
         setIsLoading(true);
+        let hasItems = false;
         
-        // First check if we have photographyItems in the current order
+        // First check if we have items in the current order from localStorage
         const orderStr = localStorage.getItem('currentOrder');
         console.log('Order data from localStorage:', orderStr);
         
@@ -34,8 +35,16 @@ const Review: React.FC = () => {
           try {
             const orderData = JSON.parse(orderStr);
             console.log('Parsed order data:', orderData);
+            let allCartItems = [];
             
-            // Check if there are photography items in the order
+            // Process dress items
+            if (orderData && orderData.items && orderData.items.length > 0) {
+              console.log('Dress items found in order:', orderData.items);
+              allCartItems = [...orderData.items];
+              hasItems = true;
+            }
+            
+            // Process photography items
             if (orderData && orderData.photographyItems && orderData.photographyItems.length > 0) {
               console.log('Photography items found in order:', orderData.photographyItems);
               
@@ -52,31 +61,67 @@ const Review: React.FC = () => {
                 isPhotographyService: true
               }));
               
-              setCartItems(processedPhotographyItems);
+              // Combine with any existing dress items
+              allCartItems = [...allCartItems, ...processedPhotographyItems];
+              hasItems = true;
+            }
+            
+            if (hasItems) {
+              setCartItems(allCartItems);
               
-              // Calculate summary for photography services
-              const totalAmount = processedPhotographyItems.reduce(
-                (sum: number, item: {price?: number}) => sum + (item.price || 0), 0
-              );
+              // Calculate overall summary
+              let totalSubtotal = 0;
+              let totalTax = 0;
+              let totalShipping = 0;
               
-              const totalWithTax = totalAmount + (totalAmount * 0.1);
+              // Calculate for dress items
+              if (orderData && orderData.items && orderData.items.length > 0) {
+                const firstItem = orderData.items[0];
+                const startDate = new Date(firstItem.startDate);
+                const endDate = new Date(firstItem.endDate);
+                if (!isNaN(startDate.getTime()) && !isNaN(endDate.getTime())) {
+                  const dressItemsSummary = calculateOrderSummary(
+                    orderData.items,
+                    startDate,
+                    endDate
+                  );
+                  totalSubtotal += dressItemsSummary.subtotal;
+                  totalTax += dressItemsSummary.tax;
+                  totalShipping += dressItemsSummary.shipping;
+                }
+              }
+              
+              // Calculate for photography items
+              if (orderData && orderData.photographyItems && orderData.photographyItems.length > 0) {
+                const photoAmount = orderData.photographyItems.reduce(
+                  (sum: number, item: {price?: number}) => sum + (item.price || 0), 0
+                );
+                totalSubtotal += photoAmount;
+                totalTax += photoAmount * 0.1; // 10% tax
+              }
+              
+              const totalAmount = totalSubtotal + totalTax + totalShipping;
               setSummary({
-                subtotal: totalAmount,
-                tax: totalAmount * 0.1, // 10% tax
-                shipping: 0,  // No shipping for photography
-                total: totalWithTax,
-                initialDeposit: totalWithTax * 0.5, // 50% deposit
-                remainingPayment: totalWithTax * 0.5, // 50% remaining payment
+                subtotal: totalSubtotal,
+                tax: totalTax,
+                shipping: totalShipping,
+                total: totalAmount,
+                initialDeposit: totalAmount * 0.5, // 50% deposit
+                remainingPayment: totalAmount * 0.5, // 50% remaining payment
                 currency: 'USD'
               });
               
-              return; // Exit if we have photography items in the order
+              setIsLoading(false);
+              return; // Exit if we have items in the order
             }
           } catch (e) {
             console.error('Error parsing order data from localStorage:', e);
           }
         }
         
+        // If no items in the order, continue with the rest of the logic...
+        // Existing code below:
+
         // If no photography items in the order, check for separate photography cart
         const photographyCartStr = localStorage.getItem('photography_cart_items');
         if (photographyCartStr) {

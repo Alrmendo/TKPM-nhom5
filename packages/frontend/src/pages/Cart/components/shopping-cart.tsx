@@ -110,16 +110,47 @@ export const ShoppingCart: React.FC = () => {
         setLoading(true);
         console.log('Fetching cart data...');
         
-        // Get dress rental items from backend API
-        const cartData = await getCart();
-        console.log('Cart data received:', cartData);
-        
-        if (!cartData || !cartData.items) {
-          console.warn('Empty or invalid cart data received:', cartData);
-          setCartItems([]);
+        // First check localStorage for current order data
+        const orderStr = localStorage.getItem('currentOrder');
+        if (orderStr) {
+          try {
+            const orderData = JSON.parse(orderStr);
+            console.log('Order data from localStorage:', orderData);
+            
+            if (orderData && orderData.items && orderData.items.length > 0) {
+              console.log('Found dress items in localStorage:', orderData.items);
+              setCartItems(orderData.items);
+            } else {
+              // If no items in localStorage, try getting from API
+              const cartData = await getCart();
+              console.log('Cart data received from API:', cartData);
+              
+              if (!cartData || !cartData.items) {
+                console.warn('Empty or invalid cart data received:', cartData);
+                setCartItems([]);
+              } else {
+                setCartItems(cartData.items || []);
+                console.log('Cart items from API:', cartData.items);
+              }
+            }
+          } catch (e) {
+            console.error('Error parsing order data from localStorage:', e);
+            // If error parsing localStorage, fallback to API
+            const cartData = await getCart();
+            if (!cartData || !cartData.items) {
+              setCartItems([]);
+            } else {
+              setCartItems(cartData.items || []);
+            }
+          }
         } else {
-          setCartItems(cartData.items || []);
-          console.log('Cart items:', cartData.items);
+          // If no data in localStorage, get from API
+          const cartData = await getCart();
+          if (!cartData || !cartData.items) {
+            setCartItems([]);
+          } else {
+            setCartItems(cartData.items || []);
+          }
         }
         
         // Get photography services from localStorage
@@ -249,7 +280,8 @@ export const ShoppingCart: React.FC = () => {
           quantity: item.quantity,
           pricePerDay: typeof item.dress === 'object' ? item.dress.dailyRentalPrice : item.pricePerDay,
           startDate: item.startDate,
-          endDate: item.endDate
+          endDate: item.endDate,
+          purchaseType: item.purchaseType || 'rent'
         };
       });
       
@@ -262,6 +294,7 @@ export const ShoppingCart: React.FC = () => {
       
       // Create order with backend items first
       if (cartItems.length > 0) {
+        // Create order but do not clear the cart
         await createOrder();
       }
       

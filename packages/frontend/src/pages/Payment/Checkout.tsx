@@ -79,54 +79,39 @@ const Checkout: React.FC = () => {
       try {
         apiCallAttempted.current = true;
         setIsLoading(true);
+        let hasItems = false;
+        let allCartItems: any[] = [];
         
-        // Kiểm tra dữ liệu đơn hàng trong localStorage trước
-        const orderDataStr = localStorage.getItem('currentOrder');
-        if (orderDataStr) {
+        // Check for order data in localStorage
+        const orderStr = localStorage.getItem('currentOrder');
+        if (orderStr) {
           try {
-            const orderData = JSON.parse(orderDataStr);
-            console.log('Order data from localStorage in Checkout page:', orderData);
+            const orderData = JSON.parse(orderStr);
+            console.log('Order data from localStorage in Checkout:', orderData);
             
-            let hasItems = false;
-            
-            // Check for regular dress items
+            // Process dress items
             if (orderData && orderData.items && orderData.items.length > 0) {
-              setCartItems(orderData.items);
-              hasItems = true;
+              console.log('Dress items found in order:', orderData.items);
+              allCartItems = [...orderData.items];
               
+              // Calculate summary for dress items
               const firstItem = orderData.items[0];
-              let itemStartDate = firstItem.startDate ? new Date(firstItem.startDate) : new Date();
-              let itemEndDate = firstItem.endDate ? new Date(firstItem.endDate) : new Date();
+              const startDate = new Date(firstItem.startDate);
+              const endDate = new Date(firstItem.endDate);
               
-              // Đảm bảo ngày hợp lệ
-              if (isNaN(itemStartDate.getTime())) itemStartDate = new Date();
-              if (isNaN(itemEndDate.getTime())) itemEndDate = new Date();
-              
-              const calculatedSummary = calculateOrderSummary(
-                orderData.items,
-                itemStartDate,
-                itemEndDate
-              );
-              
-              // Lấy thông tin shipping method từ session storage
-              try {
-                const shippingMethodStr = sessionStorage.getItem('shippingMethod');
-                if (shippingMethodStr) {
-                  const shippingMethodData = JSON.parse(shippingMethodStr);
-                  setShippingMethod(shippingMethodData);
-                  
-                  // Cập nhật phí shipping trong summary
-                  calculatedSummary.shipping = shippingMethodData.price;
-                  calculatedSummary.total = calculatedSummary.subtotal + calculatedSummary.tax + shippingMethodData.price;
-                }
-              } catch (e) {
-                console.error('Error parsing shipping method from session storage:', e);
+              if (!isNaN(startDate.getTime()) && !isNaN(endDate.getTime())) {
+                const dressItemsSummary = calculateOrderSummary(
+                  orderData.items,
+                  startDate,
+                  endDate
+                );
+                setSummary(dressItemsSummary);
               }
               
-              setSummary(calculatedSummary);
+              hasItems = true;
             }
             
-            // Check for photography items
+            // Process photography items
             if (orderData && orderData.photographyItems && orderData.photographyItems.length > 0) {
               console.log('Photography items found in order:', orderData.photographyItems);
               console.log('Current hasItems status:', hasItems);
@@ -146,14 +131,8 @@ const Checkout: React.FC = () => {
               
               console.log('Processed photography items:', processedPhotographyItems);
               
-              // If we already have dress items, merge the arrays; otherwise, set cartItems directly
-              if (hasItems) {
-                setCartItems(prev => [...prev, ...processedPhotographyItems]);
-              } else {
-                setCartItems(processedPhotographyItems);
-              }
-              
-              hasItems = true;
+              // Combine with any existing dress items
+              allCartItems = [...allCartItems, ...processedPhotographyItems];
               
               // Calculate summary for photography services
               const totalAmount = processedPhotographyItems.reduce(
@@ -162,57 +141,40 @@ const Checkout: React.FC = () => {
               
               console.log('Photography items total amount:', totalAmount);
               
-              // Update or create summary with photography items
+              // Update summary with photography items
               setSummary(prev => {
-                // Start with existing summary or create new one
-                const updatedSummary = prev || {
-                  subtotal: 0,
-                  tax: 0,
-                  shipping: 0,
-                  total: 0,
-                  currency: 'USD'
-                };
-                
-                // Add photography items to summary
-                updatedSummary.subtotal += totalAmount;
-                updatedSummary.tax += totalAmount * 0.1; // 10% tax
-                
-                // Calculate deposit and remaining amounts (50% each)
-                updatedSummary.initialDeposit = (updatedSummary.subtotal + updatedSummary.tax) * 0.5;
-                updatedSummary.remainingPayment = (updatedSummary.subtotal + updatedSummary.tax) * 0.5;
-                
-                // Apply shipping costs if available
-                try {
-                  const shippingMethodStr = sessionStorage.getItem('shippingMethod');
-                  if (shippingMethodStr) {
-                    const shippingMethodData = JSON.parse(shippingMethodStr);
-                    setShippingMethod(shippingMethodData);
-                    
-                    // Update shipping cost
-                    updatedSummary.shipping = shippingMethodData.price;
-                  }
-                } catch (e) {
-                  console.error('Error parsing shipping method from session storage:', e);
+                if (!prev) {
+                  return {
+                    subtotal: totalAmount,
+                    tax: totalAmount * 0.1, // 10% tax
+                    shipping: 0,  // No shipping for photography
+                    total: totalAmount + (totalAmount * 0.1),
+                    initialDeposit: (totalAmount + (totalAmount * 0.1)) * 0.5, // 50% deposit
+                    remainingPayment: (totalAmount + (totalAmount * 0.1)) * 0.5, // 50% remaining payment
+                    currency: 'USD'
+                  };
                 }
                 
-                // Recalculate total with all costs
-                updatedSummary.total = updatedSummary.subtotal + updatedSummary.tax + updatedSummary.shipping;
-                
-                console.log('Updated summary with photography items:', updatedSummary);
+                const updatedSummary = {...prev};
+                updatedSummary.subtotal += totalAmount;
+                updatedSummary.tax += totalAmount * 0.1; // 10% tax
+                updatedSummary.total += totalAmount + (totalAmount * 0.1);
+                updatedSummary.initialDeposit = updatedSummary.total * 0.5;
+                updatedSummary.remainingPayment = updatedSummary.total * 0.5;
                 return updatedSummary;
               });
+              
+              hasItems = true;
             }
             
-            // If we have any items (dress or photography), process address and shipping info
             if (hasItems) {
-              console.log('Items found in cart, proceeding with checkout');
-              // Sau khi đã xử lý dữ liệu đơn hàng, tiếp tục lấy địa chỉ từ session storage
+              setCartItems(allCartItems);
+              
+              // Continue with loading shipping address
               processAddressAndShippingMethod();
               
               setIsLoading(false);
-              return; // Thoát luôn nếu đã có dữ liệu trong localStorage
-            } else {
-              console.error('No items found in order data');
+              return; // Exit if we have processed any items
             }
           } catch (e) {
             console.error('Error parsing order data from localStorage:', e);
