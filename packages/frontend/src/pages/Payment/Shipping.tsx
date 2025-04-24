@@ -157,12 +157,12 @@ const Shipping: React.FC = () => {
               setCartItems(allCartItems);
               setIsLoading(false);
               return; // Exit if we have any items
-            }
-          } catch (e) {
+              }
+            } catch (e) {
             console.error('Error parsing order data from localStorage:', e);
+            }
           }
-        }
-
+          
         // If no order data found, fallback to separate photography cart
         const photographyCartStr = localStorage.getItem('photography_cart_items');
         

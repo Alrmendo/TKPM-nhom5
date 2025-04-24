@@ -101,12 +101,12 @@ const Checkout: React.FC = () => {
               
               if (!isNaN(startDate.getTime()) && !isNaN(endDate.getTime())) {
                 const dressItemsSummary = calculateOrderSummary(
-                  orderData.items,
+                orderData.items,
                   startDate,
                   endDate
-                );
+              );
                 setSummary(dressItemsSummary);
-              }
+                }
               
               hasItems = true;
             }
@@ -151,8 +151,8 @@ const Checkout: React.FC = () => {
                     total: totalAmount + (totalAmount * 0.1),
                     initialDeposit: (totalAmount + (totalAmount * 0.1)) * 0.5, // 50% deposit
                     remainingPayment: (totalAmount + (totalAmount * 0.1)) * 0.5, // 50% remaining payment
-                    currency: 'USD'
-                  };
+                  currency: 'USD'
+                };
                 }
                 
                 const updatedSummary = {...prev};

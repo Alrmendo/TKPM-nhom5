@@ -112,9 +112,9 @@ export const ShoppingCart: React.FC = () => {
         
         // Always try to get cart data from API first
         try {
-          const cartData = await getCart();
+        const cartData = await getCart();
           console.log('Cart data received from API:', cartData);
-          
+        
           // Use API data regardless if it's empty or not
           setCartItems(cartData?.items || []);
           
@@ -135,9 +135,9 @@ export const ShoppingCart: React.FC = () => {
               }
             } catch (e) {
               console.error('Error parsing order data from localStorage:', e);
-              setCartItems([]);
+          setCartItems([]);
             }
-          } else {
+        } else {
             setCartItems([]);
           }
         }

@@ -18,6 +18,12 @@ import {
   ImageListItem,
   Tab,
   Tabs,
+  TextField,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  FormHelperText
 } from '@mui/material';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
@@ -75,6 +81,30 @@ function TabPanel(props: TabPanelProps) {
 
 const API_URL = 'http://localhost:3000/photography/services';
 
+// Generate time slots from 8:00 AM to 6:00 PM
+const generateTimeSlots = () => {
+  const slots = [];
+  for (let hour = 8; hour <= 18; hour++) {
+    const hourFormatted = hour % 12 === 0 ? 12 : hour % 12;
+    const ampm = hour < 12 ? 'AM' : 'PM';
+    // Full hour
+    slots.push({
+      value: `${hour.toString().padStart(2, '0')}:00`,
+      label: `${hourFormatted}:00 ${ampm}`
+    });
+    // Half hour
+    if (hour < 18) {
+      slots.push({
+        value: `${hour.toString().padStart(2, '0')}:30`,
+        label: `${hourFormatted}:30 ${ampm}`
+      });
+    }
+  }
+  return slots;
+};
+
+const TIME_SLOTS = generateTimeSlots();
+
 const ServiceDetail = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -84,9 +114,11 @@ const ServiceDetail = () => {
   const [tabValue, setTabValue] = useState(0);
   const [selectedImage, setSelectedImage] = useState('');
   
-  // Add state for date selection
+  // Add state for date and time selection
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const [selectedTime, setSelectedTime] = useState<string>('');
   const [showDatePicker, setShowDatePicker] = useState(false);
+  const [timeError, setTimeError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchServiceDetail = async () => {
@@ -120,6 +152,12 @@ const ServiceDetail = () => {
     setSelectedDate(date);
     setShowDatePicker(false);
   };
+  
+  // Handle time selection
+  const handleTimeChange = (event: React.ChangeEvent<{ value: unknown }>) => {
+    setSelectedTime(event.target.value as string);
+    setTimeError(null);
+  };
 
   const handleSelectPackage = async () => {
     if (service) {
@@ -130,6 +168,17 @@ const ServiceDetail = () => {
           return;
         }
         
+        // Check if a time is selected
+        if (!selectedTime) {
+          setTimeError('Please select a booking time');
+          return;
+        }
+        
+        // Combine date and time
+        const bookingDate = new Date(selectedDate);
+        const [hours, minutes] = selectedTime.split(':').map(Number);
+        bookingDate.setHours(hours, minutes, 0, 0);
+        
         // Add to photography cart using localStorage service
         await addPhotographyToCart({
           serviceId: service._id,
@@ -137,7 +186,7 @@ const ServiceDetail = () => {
           serviceType: service.packageType,
           price: service.price,
           imageUrl: service.imageUrls[0] || '',
-          bookingDate: selectedDate.toISOString(), // Use the selected date
+          bookingDate: bookingDate.toISOString(), // Use the combined date and time
           location: service.location
         });
         
@@ -317,12 +366,14 @@ const ServiceDetail = () => {
                   </ListItem>
                 </List>
                 
-                {/* Date Picker Section */}
+                {/* Date and Time Picker Section */}
                 <Box sx={{ mb: 3 }}>
                   <Typography variant="subtitle1" sx={{ mb: 1, fontWeight: 'bold', display: 'flex', alignItems: 'center' }}>
                     <CalendarMonthIcon sx={{ mr: 1, fontSize: 20 }} />
-                    Select Booking Date
+                    Select Booking Date and Time
                   </Typography>
+                  
+                  {/* Date Picker */}
                   <DatePicker
                     label="Booking Date"
                     selectedDate={selectedDate}
@@ -331,9 +382,33 @@ const ServiceDetail = () => {
                     onPickerChange={setShowDatePicker}
                     minDate={new Date()} // Can't select dates in the past
                   />
-                  {!selectedDate && (
+                  
+                  {/* Time Picker */}
+                  <FormControl 
+                    fullWidth 
+                    sx={{ mt: 2 }}
+                    error={!!timeError}
+                  >
+                    <InputLabel id="time-select-label">Select Time</InputLabel>
+                    <Select
+                      labelId="time-select-label"
+                      value={selectedTime}
+                      onChange={handleTimeChange}
+                      label="Select Time"
+                      disabled={!selectedDate}
+                    >
+                      {TIME_SLOTS.map((slot) => (
+                        <MenuItem key={slot.value} value={slot.value}>
+                          {slot.label}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                    {timeError && <FormHelperText>{timeError}</FormHelperText>}
+                  </FormControl>
+                  
+                  {(!selectedDate || !selectedTime) && (
                     <Typography variant="caption" color="error" sx={{ mt: 1, display: 'block' }}>
-                      Please select a date to book this package
+                      Please select both date and time to book this package
                     </Typography>
                   )}
                 </Box>
@@ -343,12 +418,12 @@ const ServiceDetail = () => {
                   size="large" 
                   fullWidth 
                   onClick={handleSelectPackage}
-                  disabled={!selectedDate}
+                  disabled={!selectedDate || !selectedTime}
                   sx={{ 
                     py: 1.5,
-                    backgroundColor: selectedDate ? '#000' : '#ccc',
+                    backgroundColor: (selectedDate && selectedTime) ? '#000' : '#ccc',
                     '&:hover': {
-                      backgroundColor: selectedDate ? '#333' : '#ccc',
+                      backgroundColor: (selectedDate && selectedTime) ? '#333' : '#ccc',
                     },
                     mb: 4
                   }}
