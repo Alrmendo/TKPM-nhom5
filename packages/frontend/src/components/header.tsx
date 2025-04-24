@@ -183,9 +183,9 @@ const Header: React.FC<NavigationProps> = ({ isSticky = false }) => {
               >
                 About
               </li>
-              <li className="text-[#C3937C] hover:text-[#6164bc] cursor-pointer text-sm lg:text-base">
+              {/* <li className="text-[#C3937C] hover:text-[#6164bc] cursor-pointer text-sm lg:text-base">
                 Blog
-              </li>
+              </li> */}
               <li
                 className="text-[#C3937C] hover:text-[#6164bc] cursor-pointer text-sm lg:text-base"
                 onClick={() => navigate('/contact')}
@@ -304,9 +304,9 @@ const Header: React.FC<NavigationProps> = ({ isSticky = false }) => {
             >
               About
             </li>
-            <li className="text-[#C3937C] hover:text-[#6164bc] cursor-pointer">
+            {/* <li className="text-[#C3937C] hover:text-[#6164bc] cursor-pointer">
               Blog
-            </li>
+            </li> */}
             <li
               className="text-[#C3937C] hover:text-[#6164bc] cursor-pointer"
               onClick={() => {

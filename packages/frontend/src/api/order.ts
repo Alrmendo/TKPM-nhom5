@@ -41,10 +41,23 @@ export const getOrderById = async (orderId: string) => {
 };
 
 // Create order
-export const createOrder = async () => {
+export const createOrder = async (localItems?: any[]) => {
   try {
     console.log('Creating order from cart items...');
-    const response = await API.post('/orders/create');
+    
+    // If localItems are provided, use them to create the order
+    let requestData = {};
+    if (localItems && localItems.length > 0) {
+      console.log('Using provided local items for order creation:', localItems);
+      requestData = {
+        useLocalData: true,
+        items: localItems,
+        startDate: localItems[0].startDate,
+        endDate: localItems[0].endDate
+      };
+    }
+    
+    const response = await API.post('/orders/create', requestData);
     console.log('Order creation API response status:', response.status);
 
     if (!response.data || !response.data.data) {
@@ -68,6 +81,23 @@ export const createOrder = async () => {
     if (error.response) {
       console.error('Error response status:', error.response.status);
       console.error('Error response data:', error.response.data);
+      
+      // If the error is "Cart is empty" and we have items in localStorage, try to create order from localStorage
+      if (error.response.data?.message === 'Cart is empty' && !localItems) {
+        console.log('Cart is empty, trying to create order from localStorage data');
+        const orderDataStr = localStorage.getItem('currentOrder');
+        if (orderDataStr) {
+          try {
+            const orderData = JSON.parse(orderDataStr);
+            if (orderData && orderData.items && orderData.items.length > 0) {
+              console.log('Found items in localStorage, retrying order creation');
+              return createOrder(orderData.items);
+            }
+          } catch (e) {
+            console.error('Error parsing localStorage data:', e);
+          }
+        }
+      }
     }
     throw new Error(error.response?.data?.message || 'Failed to create order');
   }
