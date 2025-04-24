@@ -23,7 +23,8 @@ import {
   InputLabel,
   Select,
   MenuItem,
-  FormHelperText
+  FormHelperText,
+  SelectChangeEvent
 } from '@mui/material';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
@@ -154,7 +155,7 @@ const ServiceDetail = () => {
   };
   
   // Handle time selection
-  const handleTimeChange = (event: React.ChangeEvent<{ value: unknown }>) => {
+  const handleTimeChange = (event: SelectChangeEvent) => {
     setSelectedTime(event.target.value as string);
     setTimeError(null);
   };

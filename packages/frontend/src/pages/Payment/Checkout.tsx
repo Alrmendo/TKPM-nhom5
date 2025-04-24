@@ -627,7 +627,7 @@ const Checkout: React.FC = () => {
             shootingDate: new Date(item.shootingDate),
             shootingTime: item.shootingTime,
             shootingLocation: item.shootingLocation,
-            status: 'Confirmed',
+            status: 'Pending',
             paymentDetails: {
               paymentMethod,
               totalAmount: matchingItem.price,

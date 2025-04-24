@@ -277,7 +277,7 @@ export class PhotographyService {
           shootingTime: item.shootingTime || '10:00 AM',
           shootingLocation: item.shootingLocation,
           additionalRequests: item.additionalRequests || '',
-          status: BookingStatus.CONFIRMED,
+          status: BookingStatus.PENDING,
           paymentDetails: {
             paymentMethod: bookingData.paymentDetails.paymentMethod,
             totalAmount: service.price,
