@@ -111,65 +111,10 @@ const CurrentOrdersPage: React.FC = () => {
         // Only fetch cart items if we need them (when viewing current orders)
         if (activeTab === 'current') {
           console.log('Fetching cart items...');
-          try {
-            const cartData = await getCart();
-            
-            if (cartData && cartData.items && cartData.items.length > 0) {
-              console.log('Found items in cart:', cartData.items);
-              
-              // Add cart items as "pending" orders
-              cartData.items.forEach((item, index) => {
-                const startDate = new Date(item.startDate);
-                const endDate = new Date(item.endDate);
-                const daysCount = differenceInDays(endDate, startDate) + 1;
-                
-                formattedOrders.push({
-                  id: `cart-item-${index}`,
-                  name: typeof item.dress === 'object' ? item.dress.name : item.name || 'Dress',
-                  image: typeof item.dress === 'object' && item.dress.images?.length ? 
-                    item.dress.images[0] : item.image || '/placeholder.svg',
-                  size: typeof item.size === 'object' ? item.size.name : item.sizeName || 'One Size',
-                  color: typeof item.color === 'object' ? item.color.name : item.colorName || 'Standard',
-                  rentalDuration: `${daysCount} Nights`,
-                  arrivalDate: format(startDate, 'MM/dd/yyyy'),
-                  returnDate: format(endDate, 'MM/dd/yyyy'),
-                  status: 'pending',
-                  isCartItem: true,
-                  purchaseType: item.purchaseType || 'rent'  // Lấy thông tin loại giao dịch từ giỏ hàng
-                });
-              });
-            }
-          } catch (cartErr) {
-            console.error('Error fetching cart:', cartErr);
-          }
+          // Remove the cart fetching code since we don't want to show cart items
+          // This replaces the section that was getting cart and photography cart items
           
-          // Get photography cart items and display them in Current Orders
-          try {
-            const photographyItems = getPhotographyCart();
-            console.log('Found photography items in cart:', photographyItems);
-            
-            if (photographyItems && photographyItems.length > 0) {
-              // Add photography items as "pending" orders
-              photographyItems.forEach((item, index) => {
-                formattedOrders.push({
-                  id: `photography-item-${index}`,
-                  name: item.serviceName,
-                  image: item.imageUrl,
-                  size: item.serviceType,
-                  color: item.location || 'Standard',
-                  rentalDuration: 'Photography Service',
-                  arrivalDate: new Date(item.bookingDate).toLocaleDateString(),
-                  returnDate: new Date(item.bookingDate).toLocaleDateString(),
-                  status: 'pending',
-                  isCartItem: true,
-                  isPhotographyService: true,
-                  purchaseType: 'service'
-                });
-              });
-            }
-          } catch (photoCartErr) {
-            console.error('Error fetching photography cart:', photoCartErr);
-          }
+          /* Original cart fetching code removed as requested */
         }
         
         // Fetch photography bookings
@@ -225,7 +170,9 @@ const CurrentOrdersPage: React.FC = () => {
         });
         
         // Convert back to array
-        const deduplicatedOrders = Array.from(uniqueOrderMap.values());
+        const deduplicatedOrders = Array.from(uniqueOrderMap.values())
+          // Filter out cart items
+          .filter(order => !order.isCartItem);
         console.log('Deduplicated orders:', deduplicatedOrders);
         
         setOrders(deduplicatedOrders);
@@ -256,15 +203,16 @@ const CurrentOrdersPage: React.FC = () => {
       if (activeTab === 'canceled') shouldShow = status === 'cancelled' || status === 'canceled';
       if (activeTab === 'all') shouldShow = true;
       
+      // Exclude cart items
+      if (order.isCartItem) shouldShow = false;
+      
       console.log('===DEBUG=== Should show?', shouldShow);
       return shouldShow;
     }
     
-    // For regular orders and cart items, use the existing logic
-    if (activeTab === 'current') {
-      // Only show pending and under-review in current orders
-      return order.status === 'pending' || order.status === 'under-review' || order.isCartItem === true;
-    }
+    // For regular orders, exclude cart items and use the existing logic
+    if (order.isCartItem) return false;
+    if (activeTab === 'current') return order.status === 'pending' || order.status === 'under-review';
     if (activeTab === 'previous') return order.status === 'done';
     if (activeTab === 'canceled') return order.status === 'canceled';
     return true;

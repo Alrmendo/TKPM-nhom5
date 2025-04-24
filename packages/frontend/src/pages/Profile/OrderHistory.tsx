@@ -146,7 +146,9 @@ export default function OrderHistory(): JSX.Element {
         });
         
         // Convert back to array
-        const deduplicatedOrders = Array.from(uniqueOrderMap.values());
+        const deduplicatedOrders = Array.from(uniqueOrderMap.values())
+          // Filter out any cart items
+          .filter(order => !order.isCartItem);
         
         setOrders(deduplicatedOrders);
       } catch (err) {
@@ -172,11 +174,15 @@ export default function OrderHistory(): JSX.Element {
       if (activeTab === 'canceled') shouldShow = status === 'cancelled' || status === 'canceled';
       if (activeTab === 'all') shouldShow = true;
       
+      // Exclude cart items
+      if (order.isCartItem) shouldShow = false;
+      
       console.log('===DEBUG=== Should show?', shouldShow);
       return shouldShow;
     }
     
-    // For regular orders, use the existing logic
+    // For regular orders, exclude cart items and use the existing logic
+    if (order.isCartItem) return false;
     if (activeTab === 'current') return order.status === 'pending' || order.status === 'under-review';
     if (activeTab === 'previous') return order.status === 'done';
     if (activeTab === 'canceled') return order.status === 'canceled';

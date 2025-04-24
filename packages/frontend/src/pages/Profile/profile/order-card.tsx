@@ -75,7 +75,7 @@ export function OrderCard({ order, onDelete }: OrderCardProps): JSX.Element {
       case 'confirmed':
         return 'Confirmed';
       case 'pending':
-        return order.isCartItem ? 'In Cart' : 'Pending';
+        return 'Pending';
       case 'under-review':
         return 'Under review';
       case 'canceled':
@@ -174,7 +174,7 @@ export function OrderCard({ order, onDelete }: OrderCardProps): JSX.Element {
           </div>
 
           <div className="flex space-x-2">
-            {(order.status === 'pending' || order.status === 'under-review' || order.isCartItem) && onDelete && (
+            {(order.status === 'pending' || order.status === 'under-review') && onDelete && (
               <button
                 onClick={handleDelete}
                 className="px-4 py-1 border rounded-full text-sm text-red-600 hover:bg-red-50 border-red-200 flex items-center"
@@ -185,21 +185,12 @@ export function OrderCard({ order, onDelete }: OrderCardProps): JSX.Element {
               </button>
             )}
 
-            {order.isCartItem ? (
-              <Link
-                to="/cart"
-                className="px-4 py-1 border rounded-full text-sm text-amber-600 hover:bg-amber-50 border-amber-200"
-              >
-                Go to Cart
-              </Link>
-            ) : (
-              <a
-                href={`/order-details/${order.id}`}
-                className="px-4 py-1 border rounded-full text-sm text-gray-600 hover:bg-gray-50"
-              >
-                More details
-              </a>
-            )}
+            <a
+              href={`/order-details/${order.id}`}
+              className="px-4 py-1 border rounded-full text-sm text-gray-600 hover:bg-gray-50"
+            >
+              More details
+            </a>
           </div>
         </div>
       </div>
