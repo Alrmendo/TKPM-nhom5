@@ -33,24 +33,59 @@ const Information: React.FC = () => {
       const addressesResponse = await axios.get('http://localhost:3000/users/addresses', { withCredentials: true });
       
       if (addressesResponse.data.success) {
-        const addresses = addressesResponse.data.data || [];
-        console.log('Saved addresses loaded:', addresses);
-        setSavedAddresses(addresses);
+        const addressesData = addressesResponse.data.data || {};
+        console.log('Saved addresses loaded:', addressesData);
         
-        // Nếu có địa chỉ mặc định, chọn nó
-        const defaultAddress = addresses.find(addr => addr.isDefault);
-        if (defaultAddress) {
-          setDefaultAddressId(defaultAddress.id);
-          setSelectedAddressId(defaultAddress.id);
-          setShowAddressForm(false); // Hiển thị danh sách địa chỉ đã lưu
-        } else if (addresses.length > 0) {
-          // Nếu không có địa chỉ mặc định nhưng có địa chỉ, chọn địa chỉ đầu tiên
-          setSelectedAddressId(addresses[0].id);
-          setShowAddressForm(false); // Hiển thị danh sách địa chỉ đã lưu
+        // Kiểm tra định dạng dữ liệu trả về
+        let addressesList = [];
+        
+        // Kiểm tra nếu API trả về dạng { addresses: [...], defaultAddressId: '...' }
+        if (addressesData.addresses && Array.isArray(addressesData.addresses)) {
+          addressesList = addressesData.addresses;
+          if (addressesData.defaultAddressId) {
+            setDefaultAddressId(addressesData.defaultAddressId);
+          }
+        } 
+        // Nếu API trả về trực tiếp mảng địa chỉ
+        else if (Array.isArray(addressesData)) {
+          addressesList = addressesData;
+        }
+        
+        setSavedAddresses(addressesList);
+        
+        // Xử lý địa chỉ mặc định hoặc địa chỉ đầu tiên
+        if (addressesList.length > 0) {
+          if (addressesData.defaultAddressId) {
+            // Tìm địa chỉ mặc định dựa vào ID
+            const defaultAddress = addressesList.find(addr => addr.id === addressesData.defaultAddressId);
+            if (defaultAddress) {
+              setSelectedAddressId(defaultAddress.id);
+              setShowAddressForm(false);
+            } else {
+              // Nếu không tìm thấy địa chỉ mặc định, chọn địa chỉ đầu tiên
+              setSelectedAddressId(addressesList[0].id);
+              setShowAddressForm(false);
+            }
+          } else {
+            // Nếu không có defaultAddressId, kiểm tra xem các địa chỉ có trường isDefault không
+            const defaultAddress = addressesList.find(addr => addr.isDefault === true);
+            if (defaultAddress) {
+              setDefaultAddressId(defaultAddress.id);
+              setSelectedAddressId(defaultAddress.id);
+              setShowAddressForm(false);
+            } else {
+              // Nếu không có địa chỉ mặc định, chọn địa chỉ đầu tiên
+              setSelectedAddressId(addressesList[0].id);
+              setShowAddressForm(false);
+            }
+          }
         } else {
-          // Nếu không có địa chỉ nào, hiển thị form để thêm mới
+          // Nếu không có địa chỉ nào, hiển thị form thêm mới
           setShowAddressForm(true);
         }
+      } else {
+        // Nếu API không trả về success, hiển thị form
+        setShowAddressForm(true);
       }
     } catch (error) {
       console.error('Error fetching addresses:', error);
