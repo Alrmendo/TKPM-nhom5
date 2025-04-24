@@ -41,7 +41,8 @@ export interface OrderItem {
     | 'Pending'
     | 'Confirmed'
     | 'Cancelled'
-    | 'Completed';
+    | 'Completed'
+    | 'In Cart';
   isCartItem?: boolean;
   isPaid?: boolean;
   purchaseType?: 'rent' | 'buy' | 'service';
@@ -179,75 +180,35 @@ const CurrentOrdersPage: React.FC = () => {
         // Only fetch cart items if we need them (when viewing current orders)
         if (activeTab === 'current') {
           console.log('Fetching cart items...');
+          
+          // Add photography cart items 
           try {
-            const cartData = await getCart();
-
-            if (cartData && cartData.items && cartData.items.length > 0) {
-              console.log('Found items in cart:', cartData.items);
-
-              // Add cart items as "pending" orders
-              cartData.items.forEach((item, index) => {
-                const startDate = new Date(item.startDate);
-                const endDate = new Date(item.endDate);
-                const daysCount = differenceInDays(endDate, startDate) + 1;
-
+            // Import và sử dụng getPhotographyCart
+            const { getPhotographyCart } = await import('../../api/photographyCart');
+            const photographyCartItems = await getPhotographyCart();
+            console.log('Photography cart items:', photographyCartItems);
+            
+            if (photographyCartItems && photographyCartItems.length > 0) {
+              // Add photography items as cart items with "In Cart" status
+              photographyCartItems.forEach((item) => {
                 formattedOrders.push({
-                  id: `cart-item-${index}`,
-                  name:
-                    typeof item.dress === 'object'
-                      ? item.dress.name
-                      : item.name || 'Dress',
-                  image:
-                    typeof item.dress === 'object' && item.dress.images?.length
-                      ? item.dress.images[0]
-                      : item.image || '/placeholder.svg',
-                  size:
-                    typeof item.size === 'object'
-                      ? item.size.name
-                      : item.sizeName || 'One Size',
-                  color:
-                    typeof item.color === 'object'
-                      ? item.color.name
-                      : item.colorName || 'Standard',
-                  rentalDuration: `${daysCount} Nights`,
-                  arrivalDate: format(startDate, 'MM/dd/yyyy'),
-                  returnDate: format(endDate, 'MM/dd/yyyy'),
-                  status: 'pending',
-                  isCartItem: true,
-                  purchaseType: item.purchaseType || 'rent', // Lấy thông tin loại giao dịch từ giỏ hàng
-                });
-              });
-            }
-          } catch (cartErr) {
-            console.error('Error fetching cart:', cartErr);
-          }
-
-          // Get photography cart items and display them in Current Orders
-          try {
-            const photographyItems = getPhotographyCart();
-            console.log('Found photography items in cart:', photographyItems);
-
-            if (photographyItems && photographyItems.length > 0) {
-              // Add photography items as "pending" orders
-              photographyItems.forEach((item: any, index: number) => {
-                formattedOrders.push({
-                  id: `photography-item-${index}`,
+                  id: `photography-cart-item-${item.serviceId}`,
                   name: item.serviceName,
                   image: item.imageUrl,
                   size: item.serviceType,
-                  color: item.location || 'Standard',
+                  color: item.location || 'Studio',
                   rentalDuration: 'Photography Service',
                   arrivalDate: new Date(item.bookingDate).toLocaleDateString(),
                   returnDate: new Date(item.bookingDate).toLocaleDateString(),
-                  status: 'pending',
+                  status: 'In Cart',
                   isCartItem: true,
                   isPhotographyService: true,
-                  purchaseType: 'service',
+                  purchaseType: 'service'
                 });
               });
             }
           } catch (photoCartErr) {
-            console.error('Error fetching photography cart:', photoCartErr);
+            console.error('Error fetching photography cart items:', photoCartErr);
           }
         }
 
@@ -324,7 +285,9 @@ const CurrentOrdersPage: React.FC = () => {
         });
 
         // Convert back to array
-        const deduplicatedOrders = Array.from(uniqueOrderMap.values());
+        const deduplicatedOrders = Array.from(uniqueOrderMap.values())
+          // Don't filter out cart items anymore - we want to show them
+          // .filter(order => !order.isCartItem);
         console.log('Deduplicated orders:', deduplicatedOrders);
 
         setOrders(deduplicatedOrders);
@@ -358,7 +321,7 @@ const CurrentOrdersPage: React.FC = () => {
 
       let shouldShow = false;
       if (activeTab === 'current')
-        shouldShow = status === 'pending' || status === 'confirmed';
+        shouldShow = status === 'pending' || status === 'confirmed' || order.isCartItem === true || status === 'in cart';
       if (activeTab === 'previous') shouldShow = status === 'completed';
       if (activeTab === 'canceled')
         shouldShow = status === 'cancelled' || status === 'canceled';
@@ -408,6 +371,15 @@ const CurrentOrdersPage: React.FC = () => {
         await removeFromCart(itemIndex);
 
         toast.success('Item removed from cart successfully');
+      } else if (orderId.startsWith('photography-cart-item-')) {
+        // Extract the serviceId from the photography-cart-item-X pattern
+        const serviceId = orderId.replace('photography-cart-item-', '');
+        
+        // For photography cart items, use removePhotographyFromCart
+        const { removePhotographyFromCart } = await import('../../api/photographyCart');
+        await removePhotographyFromCart(serviceId);
+        
+        toast.success('Photography service removed from cart successfully');
       } else {
         // For actual orders, use cancelOrder
         await cancelOrder(orderId);

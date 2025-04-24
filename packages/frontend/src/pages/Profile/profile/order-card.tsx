@@ -31,7 +31,8 @@ export interface OrderItem {
     | 'Pending'
     | 'Confirmed'
     | 'Cancelled'
-    | 'Completed';
+    | 'Completed'
+    | 'In Cart';
   isCartItem?: boolean;
   isPaid?: boolean;
   purchaseType?: 'rent' | 'buy' | 'service'; // Thêm 'service' cho dịch vụ nhiếp ảnh
@@ -46,6 +47,15 @@ interface OrderCardProps {
 
 export function OrderCard({ order, onDelete }: OrderCardProps): JSX.Element {
   const getStatusIcon = () => {
+    // For cart items, use a shopping cart icon
+    if (order.isCartItem) {
+      return <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5 text-blue-500">
+        <circle cx="8" cy="21" r="1"></circle>
+        <circle cx="19" cy="21" r="1"></circle>
+        <path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"></path>
+      </svg>;
+    }
+    
     // Special handling for photography bookings with original backend status names
     if (order.isPhotographyService) {
       switch (order.status) {
@@ -91,6 +101,11 @@ export function OrderCard({ order, onDelete }: OrderCardProps): JSX.Element {
       return 'Paid';
     }
 
+    // Check for cart items first
+    if (order.isCartItem || order.status === 'In Cart') {
+      return 'In Cart';
+    }
+
     // Special handling for photography bookings
     if (order.isPhotographyService) {
       return order.status; // Just return the original status
@@ -108,7 +123,7 @@ export function OrderCard({ order, onDelete }: OrderCardProps): JSX.Element {
       case 'returned':
         return 'Returned';
       case 'pending':
-        return order.isCartItem ? 'In Cart' : 'Pending';
+        return 'Pending';
       case 'under-review':
         return 'Under Review';
       case 'canceled':
@@ -120,6 +135,11 @@ export function OrderCard({ order, onDelete }: OrderCardProps): JSX.Element {
   };
 
   const getStatusColor = () => {
+    // For cart items, use a distinctive color
+    if (order.isCartItem) {
+      return 'text-blue-500';
+    }
+    
     // Special handling for photography bookings
     if (order.isPhotographyService) {
       switch (order.status) {
@@ -225,7 +245,7 @@ export function OrderCard({ order, onDelete }: OrderCardProps): JSX.Element {
             {order.isCartItem ? (
               <Link
                 to="/cart"
-                className="px-4 py-1 border rounded-full text-sm text-amber-600 hover:bg-amber-50 border-amber-200"
+                className="px-4 py-1 border rounded-full text-sm text-blue-600 hover:bg-blue-50 border-blue-200"
               >
                 Go to Cart
               </Link>

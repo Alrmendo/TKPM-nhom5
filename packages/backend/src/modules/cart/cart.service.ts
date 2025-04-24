@@ -113,36 +113,56 @@ export class CartService {
     return this.getCart(userId);
   }
 
-  async removeFromCart(userId: string, itemIndex: number): Promise<Cart> {
-    console.log('Removing item at index', itemIndex, 'for user', userId);
-    const cart = await this.getCart(userId);
+  async removeFromCart(userId: string, itemIndex: number | string): Promise<Cart> {
+    // Handle removal by index
+    if (typeof itemIndex === 'number') {
+      console.log('Removing item at index', itemIndex, 'for user', userId);
+      const cart = await this.getCart(userId);
 
-    if (itemIndex < 0 || itemIndex >= cart.items.length) {
-      console.error('Invalid item index:', itemIndex, 'Cart items length:', cart.items.length);
-      throw new Error('Invalid item index');
-    }
+      if (itemIndex < 0 || itemIndex >= cart.items.length) {
+        console.error('Invalid item index:', itemIndex, 'Cart items length:', cart.items.length);
+        throw new Error('Invalid item index');
+      }
 
-    console.log('Cart before removing item:', cart);
-    
-    try {
-      // Use MongoDB's array syntax to remove the element at the specified position
-      await this.cartModel.updateOne(
-        { userId: new Types.ObjectId(userId) },
-        { $unset: { [`items.${itemIndex}`]: 1 } }
-      );
+      console.log('Cart before removing item:', cart);
       
-      // Then compact the array to remove null entries
-      await this.cartModel.updateOne(
-        { userId: new Types.ObjectId(userId) },
-        { $pull: { items: null } }
-      );
-      
-      console.log('Item removed successfully');
-      
-      return this.getCart(userId);
-    } catch (error) {
-      console.error('Error removing item from cart:', error);
-      throw error;
+      try {
+        // Use MongoDB's array syntax to remove the element at the specified position
+        await this.cartModel.updateOne(
+          { userId: new Types.ObjectId(userId) },
+          { $unset: { [`items.${itemIndex}`]: 1 } }
+        );
+        
+        // Then compact the array to remove null entries
+        await this.cartModel.updateOne(
+          { userId: new Types.ObjectId(userId) },
+          { $pull: { items: null } }
+        );
+        
+        console.log('Item removed successfully');
+        
+        return this.getCart(userId);
+      } catch (error) {
+        console.error('Error removing item from cart:', error);
+        throw error;
+      }
+    } 
+    // Handle removal by dressId
+    else {
+      console.log('Removing item with dressId', itemIndex, 'for user', userId);
+      const dressId = itemIndex;
+      try {
+        await this.cartModel.updateOne(
+          { userId: new Types.ObjectId(userId) },
+          { $pull: { items: { dressId: new Types.ObjectId(dressId) } } }
+        );
+        
+        console.log('Item removed successfully by dressId');
+        return this.getCart(userId);
+      } catch (error) {
+        console.error('Error removing item from cart by dressId:', error);
+        throw error;
+      }
     }
   }
 
@@ -189,7 +209,7 @@ export class CartService {
     }
   }
 
-  async clearCart(userId: string): Promise<void> {
+  async clearCart(userId: string): Promise<Cart> {
     console.log('Clearing cart for user:', userId);
     try {
       const updateResult = await this.cartModel.updateOne(
@@ -197,6 +217,7 @@ export class CartService {
         { $set: { items: [] } }
       );
       console.log('Clear cart result:', updateResult);
+      return this.getCart(userId);
     } catch (error) {
       console.error('Error clearing cart:', error);
       throw error;
