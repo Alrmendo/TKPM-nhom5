@@ -202,4 +202,18 @@ export class CartService {
       throw error;
     }
   }
+
+  async removeFromCart(userId: string, dressId: string) {
+    const cart = await this.getCart(userId);
+    cart.items = cart.items.filter((item) => item.dressId.toString() !== dressId);
+    await cart.save();
+    return cart;
+  }
+
+  async clearCart(userId: string) {
+    const cart = await this.getCart(userId);
+    cart.items = [];
+    await cart.save();
+    return cart;
+  }
 } 

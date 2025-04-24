@@ -74,8 +74,8 @@ export class OrderService {
       totalAmount
     });
     
-    // Không xóa giỏ hàng khi tạo đơn hàng để người dùng có thể quay lại
-    // await this.cartService.clearCart(userId);
+    // Clear the cart after successful order creation
+    await this.cartService.clearCart(userId);
     
     return order;
   }

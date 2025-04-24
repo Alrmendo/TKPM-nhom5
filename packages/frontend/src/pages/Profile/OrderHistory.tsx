@@ -10,6 +10,7 @@ import { getUserOrders } from '../../api/order';
 import { getUserPhotographyBookings, PhotographyBooking } from '../../api/photography';
 import { UserProfile } from '../../api/user';
 import { format, differenceInDays } from 'date-fns';
+import { toast } from 'react-hot-toast';
 
 type OrderFilterTab = 'current' | 'previous' | 'canceled' | 'all';
 
@@ -128,6 +129,35 @@ export default function OrderHistory(): JSX.Element {
           console.error('Error fetching photography bookings:', photoErr);
         }
         
+        // Add photography cart items
+        try {
+          const { getPhotographyCart } = await import('../../api/photographyCart');
+          const photographyCartItems = await getPhotographyCart();
+          console.log('Photography cart items:', photographyCartItems);
+          
+          if (photographyCartItems && photographyCartItems.length > 0) {
+            // Add photography items as cart items with "In Cart" status
+            photographyCartItems.forEach((item) => {
+              formattedOrders.push({
+                id: `photography-cart-item-${item.serviceId}`,
+                name: item.serviceName,
+                image: item.imageUrl,
+                size: item.serviceType,
+                color: item.location || 'Studio',
+                rentalDuration: 'Photography Service',
+                arrivalDate: new Date(item.bookingDate).toLocaleDateString(),
+                returnDate: new Date(item.bookingDate).toLocaleDateString(),
+                status: 'Pending',
+                isCartItem: true,
+                isPhotographyService: true,
+                purchaseType: 'service'
+              });
+            });
+          }
+        } catch (photoCartErr) {
+          console.error('Error fetching photography cart items:', photoCartErr);
+        }
+        
         // Use different deduplication strategies for different order types
         const uniqueOrderMap = new Map();
         formattedOrders.forEach(order => {
@@ -147,8 +177,8 @@ export default function OrderHistory(): JSX.Element {
         
         // Convert back to array
         const deduplicatedOrders = Array.from(uniqueOrderMap.values())
-          // Filter out any cart items
-          .filter(order => !order.isCartItem);
+          // Show cart items in the 'current' tab instead of only in the 'all' tab
+          .filter(order => !order.isCartItem || activeTab === 'all' || activeTab === 'current');
         
         setOrders(deduplicatedOrders);
       } catch (err) {
@@ -169,20 +199,17 @@ export default function OrderHistory(): JSX.Element {
       console.log('===DEBUG=== Filtering photo order:', order.id, 'Status:', order.status, 'Tab:', activeTab);
       
       let shouldShow = false;
-      if (activeTab === 'current') shouldShow = status === 'pending' || status === 'confirmed';
+      if (activeTab === 'current') shouldShow = status === 'pending' || status === 'confirmed' || order.isCartItem === true;
       if (activeTab === 'previous') shouldShow = status === 'completed';
       if (activeTab === 'canceled') shouldShow = status === 'cancelled' || status === 'canceled';
       if (activeTab === 'all') shouldShow = true;
-      
-      // Exclude cart items
-      if (order.isCartItem) shouldShow = false;
       
       console.log('===DEBUG=== Should show?', shouldShow);
       return shouldShow;
     }
     
-    // For regular orders, exclude cart items and use the existing logic
-    if (order.isCartItem) return false;
+    // For regular orders
+    if (order.isCartItem) return activeTab === 'current'; // Show cart items in current tab
     if (activeTab === 'current') return order.status === 'pending' || order.status === 'under-review';
     if (activeTab === 'previous') return order.status === 'done';
     if (activeTab === 'canceled') return order.status === 'canceled';
@@ -190,6 +217,33 @@ export default function OrderHistory(): JSX.Element {
   });
   
   console.log('===DEBUG=== Final filtered orders:', filteredOrders);
+
+  // Handle canceling/deleting an order
+  const handleDeleteOrder = async (orderId: string) => {
+    try {
+      setLoading(true);
+      
+      // Check if this is a cart item
+      if (orderId.startsWith('photography-cart-item-')) {
+        // Extract the serviceId from the photography-cart-item-X pattern
+        const serviceId = orderId.replace('photography-cart-item-', '');
+        
+        // For photography cart items, use removePhotographyFromCart
+        const { removePhotographyFromCart } = await import('../../api/photographyCart');
+        await removePhotographyFromCart(serviceId);
+        
+        // Show success message
+        toast.success('Photography service removed from cart successfully');
+        
+        // Refresh orders by removing the deleted one
+        setOrders(prevOrders => prevOrders.filter(order => order.id !== orderId));
+      }
+    } catch (err: any) {
+      console.error('Failed to delete item:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
@@ -215,7 +269,13 @@ export default function OrderHistory(): JSX.Element {
                   <p className="text-gray-500">Loading orders...</p>
                 </div>
               ) : filteredOrders.length > 0 ? (
-                filteredOrders.map(order => <OrderCard key={order.id} order={order} />)
+                filteredOrders.map(order => (
+                  <OrderCard 
+                    key={order.id} 
+                    order={order} 
+                    onDelete={activeTab === 'current' && order.isCartItem ? handleDeleteOrder : undefined}
+                  />
+                ))
               ) : (
                 <div className="bg-white rounded-lg border p-8 text-center">
                   <p className="text-gray-500">No {activeTab} orders found.</p>
