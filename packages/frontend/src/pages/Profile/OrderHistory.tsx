@@ -7,7 +7,10 @@ import Footer from '../../components/footer';
 import { useAuth } from '../../context/AuthContext';
 import { getUserProfile } from '../../api/user';
 import { getUserOrders } from '../../api/order';
-import { getUserPhotographyBookings, PhotographyBooking } from '../../api/photography';
+import {
+  getUserPhotographyBookings,
+  PhotographyBooking,
+} from '../../api/photography';
 import { UserProfile } from '../../api/user';
 import { format, differenceInDays } from 'date-fns';
 import { toast } from 'react-hot-toast';
@@ -15,19 +18,41 @@ import { toast } from 'react-hot-toast';
 type OrderFilterTab = 'current' | 'previous' | 'canceled' | 'all';
 
 // Map backend status to frontend status
-const mapOrderStatus = (backendStatus: string): 'done' | 'pending' | 'under-review' | 'canceled' => {
-  const statusMap: Record<string, 'done' | 'pending' | 'under-review' | 'canceled'> = {
-    'pending': 'pending',
-    'confirmed': 'under-review',  // backend 'confirmed' maps to frontend 'under-review'
-    'cancelled': 'canceled',      // Note different spelling
-    'canceled': 'canceled',
-    'delivered': 'done',
-    'returned': 'done',
-    'done': 'done',
-    'paid': 'done'  // Add paid status to be shown in order history
+const mapOrderStatus = (
+  backendStatus: string,
+):
+  | 'done'
+  | 'pending'
+  | 'under-review'
+  | 'canceled'
+  | 'confirmed'
+  | 'shipped'
+  | 'delivered'
+  | 'returned' => {
+  const statusMap: Record<
+    string,
+    | 'done'
+    | 'pending'
+    | 'under-review'
+    | 'canceled'
+    | 'confirmed'
+    | 'shipped'
+    | 'delivered'
+    | 'returned'
+  > = {
+    pending: 'pending',
+    confirmed: 'confirmed',
+    shipped: 'shipped',
+    delivered: 'delivered',
+    cancelled: 'canceled',
+    canceled: 'canceled',
+    returned: 'returned',
+    'under-review': 'under-review',
+    done: 'done',
+    paid: 'done',
   };
-  
-  return statusMap[backendStatus.toLowerCase()] || 'pending'; // Default to pending if status unknown
+
+  return statusMap[backendStatus.toLowerCase()] || 'pending';
 };
 
 // Map photography booking status to frontend status
@@ -61,106 +86,98 @@ export default function OrderHistory(): JSX.Element {
   useEffect(() => {
     const fetchOrders = async () => {
       if (!isAuthenticated) return;
-      
+
       setLoading(true);
       try {
         const ordersData = await getUserOrders();
-        
+
         // Transform the orders data to match OrderItem structure
         const formattedOrders: OrderItem[] = [];
-        
+
         if (ordersData && ordersData.length > 0) {
-          ordersData.forEach(order => {
+          ordersData.forEach((order) => {
             // Check if order has items
             if (!order.items || order.items.length === 0) {
               return;
             }
-            
+
             const firstItem = order.items[0];
-            
+
             // Map backend status to frontend status
             const mappedStatus = mapOrderStatus(order.status);
-            
+
             formattedOrders.push({
               id: order._id,
               name: firstItem.name,
               image: firstItem.image,
               size: firstItem.size,
               color: firstItem.color,
-              rentalDuration: order.startDate && order.endDate 
-                ? `${Math.ceil((new Date(order.endDate).getTime() - new Date(order.startDate).getTime()) / (1000 * 60 * 60 * 24))} Nights`
-                : 'N/A',
-              arrivalDate: order.arrivalDate ? new Date(order.arrivalDate).toLocaleDateString() : 
-                           order.startDate ? new Date(order.startDate).toLocaleDateString() : 'N/A',
-              returnDate: order.returnDate ? new Date(order.returnDate).toLocaleDateString() : 
-                          order.endDate ? new Date(order.endDate).toLocaleDateString() : 'N/A',
+              rentalDuration:
+                order.startDate && order.endDate
+                  ? `${Math.ceil((new Date(order.endDate).getTime() - new Date(order.startDate).getTime()) / (1000 * 60 * 60 * 24))} Nights`
+                  : 'N/A',
+              arrivalDate: order.arrivalDate
+                ? new Date(order.arrivalDate).toLocaleDateString()
+                : order.startDate
+                  ? new Date(order.startDate).toLocaleDateString()
+                  : 'N/A',
+              returnDate: order.returnDate
+                ? new Date(order.returnDate).toLocaleDateString()
+                : order.endDate
+                  ? new Date(order.endDate).toLocaleDateString()
+                  : 'N/A',
               status: mappedStatus,
-              isPaid: order.status.toLowerCase() === 'paid'
+              isPaid: order.status.toLowerCase() === 'paid',
             });
           });
         }
-        
+
         // Fetch photography bookings
         try {
           const photographyBookings = await getUserPhotographyBookings();
-          console.log('===DEBUG=== Photography bookings from API:', photographyBookings);
-          
+          console.log(
+            '===DEBUG=== Photography bookings from API:',
+            photographyBookings,
+          );
+
           if (photographyBookings && photographyBookings.length > 0) {
             // Show all photography bookings, not just ones with payment details
-            photographyBookings.forEach(booking => {
-                console.log('===DEBUG=== Processing booking:', booking._id, 'with status:', booking.status);
-                formattedOrders.push({
-                  id: booking._id,
-                  name: booking.serviceId?.name || 'Photography Service',
-                  image: booking.serviceId?.imageUrls?.[0] || booking.serviceId?.images?.[0] || booking.serviceId?.coverImage || '/placeholder-photography.jpg',
-                  size: booking.serviceId?.packageType || 'Standard Package',
-                  color: booking.shootingLocation || 'Studio',
-                  rentalDuration: 'Photography Service',
-                  arrivalDate: new Date(booking.shootingDate).toLocaleDateString(),
-                  returnDate: new Date(booking.shootingDate).toLocaleDateString(),
-                  status: booking.status, // Use status directly without mapping
-                  isPhotographyService: true,
-                  purchaseType: 'service',
-                  additionalDetails: booking.additionalRequests
-                });
+            photographyBookings.forEach((booking) => {
+              console.log(
+                '===DEBUG=== Processing booking:',
+                booking._id,
+                'with status:',
+                booking.status,
+              );
+              formattedOrders.push({
+                id: booking._id,
+                name: booking.serviceId?.name || 'Photography Service',
+                image:
+                  booking.serviceId?.imageUrls?.[0] ||
+                  booking.serviceId?.images?.[0] ||
+                  booking.serviceId?.coverImage ||
+                  '/placeholder-photography.jpg',
+                size: booking.serviceId?.packageType || 'Standard Package',
+                color: booking.shootingLocation || 'Studio',
+                rentalDuration: 'Photography Service',
+                arrivalDate: new Date(
+                  booking.shootingDate,
+                ).toLocaleDateString(),
+                returnDate: new Date(booking.shootingDate).toLocaleDateString(),
+                status: booking.status, // Use status directly without mapping
+                isPhotographyService: true,
+                purchaseType: 'service',
+                additionalDetails: booking.additionalRequests,
+              });
             });
           }
         } catch (photoErr) {
           console.error('Error fetching photography bookings:', photoErr);
         }
-        
-        // Add photography cart items
-        try {
-          const { getPhotographyCart } = await import('../../api/photographyCart');
-          const photographyCartItems = await getPhotographyCart();
-          console.log('Photography cart items:', photographyCartItems);
-          
-          if (photographyCartItems && photographyCartItems.length > 0) {
-            // Add photography items as cart items with "In Cart" status
-            photographyCartItems.forEach((item) => {
-              formattedOrders.push({
-                id: `photography-cart-item-${item.serviceId}`,
-                name: item.serviceName,
-                image: item.imageUrl,
-                size: item.serviceType,
-                color: item.location || 'Studio',
-                rentalDuration: 'Photography Service',
-                arrivalDate: new Date(item.bookingDate).toLocaleDateString(),
-                returnDate: new Date(item.bookingDate).toLocaleDateString(),
-                status: 'Pending',
-                isCartItem: true,
-                isPhotographyService: true,
-                purchaseType: 'service'
-              });
-            });
-          }
-        } catch (photoCartErr) {
-          console.error('Error fetching photography cart items:', photoCartErr);
-        }
-        
+
         // Use different deduplication strategies for different order types
         const uniqueOrderMap = new Map();
-        formattedOrders.forEach(order => {
+        formattedOrders.forEach((order) => {
           // For photography services, use ID as unique key to preserve all bookings
           if (order.isPhotographyService) {
             const key = order.id;
@@ -169,17 +186,18 @@ export default function OrderHistory(): JSX.Element {
             // For wedding dresses, use name+size+color as key to prevent duplicates
             const key = `${order.name}-${order.size}-${order.color}`;
             // If we already have this item, only replace if it's not a cart item
-            if (!uniqueOrderMap.has(key) || (uniqueOrderMap.get(key).isCartItem && !order.isCartItem)) {
+            if (
+              !uniqueOrderMap.has(key) ||
+              (uniqueOrderMap.get(key).isCartItem && !order.isCartItem)
+            ) {
               uniqueOrderMap.set(key, order);
             }
           }
         });
-        
+
         // Convert back to array
-        const deduplicatedOrders = Array.from(uniqueOrderMap.values())
-          // Show cart items in the 'current' tab instead of only in the 'all' tab
-          .filter(order => !order.isCartItem || activeTab === 'all' || activeTab === 'current');
-        
+        const deduplicatedOrders = Array.from(uniqueOrderMap.values());
+
         setOrders(deduplicatedOrders);
       } catch (err) {
         console.error('Error fetching orders:', err);
@@ -192,30 +210,51 @@ export default function OrderHistory(): JSX.Element {
   }, [isAuthenticated, activeTab]);
 
   // Filter orders based on active tab
-  const filteredOrders = orders.filter(order => {
+  const filteredOrders = orders.filter((order) => {
     // For photography services, debug the status check
     if (order.isPhotographyService) {
       const status = order.status ? order.status.toLowerCase() : '';
-      console.log('===DEBUG=== Filtering photo order:', order.id, 'Status:', order.status, 'Tab:', activeTab);
-      
+      console.log(
+        '===DEBUG=== Filtering photo order:',
+        order.id,
+        'Status:',
+        order.status,
+        'Tab:',
+        activeTab,
+      );
+
       let shouldShow = false;
-      if (activeTab === 'current') shouldShow = status === 'pending' || status === 'confirmed' || order.isCartItem === true;
+      if (activeTab === 'current')
+        shouldShow = status === 'pending' || status === 'confirmed';
       if (activeTab === 'previous') shouldShow = status === 'completed';
-      if (activeTab === 'canceled') shouldShow = status === 'cancelled' || status === 'canceled';
+      if (activeTab === 'canceled')
+        shouldShow = status === 'cancelled' || status === 'canceled';
       if (activeTab === 'all') shouldShow = true;
-      
+
       console.log('===DEBUG=== Should show?', shouldShow);
       return shouldShow;
     }
-    
-    // For regular orders
-    if (order.isCartItem) return activeTab === 'current'; // Show cart items in current tab
-    if (activeTab === 'current') return order.status === 'pending' || order.status === 'under-review';
-    if (activeTab === 'previous') return order.status === 'done';
-    if (activeTab === 'canceled') return order.status === 'canceled';
+
+    // For regular orders, use the existing logic
+    if (activeTab === 'current')
+      return (
+        order.status === 'pending' ||
+        order.status === 'under-review' ||
+        order.status === 'confirmed' ||
+        order.status === 'shipped'
+      );
+    if (activeTab === 'previous')
+      return (
+        order.status === 'done' ||
+        order.status === 'delivered' ||
+        order.status === 'returned' ||
+        order.isPaid
+      );
+    if (activeTab === 'canceled')
+      return order.status === 'canceled' || order.status === 'cancelled';
     return true;
   });
-  
+
   console.log('===DEBUG=== Final filtered orders:', filteredOrders);
 
   // Handle canceling/deleting an order
@@ -256,12 +295,19 @@ export default function OrderHistory(): JSX.Element {
               activeTab="order-history"
               userName={userData ? userData.username : 'User'}
               userImage={userData?.profileImageUrl}
-              fullName={userData ? `${userData.firstName} ${userData.lastName}` : undefined}
+              fullName={
+                userData
+                  ? `${userData.firstName} ${userData.lastName}`
+                  : undefined
+              }
             />
           </div>
 
           <div className="md:col-span-2">
-            <OrderFilterTabs defaultTab={activeTab} onTabChange={setActiveTab} />
+            <OrderFilterTabs
+              defaultTab={activeTab}
+              onTabChange={setActiveTab}
+            />
 
             <div className="space-y-4">
               {loading ? (
@@ -269,12 +315,8 @@ export default function OrderHistory(): JSX.Element {
                   <p className="text-gray-500">Loading orders...</p>
                 </div>
               ) : filteredOrders.length > 0 ? (
-                filteredOrders.map(order => (
-                  <OrderCard 
-                    key={order.id} 
-                    order={order} 
-                    onDelete={activeTab === 'current' && order.isCartItem ? handleDeleteOrder : undefined}
-                  />
+                filteredOrders.map((order) => (
+                  <OrderCard key={order.id} order={order} />
                 ))
               ) : (
                 <div className="bg-white rounded-lg border p-8 text-center">

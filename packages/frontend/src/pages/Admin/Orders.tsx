@@ -45,9 +45,14 @@ import {
   LocalShipping,
   AssignmentReturn,
   ReceiptLong,
-  Email
+  Email,
 } from '@mui/icons-material';
-import { getAllOrders, updateOrderStatus, updatePaymentStatus, processReturn } from '../../api/order';
+import {
+  getAllOrders,
+  updateOrderStatus,
+  updatePaymentStatus,
+  processReturn,
+} from '../../api/order';
 /**
  * Interface cho đơn hàng trong hệ thống
  */
@@ -61,8 +66,21 @@ interface Order {
   };
   items: OrderItem[];
   totalAmount: number;
-  status: 'pending' | 'confirmed' | 'shipped' | 'delivered' | 'cancelled' | 'returned' | 'under-review';
-  paymentStatus: 'pending' | 'processing' | 'paid' | 'failed' | 'refunded' | 'partially_refunded';
+  status:
+    | 'pending'
+    | 'confirmed'
+    | 'shipped'
+    | 'delivered'
+    | 'cancelled'
+    | 'returned'
+    | 'under-review';
+  paymentStatus:
+    | 'pending'
+    | 'processing'
+    | 'paid'
+    | 'failed'
+    | 'refunded'
+    | 'partially_refunded';
   createdAt: string;
   shippingAddress: {
     street: string;
@@ -112,7 +130,11 @@ const PAYMENT_STATUSES = [
   { value: 'paid', label: 'Paid', color: 'success' },
   { value: 'failed', label: 'Failed', color: 'error' },
   { value: 'refunded', label: 'Refunded', color: 'default' },
-  { value: 'partially_refunded', label: 'Partially Refunded', color: 'secondary' },
+  {
+    value: 'partially_refunded',
+    label: 'Partially Refunded',
+    color: 'secondary',
+  },
 ];
 
 // Custom Grid component to fix compatibility issues with MUI v5
@@ -128,86 +150,110 @@ const Orders = () => {
   const [filterStatus, setFilterStatus] = useState('all');
   const [filterPaymentStatus, setFilterPaymentStatus] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
-  
+
   // Pagination
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
-  
+
   // Order detail dialog
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [orderDetailOpen, setOrderDetailOpen] = useState(false);
-  
+
   // Order status dialog
   const [updateStatusDialogOpen, setUpdateStatusDialogOpen] = useState(false);
   const [newStatus, setNewStatus] = useState<Order['status']>('pending');
-  
+
   // Payment status dialog
-  const [updatePaymentStatusDialogOpen, setUpdatePaymentStatusDialogOpen] = useState(false);
-  const [newPaymentStatus, setNewPaymentStatus] = useState<Order['paymentStatus']>('pending');
+  const [updatePaymentStatusDialogOpen, setUpdatePaymentStatusDialogOpen] =
+    useState(false);
+  const [newPaymentStatus, setNewPaymentStatus] =
+    useState<Order['paymentStatus']>('pending');
 
   // Return processing dialog
   const [returnDialogOpen, setReturnDialogOpen] = useState(false);
-  const [returnCondition, setReturnCondition] = useState<'perfect' | 'good' | 'damaged'>('perfect');
+  const [returnCondition, setReturnCondition] = useState<
+    'perfect' | 'good' | 'damaged'
+  >('perfect');
   const [damageDescription, setDamageDescription] = useState('');
   const [additionalCharges, setAdditionalCharges] = useState<number>(0);
   const [sendPaymentReminder, setSendPaymentReminder] = useState(true);
-  
+
   // Error handling
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [processingAction, setProcessingAction] = useState(false);
-  
+
   // Fetch orders from API
   const fetchOrders = async () => {
     try {
       setLoading(true);
       // Gọi API lấy danh sách đơn hàng từ backend
       const ordersData = await getAllOrders();
-      
+
       // Map backend response to our frontend interface
-      const mappedOrders: Order[] = Array.isArray(ordersData) ? ordersData.map(order => {
-        // Provide default values for potentially missing fields
-        return {
-          _id: order._id || '',
-          orderNumber: order.orderNumber || `ORD-${order._id?.substring(0, 6) || '000000'}`,
-          customer: {
-            _id: order.userId?._id || order.customer?._id || (typeof order.userId === 'string' ? order.userId : ''),
-            name: order.userId?.name || 
-                  (order.userId?.firstName && order.userId?.lastName ? `${order.userId.firstName} ${order.userId.lastName}` : 
-                   order.userId?.username || 
-                   order.customer?.name || 
-                   (order.customer?.firstName && order.customer?.lastName ? `${order.customer.firstName} ${order.customer.lastName}` : 'Unknown Customer')),
-            email: order.userId?.email || order.customer?.email || 'unknown@example.com'
-          },
-          items: Array.isArray(order.items) ? order.items.map((item: any) => ({
-            dress: {
-              _id: item.dressId || '',
-              name: item.name || 'Unknown Dress'
-            },
-            quantity: item.quantity || 1,
-            price: item.pricePerDay || 0,
-            rentalDays: 3 // Default rental days if not specified
-          })) : [],
-          totalAmount: order.totalAmount || 0,
-          status: (order.status || 'pending') as Order['status'],
-          paymentStatus: (order.paymentStatus || 'pending') as Order['paymentStatus'],
-          createdAt: order.createdAt || new Date().toISOString(),
-          shippingAddress: order.shippingAddress || {
-            street: 'N/A',
-            city: 'N/A',
-            state: 'N/A',
-            zipCode: 'N/A',
-            country: 'N/A'
-          },
-          trackingNumber: order.trackingNumber,
-          isRental: true, // Default to rental for wedding dress shop
-          rentalPeriod: order.startDate && order.endDate ? {
-            startDate: new Date(order.startDate).toISOString(),
-            endDate: new Date(order.endDate).toISOString()
-          } : undefined
-        };
-      }) : [];
-      
+      const mappedOrders: Order[] = Array.isArray(ordersData)
+        ? ordersData.map((order) => {
+            // Provide default values for potentially missing fields
+            return {
+              _id: order._id || '',
+              orderNumber:
+                order.orderNumber ||
+                `ORD-${order._id?.substring(0, 6) || '000000'}`,
+              customer: {
+                _id:
+                  order.userId?._id ||
+                  order.customer?._id ||
+                  (typeof order.userId === 'string' ? order.userId : ''),
+                name:
+                  order.userId?.name ||
+                  (order.userId?.firstName && order.userId?.lastName
+                    ? `${order.userId.firstName} ${order.userId.lastName}`
+                    : order.userId?.username ||
+                      order.customer?.name ||
+                      (order.customer?.firstName && order.customer?.lastName
+                        ? `${order.customer.firstName} ${order.customer.lastName}`
+                        : 'Unknown Customer')),
+                email:
+                  order.userId?.email ||
+                  order.customer?.email ||
+                  'unknown@example.com',
+              },
+              items: Array.isArray(order.items)
+                ? order.items.map((item: any) => ({
+                    dress: {
+                      _id: item.dressId || '',
+                      name: item.name || 'Unknown Dress',
+                    },
+                    quantity: item.quantity || 1,
+                    price: item.pricePerDay || 0,
+                    rentalDays: 3, // Default rental days if not specified
+                  }))
+                : [],
+              totalAmount: order.totalAmount || 0,
+              status: (order.status || 'pending') as Order['status'],
+              paymentStatus: (order.paymentStatus ||
+                'pending') as Order['paymentStatus'],
+              createdAt: order.createdAt || new Date().toISOString(),
+              shippingAddress: order.shippingAddress || {
+                street: 'N/A',
+                city: 'N/A',
+                state: 'N/A',
+                zipCode: 'N/A',
+                country: 'N/A',
+              },
+              trackingNumber: order.trackingNumber,
+              isRental: true, // Default to rental for wedding dress shop
+              rentalPeriod:
+                order.startDate && order.endDate
+                  ? {
+                      startDate: new Date(order.startDate).toISOString(),
+                      endDate: new Date(order.endDate).toISOString(),
+                    }
+                  : undefined,
+            };
+          })
+        : [];
+
       console.log('Mapped orders:', mappedOrders);
       setOrders(mappedOrders);
       setLoading(false);
@@ -227,37 +273,48 @@ const Orders = () => {
   useEffect(() => {
     // Filter orders when filters change
     let result = [...orders];
-    
+
     // Apply search filter
     if (searchTerm && result.length > 0) {
       result = result.filter((order) => {
         return (
           order.orderNumber?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          order.customer?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          order.customer?.email?.toLowerCase().includes(searchTerm.toLowerCase())
+          order.customer?.name
+            ?.toLowerCase()
+            .includes(searchTerm.toLowerCase()) ||
+          order.customer?.email
+            ?.toLowerCase()
+            .includes(searchTerm.toLowerCase())
         );
       });
     }
-    
+
     // Apply status filter
     if (filterStatus !== 'all' && result.length > 0) {
-      result = result.filter(order => order.status === filterStatus);
+      result = result.filter((order) => order.status === filterStatus);
     }
-    
+
     // Apply payment status filter
     if (filterPaymentStatus !== 'all' && result.length > 0) {
-      result = result.filter(order => order.paymentStatus === filterPaymentStatus);
+      result = result.filter(
+        (order) => order.paymentStatus === filterPaymentStatus,
+      );
     }
-    
+
     // Update filtered orders
     setFilteredOrders(result);
   }, [orders, searchTerm, filterStatus, filterPaymentStatus]);
 
-  const handleChangePage = (_event: React.MouseEvent<HTMLButtonElement> | null, newPage: number) => {
+  const handleChangePage = (
+    _event: React.MouseEvent<HTMLButtonElement> | null,
+    newPage: number,
+  ) => {
     setPage(newPage);
   };
 
-  const handleChangeRowsPerPage = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChangeRowsPerPage = (
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) => {
     setRowsPerPage(parseInt(event.target.value, 10));
     setPage(0);
   };
@@ -291,56 +348,109 @@ const Orders = () => {
 
   const handleUpdateStatus = async () => {
     if (!selectedOrder) return;
-    
+
     try {
       setLoading(true);
-      
+
       // Call the API to update the order status
       await updateOrderStatus(selectedOrder._id, newStatus);
-      
+
       // Update the local state with the updated order
-      setOrders(prevOrders => 
-        prevOrders.map(order => 
-          order._id === selectedOrder._id ? { ...order, status: newStatus } : order
-        )
+      setOrders((prevOrders) =>
+        prevOrders.map((order) =>
+          order._id === selectedOrder._id
+            ? { ...order, status: newStatus }
+            : order,
+        ),
       );
-      
+
       // Update filtered orders as well
-      setFilteredOrders(prevOrders => 
-        prevOrders.map(order => 
-          order._id === selectedOrder._id ? { ...order, status: newStatus } : order
-        )
+      setFilteredOrders((prevOrders) =>
+        prevOrders.map((order) =>
+          order._id === selectedOrder._id
+            ? { ...order, status: newStatus }
+            : order,
+        ),
       );
-      
+
       // Set success message
-      setSuccessMessage(`Order status updated to "${ORDER_STATUSES.find(s => s.value === newStatus)?.label}"`);
-      
+      setSuccessMessage(
+        `Order status updated to "${ORDER_STATUSES.find((s) => s.value === newStatus)?.label}"`,
+      );
+
       // Close the dialog
       setUpdateStatusDialogOpen(false);
-      
-      // If needed, also update payment status to maintain consistency
-      // For example, if an order is delivered, payment status should be paid
-      if (newStatus === 'delivered' && selectedOrder.paymentStatus === 'pending') {
-        try {
-          await updatePaymentStatus(selectedOrder._id, 'paid');
-          setOrders(prevOrders => 
-            prevOrders.map(order => 
-              order._id === selectedOrder._id ? { ...order, paymentStatus: 'paid' } : order
-            )
-          );
-        } catch (error) {
-          console.error('Failed to update payment status:', error);
+
+      // Handle automatic payment status changes based on order status
+      let updatedPaymentStatus: Order['paymentStatus'] | null = null;
+
+      // For rental orders
+      if (selectedOrder.isRental) {
+        if (newStatus === 'pending') {
+          updatedPaymentStatus = 'pending';
+        } else if (newStatus === 'under-review' || newStatus === 'confirmed') {
+          // If a rental is confirmed, it means at least the deposit is paid
+          if (selectedOrder.paymentStatus === 'pending') {
+            updatedPaymentStatus = 'processing'; // Deposit paid
+          }
+        } else if (newStatus === 'delivered') {
+          // When delivered, full payment should be complete
+          if (selectedOrder.paymentStatus !== 'paid') {
+            updatedPaymentStatus = 'paid';
+          }
+        } else if (newStatus === 'cancelled') {
+          // If cancelled, handle refund based on current payment status
+          if (selectedOrder.paymentStatus === 'paid') {
+            updatedPaymentStatus = 'refunded';
+          } else if (selectedOrder.paymentStatus === 'processing') {
+            updatedPaymentStatus = 'partially_refunded'; // Refund deposit
+          }
         }
       }
-      
-      // If cancelled, update payment status accordingly
-      if (newStatus === 'cancelled' && selectedOrder.paymentStatus === 'paid') {
+      // For purchase orders
+      else {
+        if (
+          newStatus === 'confirmed' ||
+          newStatus === 'shipped' ||
+          newStatus === 'delivered'
+        ) {
+          // Purchases are typically paid in full when confirmed
+          if (selectedOrder.paymentStatus === 'pending') {
+            updatedPaymentStatus = 'paid';
+          }
+        } else if (newStatus === 'cancelled') {
+          // Handle refund for purchases
+          if (selectedOrder.paymentStatus === 'paid') {
+            updatedPaymentStatus = 'refunded';
+          }
+        }
+      }
+
+      // Update payment status if needed
+      if (updatedPaymentStatus) {
         try {
-          await updatePaymentStatus(selectedOrder._id, 'refunded');
-          setOrders(prevOrders => 
-            prevOrders.map(order => 
-              order._id === selectedOrder._id ? { ...order, paymentStatus: 'refunded' } : order
-            )
+          await updatePaymentStatus(selectedOrder._id, updatedPaymentStatus);
+
+          // Update orders in state
+          setOrders((prevOrders) =>
+            prevOrders.map((order) =>
+              order._id === selectedOrder._id
+                ? { ...order, paymentStatus: updatedPaymentStatus }
+                : order,
+            ),
+          );
+
+          // Update filtered orders as well
+          setFilteredOrders((prevOrders) =>
+            prevOrders.map((order) =>
+              order._id === selectedOrder._id
+                ? { ...order, paymentStatus: updatedPaymentStatus }
+                : order,
+            ),
+          );
+
+          setSuccessMessage(
+            `Order status updated to "${ORDER_STATUSES.find((s) => s.value === newStatus)?.label}" and payment status updated to "${PAYMENT_STATUSES.find((s) => s.value === updatedPaymentStatus)?.label}"`,
           );
         } catch (error) {
           console.error('Failed to update payment status:', error);
@@ -349,27 +459,61 @@ const Orders = () => {
     } catch (error) {
       console.error('Failed to update order status:', error);
       setError('Failed to update order status. Please try again.');
+    } finally {
       setLoading(false);
     }
   };
 
   const handleUpdatePaymentStatus = async () => {
     if (!selectedOrder) return;
-    
+
     try {
       setProcessingAction(true);
       await updatePaymentStatus(selectedOrder._id, newPaymentStatus);
-      
+
       // Update orders in state
-      setOrders(orders.map(order => {
-        if (order._id === selectedOrder._id) {
-          return { ...order, paymentStatus: newPaymentStatus };
+      setOrders(
+        orders.map((order) => {
+          if (order._id === selectedOrder._id) {
+            return { ...order, paymentStatus: newPaymentStatus };
+          }
+          return order;
+        }),
+      );
+
+      setFilteredOrders(
+        filteredOrders.map((order) => {
+          if (order._id === selectedOrder._id) {
+            return { ...order, paymentStatus: newPaymentStatus };
+          }
+          return order;
+        }),
+      );
+
+      // Generate appropriate success message based on order type and payment status
+      let paymentMessage = `Payment status for order ${selectedOrder.orderNumber} updated to ${PAYMENT_STATUSES.find((s) => s.value === newPaymentStatus)?.label}`;
+
+      if (selectedOrder.isRental) {
+        if (newPaymentStatus === 'processing') {
+          paymentMessage = `Deposit payment recorded for rental order ${selectedOrder.orderNumber}`;
+        } else if (newPaymentStatus === 'paid') {
+          paymentMessage = `Full payment recorded for rental order ${selectedOrder.orderNumber}`;
+        } else if (newPaymentStatus === 'refunded') {
+          paymentMessage = `Full refund processed for rental order ${selectedOrder.orderNumber}`;
+        } else if (newPaymentStatus === 'partially_refunded') {
+          paymentMessage = `Deposit refunded for rental order ${selectedOrder.orderNumber}`;
         }
-        return order;
-      }));
-      
+      } else {
+        // For purchase orders
+        if (newPaymentStatus === 'paid') {
+          paymentMessage = `Full payment recorded for purchase order ${selectedOrder.orderNumber}`;
+        } else if (newPaymentStatus === 'refunded') {
+          paymentMessage = `Purchase refunded for order ${selectedOrder.orderNumber}`;
+        }
+      }
+
       setUpdatePaymentStatusDialogOpen(false);
-      setSuccessMessage(`Payment status for order ${selectedOrder.orderNumber} updated to ${newPaymentStatus}`);
+      setSuccessMessage(paymentMessage);
     } catch (err: any) {
       setError(err.message || 'Failed to update payment status');
     } finally {
@@ -383,30 +527,38 @@ const Orders = () => {
 
     try {
       setProcessingAction(true);
-      
+
       const returnData = {
         condition: returnCondition,
-        damageDescription: returnCondition === 'damaged' ? damageDescription : undefined,
-        additionalCharges: additionalCharges > 0 ? additionalCharges : undefined,
-        sendPaymentReminder
+        damageDescription:
+          returnCondition === 'damaged' ? damageDescription : undefined,
+        additionalCharges:
+          additionalCharges > 0 ? additionalCharges : undefined,
+        sendPaymentReminder,
       };
 
       await processReturn(selectedOrder._id, returnData);
-      
+
       // Update orders in state
-      setOrders(orders.map(order => {
-        if (order._id === selectedOrder._id) {
-          return { 
-            ...order, 
-            status: 'returned',
-            paymentStatus: sendPaymentReminder ? 'processing' : order.paymentStatus
-          };
-        }
-        return order;
-      }));
-      
+      setOrders(
+        orders.map((order) => {
+          if (order._id === selectedOrder._id) {
+            return {
+              ...order,
+              status: 'returned',
+              paymentStatus: sendPaymentReminder
+                ? 'processing'
+                : order.paymentStatus,
+            };
+          }
+          return order;
+        }),
+      );
+
       setReturnDialogOpen(false);
-      setSuccessMessage(`Return processed for order ${selectedOrder.orderNumber}. ${sendPaymentReminder ? 'Payment reminder sent to customer.' : ''}`);
+      setSuccessMessage(
+        `Return processed for order ${selectedOrder.orderNumber}. ${sendPaymentReminder ? 'Payment reminder sent to customer.' : ''}`,
+      );
     } catch (err: any) {
       setError(err.message || 'Failed to process return');
     } finally {
@@ -423,12 +575,12 @@ const Orders = () => {
   };
 
   const getStatusColor = (status: string) => {
-    const statusObj = ORDER_STATUSES.find(s => s.value === status);
+    const statusObj = ORDER_STATUSES.find((s) => s.value === status);
     return statusObj ? statusObj.color : 'default';
   };
 
   const getPaymentStatusColor = (status: string) => {
-    const paymentStatus = PAYMENT_STATUSES.find(s => s.value === status);
+    const paymentStatus = PAYMENT_STATUSES.find((s) => s.value === status);
     return paymentStatus?.color || 'default';
   };
 
@@ -439,12 +591,14 @@ const Orders = () => {
         <Paper sx={{ mb: 4, p: 3, borderRadius: 2 }}>
           <Grid container spacing={3}>
             <Grid item xs={12}>
-              <Typography variant="h4" fontWeight="bold">Order Management</Typography>
+              <Typography variant="h4" fontWeight="bold">
+                Order Management
+              </Typography>
               <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
                 View and manage all customer orders
               </Typography>
             </Grid>
-            
+
             {/* Statistics Cards */}
             <Grid item xs={12} sm={6} md={3}>
               <Card sx={{ height: '100%', boxShadow: 2, borderRadius: 2 }}>
@@ -464,8 +618,12 @@ const Orders = () => {
                   <Typography color="text.secondary" gutterBottom>
                     Pending
                   </Typography>
-                  <Typography variant="h3" color="warning.main" fontWeight="bold">
-                    {orders.filter(o => o.status === 'pending').length}
+                  <Typography
+                    variant="h3"
+                    color="warning.main"
+                    fontWeight="bold"
+                  >
+                    {orders.filter((o) => o.status === 'pending').length}
                   </Typography>
                 </CardContent>
               </Card>
@@ -477,7 +635,7 @@ const Orders = () => {
                     Processing
                   </Typography>
                   <Typography variant="h3" color="info.main" fontWeight="bold">
-                    {orders.filter(o => o.status === 'confirmed').length}
+                    {orders.filter((o) => o.status === 'confirmed').length}
                   </Typography>
                 </CardContent>
               </Card>
@@ -488,18 +646,27 @@ const Orders = () => {
                   <Typography color="text.secondary" gutterBottom>
                     Revenue
                   </Typography>
-                  <Typography variant="h3" color="success.main" fontWeight="bold">
-                    ${orders
-                        .filter(order => order.paymentStatus === 'paid' && order.status !== 'cancelled')
-                        .reduce((sum, order) => sum + order.totalAmount, 0)
-                        .toLocaleString()}
+                  <Typography
+                    variant="h3"
+                    color="success.main"
+                    fontWeight="bold"
+                  >
+                    $
+                    {orders
+                      .filter(
+                        (order) =>
+                          order.paymentStatus === 'paid' &&
+                          order.status !== 'cancelled',
+                      )
+                      .reduce((sum, order) => sum + order.totalAmount, 0)
+                      .toLocaleString()}
                   </Typography>
                 </CardContent>
               </Card>
             </Grid>
           </Grid>
         </Paper>
-          
+
         {/* Search and Filters */}
         <Paper sx={{ mb: 4, p: 3, borderRadius: 2 }}>
           <Grid container spacing={3} alignItems="center">
@@ -510,7 +677,9 @@ const Orders = () => {
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 InputProps={{
-                  startAdornment: <Search sx={{ color: 'action.active', mr: 1 }} />,
+                  startAdornment: (
+                    <Search sx={{ color: 'action.active', mr: 1 }} />
+                  ),
                 }}
                 size="small"
                 sx={{ backgroundColor: '#f5f5f5', borderRadius: 1 }}
@@ -551,11 +720,7 @@ const Orders = () => {
             <Grid item xs={12} sm={4} md={2}>
               <FormControl fullWidth size="small">
                 <InputLabel>Type</InputLabel>
-                <Select
-                  value="all"
-                  label="Type"
-                  onChange={() => {}}
-                >
+                <Select value="all" label="Type" onChange={() => {}}>
                   <MenuItem value="all">All Types</MenuItem>
                   <MenuItem value="rental">Rentals</MenuItem>
                   <MenuItem value="purchase">Purchases</MenuItem>
@@ -564,7 +729,7 @@ const Orders = () => {
             </Grid>
           </Grid>
         </Paper>
-            
+
         {/* Orders Table */}
         <Paper sx={{ borderRadius: 2, overflow: 'hidden', boxShadow: 2 }}>
           <TableContainer>
@@ -578,54 +743,115 @@ const Orders = () => {
                   <TableCell sx={{ fontWeight: 'bold' }}>Type</TableCell>
                   <TableCell sx={{ fontWeight: 'bold' }}>Status</TableCell>
                   <TableCell sx={{ fontWeight: 'bold' }}>Payment</TableCell>
-                  <TableCell align="right" sx={{ fontWeight: 'bold' }}>Actions</TableCell>
+                  <TableCell align="right" sx={{ fontWeight: 'bold' }}>
+                    Actions
+                  </TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
                 {filteredOrders
                   .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
                   .map((order) => (
-                    <TableRow 
-                      key={order._id} 
+                    <TableRow
+                      key={order._id}
                       hover
-                      sx={{ '&:nth-of-type(odd)': { backgroundColor: 'rgba(0, 0, 0, 0.02)' } }}
+                      sx={{
+                        '&:nth-of-type(odd)': {
+                          backgroundColor: 'rgba(0, 0, 0, 0.02)',
+                        },
+                      }}
                     >
-                      <TableCell sx={{ fontWeight: 'medium' }}>{order.orderNumber}</TableCell>
+                      <TableCell sx={{ fontWeight: 'medium' }}>
+                        {order.orderNumber}
+                      </TableCell>
                       <TableCell>{formatDate(order.createdAt)}</TableCell>
                       <TableCell>{order.customer.name}</TableCell>
                       <TableCell>${order.totalAmount.toFixed(2)}</TableCell>
                       <TableCell>
                         <Chip
-                          label={order.isRental ? "Rental" : "Purchase"}
+                          label={order.isRental ? 'Rental' : 'Purchase'}
                           size="small"
-                          color={order.isRental ? "primary" : "default"}
-                          sx={{ fontWeight: 'medium', minWidth: 80, justifyContent: 'center' }}
+                          color={order.isRental ? 'primary' : 'default'}
+                          sx={{
+                            fontWeight: 'medium',
+                            minWidth: 80,
+                            justifyContent: 'center',
+                          }}
                         />
                       </TableCell>
                       <TableCell>
                         <Chip
-                          label={order.status.charAt(0).toUpperCase() + order.status.slice(1)}
+                          label={
+                            order.status.charAt(0).toUpperCase() +
+                            order.status.slice(1)
+                          }
                           size="small"
                           color={getStatusColor(order.status) as any}
-                          sx={{ fontWeight: 'medium', minWidth: 80, justifyContent: 'center' }}
+                          sx={{
+                            fontWeight: 'medium',
+                            minWidth: 80,
+                            justifyContent: 'center',
+                          }}
                         />
                       </TableCell>
                       <TableCell>
-                        <Stack direction="row" spacing={0.5} alignItems="center">
-                          <Chip 
-                            label={PAYMENT_STATUSES.find(s => s.value === order.paymentStatus)?.label || order.paymentStatus} 
-                            color={(getPaymentStatusColor(order.paymentStatus) as any)} 
+                        <Stack
+                          direction="row"
+                          spacing={0.5}
+                          alignItems="center"
+                        >
+                          <Chip
+                            label={
+                              PAYMENT_STATUSES.find(
+                                (s) => s.value === order.paymentStatus,
+                              )?.label || order.paymentStatus
+                            }
+                            color={
+                              getPaymentStatusColor(order.paymentStatus) as any
+                            }
                             size="small"
-                            sx={{ fontWeight: 'medium', minWidth: 80, justifyContent: 'center' }}
+                            sx={{
+                              fontWeight: 'medium',
+                              minWidth: 80,
+                              justifyContent: 'center',
+                            }}
                           />
-                          {order.status === 'delivered' && order.paymentStatus === 'paid' && (
-                            <Chip 
-                              label="Auto-confirmed" 
-                              size="small" 
+                          {order.isRental && order.paymentStatus === 'paid' && (
+                            <Chip
+                              label="Rental - Full Payment"
+                              size="small"
                               variant="outlined"
                               sx={{ fontSize: '0.65rem' }}
                             />
                           )}
+                          {!order.isRental &&
+                            order.paymentStatus === 'paid' && (
+                              <Chip
+                                label="Purchase - Paid"
+                                size="small"
+                                variant="outlined"
+                                sx={{ fontSize: '0.65rem' }}
+                              />
+                            )}
+                          {order.isRental &&
+                            order.paymentStatus === 'processing' && (
+                              <Chip
+                                label="Rental - Deposit Paid"
+                                size="small"
+                                variant="outlined"
+                                sx={{ fontSize: '0.65rem' }}
+                              />
+                            )}
+                          {order.status === 'cancelled' &&
+                            order.paymentStatus !== 'refunded' && (
+                              <Chip
+                                label="Pending Refund"
+                                size="small"
+                                variant="outlined"
+                                color="error"
+                                sx={{ fontSize: '0.65rem' }}
+                              />
+                            )}
                         </Stack>
                       </TableCell>
                       <TableCell align="right">
@@ -639,63 +865,35 @@ const Orders = () => {
                           >
                             <Visibility />
                           </IconButton>
-                          {order.status === 'confirmed' ? (
-                            <FormControl variant="outlined" fullWidth>
-                              <InputLabel id="order-status-label">Order Status</InputLabel>
-                              <Select
-                                labelId="order-status-label"
-                                value={newStatus}
-                                onChange={(e) => setNewStatus(e.target.value as Order['status'])}
-                                label="Order Status"
-                                disabled={processingAction}
-                              >
-                                {/* Hiển thị các trạng thái theo thứ tự xử lý đơn hàng */}
-                                {['pending', 'confirmed', 'shipped', 'delivered', 'cancelled', 'returned', 'under-review']
-                                  .map(statusValue => {
-                                    const status = ORDER_STATUSES.find(s => s.value === statusValue);
-                                    if (!status) return null;
-                                    return (
-                                      <MenuItem key={status.value} value={status.value}>
-                                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                                          <Box
-                                            sx={{
-                                              width: 10,
-                                              height: 10,
-                                              borderRadius: '50%',
-                                              backgroundColor: status.color === 'default' ? '#9e9e9e' : 
-                                                status.color === 'warning' ? '#ff9800' :
-                                                status.color === 'error' ? '#f44336' :
-                                                status.color === 'success' ? '#4caf50' :
-                                                status.color === 'info' ? '#2196f3' :
-                                                status.color === 'secondary' ? '#9c27b0' : '#9e9e9e',
-                                              mr: 1
-                                            }}
-                                          />
-                                          {status.label}
-                                        </Box>
-                                      </MenuItem>
-                                    );
-                                  })}
-                              </Select>
-                            </FormControl>
-                          ) : (
-                            <IconButton
-                              color="secondary"
-                              onClick={() => handleOpenUpdateStatusDialog(order)}
-                              size="small"
-                              title="Update order status"
-                              sx={{ borderRadius: '0' }}
-                            >
-                              <LocalShipping />
-                            </IconButton>
-                          )}
-                          {['confirmed', 'shipped', 'delivered', 'cancelled', 'returned'].includes(order.status) && (
+                          <IconButton
+                            color="secondary"
+                            onClick={() => handleOpenUpdateStatusDialog(order)}
+                            size="small"
+                            title="Update order status"
+                            sx={{ borderRadius: '0' }}
+                          >
+                            <LocalShipping />
+                          </IconButton>
+                          {[
+                            'confirmed',
+                            'shipped',
+                            'delivered',
+                            'cancelled',
+                            'returned',
+                          ].includes(order.status) && (
                             <IconButton
                               color="warning"
-                              onClick={() => handleOpenUpdatePaymentStatusDialog(order)}
+                              onClick={() =>
+                                handleOpenUpdatePaymentStatusDialog(order)
+                              }
                               size="small"
                               title="Update payment status"
-                              sx={{ borderRadius: order.isRental && order.status === 'delivered' ? '0' : '0 4px 4px 0' }}
+                              sx={{
+                                borderRadius:
+                                  order.isRental && order.status === 'delivered'
+                                    ? '0'
+                                    : '0 4px 4px 0',
+                              }}
                             >
                               <CreditCard />
                             </IconButton>
@@ -718,8 +916,12 @@ const Orders = () => {
                 {filteredOrders.length === 0 && (
                   <TableRow>
                     <TableCell colSpan={8} align="center" sx={{ py: 5 }}>
-                      <Typography variant="h6" color="text.secondary">No orders found</Typography>
-                      <Typography variant="body2" color="text.secondary">Create a new order or change search criteria</Typography>
+                      <Typography variant="h6" color="text.secondary">
+                        No orders found
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        Create a new order or change search criteria
+                      </Typography>
                     </TableCell>
                   </TableRow>
                 )}
@@ -753,12 +955,23 @@ const Orders = () => {
       >
         {selectedOrder && (
           <>
-            <DialogTitle sx={{ borderBottom: '1px solid rgba(0, 0, 0, 0.12)', pb: 1 }}>
-              <Stack direction="row" justifyContent="space-between" alignItems="center">
-                <Typography variant="h5">Order #{selectedOrder.orderNumber}</Typography>
-                <Chip 
-                  label={selectedOrder.status.charAt(0).toUpperCase() + selectedOrder.status.slice(1)} 
-                  color={getStatusColor(selectedOrder.status) as any} 
+            <DialogTitle
+              sx={{ borderBottom: '1px solid rgba(0, 0, 0, 0.12)', pb: 1 }}
+            >
+              <Stack
+                direction="row"
+                justifyContent="space-between"
+                alignItems="center"
+              >
+                <Typography variant="h5">
+                  Order #{selectedOrder.orderNumber}
+                </Typography>
+                <Chip
+                  label={
+                    selectedOrder.status.charAt(0).toUpperCase() +
+                    selectedOrder.status.slice(1)
+                  }
+                  color={getStatusColor(selectedOrder.status) as any}
                   size="small"
                 />
               </Stack>
@@ -793,11 +1006,47 @@ const Orders = () => {
                         <Typography variant="subtitle2" color="text.secondary">
                           Payment Status
                         </Typography>
-                        <Chip 
-                          label={PAYMENT_STATUSES.find(s => s.value === selectedOrder.paymentStatus)?.label || selectedOrder.paymentStatus} 
-                          color={getPaymentStatusColor(selectedOrder.paymentStatus) as any} 
-                          size="small"
-                        />
+                        <Stack direction="row" spacing={1} alignItems="center">
+                          <Chip
+                            label={
+                              PAYMENT_STATUSES.find(
+                                (s) => s.value === selectedOrder.paymentStatus,
+                              )?.label || selectedOrder.paymentStatus
+                            }
+                            color={
+                              getPaymentStatusColor(
+                                selectedOrder.paymentStatus,
+                              ) as any
+                            }
+                            size="small"
+                          />
+                          {selectedOrder.isRental && (
+                            <Typography variant="body2" color="text.secondary">
+                              {selectedOrder.paymentStatus === 'pending' &&
+                                'No payment received'}
+                              {selectedOrder.paymentStatus === 'processing' &&
+                                'Deposit payment received'}
+                              {selectedOrder.paymentStatus === 'paid' &&
+                                'Full payment received'}
+                              {selectedOrder.paymentStatus === 'refunded' &&
+                                'Payment refunded'}
+                              {selectedOrder.paymentStatus ===
+                                'partially_refunded' && 'Deposit refunded'}
+                            </Typography>
+                          )}
+                          {!selectedOrder.isRental && (
+                            <Typography variant="body2" color="text.secondary">
+                              {selectedOrder.paymentStatus === 'pending' &&
+                                'Awaiting payment'}
+                              {selectedOrder.paymentStatus === 'processing' &&
+                                'Payment processing'}
+                              {selectedOrder.paymentStatus === 'paid' &&
+                                'Purchase paid in full'}
+                              {selectedOrder.paymentStatus === 'refunded' &&
+                                'Purchase refunded'}
+                            </Typography>
+                          )}
+                        </Stack>
                       </Box>
                     </Stack>
                   </Paper>
@@ -810,32 +1059,50 @@ const Orders = () => {
                           Shipping Address
                         </Typography>
                         <Typography>
-                          {selectedOrder.shippingAddress.street}, {selectedOrder.shippingAddress.city}, {selectedOrder.shippingAddress.state} {selectedOrder.shippingAddress.zipCode}, {selectedOrder.shippingAddress.country}
+                          {selectedOrder.shippingAddress.street},{' '}
+                          {selectedOrder.shippingAddress.city},{' '}
+                          {selectedOrder.shippingAddress.state}{' '}
+                          {selectedOrder.shippingAddress.zipCode},{' '}
+                          {selectedOrder.shippingAddress.country}
                         </Typography>
                       </Box>
-                      
+
                       {selectedOrder.trackingNumber && (
                         <Box>
-                          <Typography variant="subtitle2" color="text.secondary">
+                          <Typography
+                            variant="subtitle2"
+                            color="text.secondary"
+                          >
                             Tracking Number
                           </Typography>
-                          <Typography>{selectedOrder.trackingNumber}</Typography>
+                          <Typography>
+                            {selectedOrder.trackingNumber}
+                          </Typography>
                         </Box>
                       )}
                       <Box>
                         <Typography variant="subtitle2" color="text.secondary">
                           Shipping Duration
                         </Typography>
-                        <Typography>{selectedOrder.status === 'shipped' || selectedOrder.status === 'delivered' ? '3 days' : 'N/A'}</Typography>
+                        <Typography>
+                          {selectedOrder.status === 'shipped' ||
+                          selectedOrder.status === 'delivered'
+                            ? '3 days'
+                            : 'N/A'}
+                        </Typography>
                       </Box>
-                      
+
                       {selectedOrder.isRental && selectedOrder.rentalPeriod && (
                         <Box>
-                          <Typography variant="subtitle2" color="text.secondary">
+                          <Typography
+                            variant="subtitle2"
+                            color="text.secondary"
+                          >
                             Rental Period
                           </Typography>
                           <Typography>
-                            {formatDate(selectedOrder.rentalPeriod.startDate)} - {formatDate(selectedOrder.rentalPeriod.endDate)}
+                            {formatDate(selectedOrder.rentalPeriod.startDate)} -{' '}
+                            {formatDate(selectedOrder.rentalPeriod.endDate)}
                           </Typography>
                         </Box>
                       )}
@@ -858,61 +1125,166 @@ const Orders = () => {
                           </TableRow>
                         </TableHead>
                         <TableBody>
-                          {selectedOrder.items.map((item: OrderItem, index: number) => (
-                            <TableRow key={index} sx={{ '&:nth-of-type(odd)': { backgroundColor: 'rgba(0, 0, 0, 0.02)' } }}>
-                              <TableCell>{index + 1}</TableCell>
-                              <TableCell>
-                                <Typography variant="body2" fontWeight="medium">{item.dress?.name || 'Unnamed Product'}</Typography>
-                                {item.rentalDays && (
-                                  <Typography variant="caption" color="text.secondary">
-                                    Rental: {item.rentalDays} days
+                          {selectedOrder.items.map(
+                            (item: OrderItem, index: number) => (
+                              <TableRow
+                                key={index}
+                                sx={{
+                                  '&:nth-of-type(odd)': {
+                                    backgroundColor: 'rgba(0, 0, 0, 0.02)',
+                                  },
+                                }}
+                              >
+                                <TableCell>{index + 1}</TableCell>
+                                <TableCell>
+                                  <Typography
+                                    variant="body2"
+                                    fontWeight="medium"
+                                  >
+                                    {item.dress?.name || 'Unnamed Product'}
                                   </Typography>
-                                )}
-                              </TableCell>
-                              <TableCell align="right">{item.quantity || 1}</TableCell>
-                              <TableCell align="right">${(item.price || 0).toFixed(2)}</TableCell>
-                              <TableCell align="right">{item.rentalDays || 'N/A'}</TableCell>
-                              <TableCell align="right">${((item.price || 0) * (item.quantity || 1)).toFixed(2)}</TableCell>
-                            </TableRow>
-                          ))}
+                                  {item.rentalDays && (
+                                    <Typography
+                                      variant="caption"
+                                      color="text.secondary"
+                                    >
+                                      Rental: {item.rentalDays} days
+                                    </Typography>
+                                  )}
+                                </TableCell>
+                                <TableCell align="right">
+                                  {item.quantity || 1}
+                                </TableCell>
+                                <TableCell align="right">
+                                  ${(item.price || 0).toFixed(2)}
+                                </TableCell>
+                                <TableCell align="right">
+                                  {item.rentalDays || 'N/A'}
+                                </TableCell>
+                                <TableCell align="right">
+                                  $
+                                  {(
+                                    (item.price || 0) * (item.quantity || 1)
+                                  ).toFixed(2)}
+                                </TableCell>
+                              </TableRow>
+                            ),
+                          )}
                           <TableRow sx={{ backgroundColor: '#f5f5f5' }}>
-                            <TableCell colSpan={5} align="right" sx={{ fontWeight: 'bold' }}>Total:</TableCell>
-                            <TableCell align="right" sx={{ fontWeight: 'bold' }}>${selectedOrder.totalAmount.toFixed(2)}</TableCell>
+                            <TableCell
+                              colSpan={5}
+                              align="right"
+                              sx={{ fontWeight: 'bold' }}
+                            >
+                              Total:
+                            </TableCell>
+                            <TableCell
+                              align="right"
+                              sx={{ fontWeight: 'bold' }}
+                            >
+                              ${selectedOrder.totalAmount.toFixed(2)}
+                            </TableCell>
                           </TableRow>
                         </TableBody>
                       </Table>
                     </TableContainer>
                   </Paper>
                 </Grid>
-                
+
                 <Grid item xs={12}>
                   <Paper sx={{ p: 2, borderRadius: 2 }}>
-                    <Typography variant="subtitle2" color="text.secondary" gutterBottom>
+                    <Typography
+                      variant="subtitle2"
+                      color="text.secondary"
+                      gutterBottom
+                    >
                       Order Status Timeline
                     </Typography>
-                    <Stepper sx={{ mt: 2 }}>
-                      <Step>
+                    <Stepper
+                      sx={{ mt: 2 }}
+                      activeStep={
+                        selectedOrder.status === 'cancelled'
+                          ? -1
+                          : selectedOrder.status === 'pending'
+                            ? 0
+                            : selectedOrder.status === 'under-review'
+                              ? 1
+                              : selectedOrder.status === 'confirmed'
+                                ? 2
+                                : selectedOrder.status === 'shipped'
+                                  ? 3
+                                  : selectedOrder.status === 'delivered'
+                                    ? 4
+                                    : selectedOrder.status === 'returned'
+                                      ? 5
+                                      : 0
+                      }
+                    >
+                      <Step completed={selectedOrder.status !== 'pending'}>
                         <StepLabel>Pending</StepLabel>
                       </Step>
-                      <Step>
+                      <Step
+                        completed={
+                          selectedOrder.status === 'under-review' ||
+                          [
+                            'confirmed',
+                            'shipped',
+                            'delivered',
+                            'returned',
+                          ].includes(selectedOrder.status)
+                        }
+                      >
+                        <StepLabel>Under Review</StepLabel>
+                      </Step>
+                      <Step
+                        completed={[
+                          'confirmed',
+                          'shipped',
+                          'delivered',
+                          'returned',
+                        ].includes(selectedOrder.status)}
+                      >
                         <StepLabel>Confirmed</StepLabel>
                       </Step>
-                      <Step completed={selectedOrder.status === 'shipped' || selectedOrder.status === 'delivered' || selectedOrder.status === 'returned'}>
+                      <Step
+                        completed={
+                          selectedOrder.status === 'shipped' ||
+                          selectedOrder.status === 'delivered' ||
+                          selectedOrder.status === 'returned'
+                        }
+                      >
                         <StepLabel>Shipped</StepLabel>
                       </Step>
-                      <Step completed={selectedOrder.status === 'delivered' || selectedOrder.status === 'returned'}>
+                      <Step
+                        completed={
+                          selectedOrder.status === 'delivered' ||
+                          selectedOrder.status === 'returned'
+                        }
+                      >
                         <StepLabel>Delivered</StepLabel>
                       </Step>
                       <Step completed={selectedOrder.status === 'returned'}>
                         <StepLabel>Returned</StepLabel>
                       </Step>
+                      {selectedOrder.status === 'cancelled' && (
+                        <Step completed={true}>
+                          <StepLabel error>Cancelled</StepLabel>
+                        </Step>
+                      )}
                     </Stepper>
                   </Paper>
                 </Grid>
               </Grid>
             </DialogContent>
-            <DialogActions sx={{ borderTop: '1px solid rgba(0, 0, 0, 0.12)', px: 3, py: 2 }}>
-              <Button onClick={() => setOrderDetailOpen(false)} variant="outlined">Close</Button>
+            <DialogActions
+              sx={{ borderTop: '1px solid rgba(0, 0, 0, 0.12)', px: 3, py: 2 }}
+            >
+              <Button
+                onClick={() => setOrderDetailOpen(false)}
+                variant="outlined"
+              >
+                Close
+              </Button>
               <Button
                 variant="contained"
                 color="primary"
@@ -934,171 +1306,299 @@ const Orders = () => {
   return (
     <AdminLayout>
       {loading && orders.length === 0 ? (
-        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '80vh' }}>
+        <Box
+          sx={{
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            height: '80vh',
+          }}
+        >
           <CircularProgress />
         </Box>
       ) : (
         renderGridComponent()
       )}
-      
+
       {renderOrderDetailDialog()}
-      
+
       {/* Update Status Dialog */}
       <Dialog
         open={updateStatusDialogOpen}
         onClose={() => setUpdateStatusDialogOpen(false)}
         PaperProps={{
-          sx: { borderRadius: 2 }
+          sx: { borderRadius: 2 },
         }}
       >
-        <DialogTitle sx={{ borderBottom: '1px solid rgba(0, 0, 0, 0.12)', pb: 1 }}>
-          {newStatus === 'confirmed' ? 'Confirm Order' : 
-           newStatus === 'shipped' ? 'Ship Order' :
-           newStatus === 'delivered' ? 'Mark as Delivered' : 
-           'Update Order Status'}
+        <DialogTitle
+          sx={{ borderBottom: '1px solid rgba(0, 0, 0, 0.12)', pb: 1 }}
+        >
+          {newStatus === 'confirmed'
+            ? 'Confirm Order'
+            : newStatus === 'shipped'
+              ? 'Ship Order'
+              : newStatus === 'delivered'
+                ? 'Mark as Delivered'
+                : newStatus === 'cancelled'
+                  ? 'Cancel Order'
+                  : newStatus === 'returned'
+                    ? 'Return Order'
+                    : newStatus === 'under-review'
+                      ? 'Set to Under Review'
+                      : 'Update Order Status'}
         </DialogTitle>
         <DialogContent sx={{ pt: 3 }}>
           <DialogContentText sx={{ mb: 2 }}>
-            {newStatus === 'confirmed' ? 
-              `Are you sure you want to confirm order ${selectedOrder?.orderNumber}?` :
-             newStatus === 'shipped' ? 
-              `Are you sure you want to mark order ${selectedOrder?.orderNumber} as shipped?` :
-             newStatus === 'delivered' ? 
-              `Are you sure you want to mark order ${selectedOrder?.orderNumber} as delivered?` :
-              `Update the status for order ${selectedOrder?.orderNumber}`
-            }
+            {newStatus === 'confirmed'
+              ? `Are you sure you want to confirm order ${selectedOrder?.orderNumber}?`
+              : newStatus === 'shipped'
+                ? `Are you sure you want to mark order ${selectedOrder?.orderNumber} as shipped?`
+                : newStatus === 'delivered'
+                  ? `Are you sure you want to mark order ${selectedOrder?.orderNumber} as delivered?`
+                  : newStatus === 'cancelled'
+                    ? `Are you sure you want to cancel order ${selectedOrder?.orderNumber}? This cannot be undone.`
+                    : newStatus === 'returned'
+                      ? `Are you sure you want to mark order ${selectedOrder?.orderNumber} as returned?`
+                      : newStatus === 'under-review'
+                        ? `Are you sure you want to mark order ${selectedOrder?.orderNumber} as under review?`
+                        : `Update the status for order ${selectedOrder?.orderNumber}`}
           </DialogContentText>
-          {!['confirmed', 'shipped', 'delivered'].includes(newStatus) && (
-            <FormControl fullWidth sx={{ mt: 2 }}>
-              <InputLabel>Status</InputLabel>
-              <Select
-                value={newStatus}
-                label="Status"
-                onChange={(e) => setNewStatus(e.target.value as Order['status'])}
-              >
-                {/* Hiển thị các trạng thái theo thứ tự xử lý đơn hàng */}
-                {['pending', 'confirmed', 'shipped', 'delivered', 'cancelled', 'returned', 'under-review']
-                  .map(statusValue => {
-                    const status = ORDER_STATUSES.find(s => s.value === statusValue);
-                    if (!status) return null;
-                    return (
-                      <MenuItem key={status.value} value={status.value}>
-                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                          <Box
-                            sx={{
-                              width: 10,
-                              height: 10,
-                              borderRadius: '50%',
-                              backgroundColor: status.color === 'default' ? '#9e9e9e' : 
-                                status.color === 'warning' ? '#ff9800' :
-                                status.color === 'error' ? '#f44336' :
-                                status.color === 'success' ? '#4caf50' :
-                                status.color === 'info' ? '#2196f3' :
-                                status.color === 'secondary' ? '#9c27b0' : '#9e9e9e',
-                              mr: 1
-                            }}
-                          />
-                          {status.label}
-                        </Box>
-                      </MenuItem>
-                    );
-                  })}
-              </Select>
-            </FormControl>
-          )}
+          <FormControl fullWidth sx={{ mt: 2 }}>
+            <InputLabel>Status</InputLabel>
+            <Select
+              value={newStatus}
+              label="Status"
+              onChange={(e) => setNewStatus(e.target.value as Order['status'])}
+            >
+              {/* Display statuses in order processing sequence */}
+              {[
+                'pending',
+                'under-review',
+                'confirmed',
+                'shipped',
+                'delivered',
+                'returned',
+                'cancelled',
+              ].map((statusValue) => {
+                const status = ORDER_STATUSES.find(
+                  (s) => s.value === statusValue,
+                );
+                if (!status) return null;
+                return (
+                  <MenuItem key={status.value} value={status.value}>
+                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                      <Box
+                        sx={{
+                          width: 10,
+                          height: 10,
+                          borderRadius: '50%',
+                          backgroundColor:
+                            status.color === 'default'
+                              ? '#9e9e9e'
+                              : status.color === 'warning'
+                                ? '#ff9800'
+                                : status.color === 'error'
+                                  ? '#f44336'
+                                  : status.color === 'success'
+                                    ? '#4caf50'
+                                    : status.color === 'info'
+                                      ? '#2196f3'
+                                      : status.color === 'secondary'
+                                        ? '#9c27b0'
+                                        : '#9e9e9e',
+                          mr: 1,
+                        }}
+                      />
+                      {status.label}
+                    </Box>
+                  </MenuItem>
+                );
+              })}
+            </Select>
+          </FormControl>
         </DialogContent>
-        <DialogActions sx={{ borderTop: '1px solid rgba(0, 0, 0, 0.12)', px: 3, py: 2 }}>
-          <Button onClick={() => setUpdateStatusDialogOpen(false)} variant="outlined">Cancel</Button>
-          <Button 
-            onClick={handleUpdateStatus} 
-            variant="contained" 
+        <DialogActions
+          sx={{ borderTop: '1px solid rgba(0, 0, 0, 0.12)', px: 3, py: 2 }}
+        >
+          <Button
+            onClick={() => setUpdateStatusDialogOpen(false)}
+            variant="outlined"
+          >
+            Cancel
+          </Button>
+          <Button
+            onClick={handleUpdateStatus}
+            variant="contained"
             color={
-              newStatus === 'confirmed' ? 'info' :
-              newStatus === 'delivered' ? 'success' : 
-              'primary'
+              newStatus === 'confirmed'
+                ? 'info'
+                : newStatus === 'delivered'
+                  ? 'success'
+                  : newStatus === 'cancelled'
+                    ? 'error'
+                    : newStatus === 'returned'
+                      ? 'secondary'
+                      : 'primary'
             }
           >
-            {newStatus === 'confirmed' ? 'Confirm Order' :
-             newStatus === 'delivered' ? 'Mark as Delivered' :
-             'Update Status'}
+            {newStatus === 'confirmed'
+              ? 'Confirm Order'
+              : newStatus === 'delivered'
+                ? 'Mark as Delivered'
+                : newStatus === 'cancelled'
+                  ? 'Cancel Order'
+                  : newStatus === 'returned'
+                    ? 'Mark as Returned'
+                    : newStatus === 'under-review'
+                      ? 'Set Under Review'
+                      : 'Update Status'}
           </Button>
         </DialogActions>
       </Dialog>
-      
+
       {/* Update Payment Status Dialog */}
       <Dialog
         open={updatePaymentStatusDialogOpen}
-        onClose={() => !processingAction && setUpdatePaymentStatusDialogOpen(false)}
+        onClose={() =>
+          !processingAction && setUpdatePaymentStatusDialogOpen(false)
+        }
         PaperProps={{
-          sx: { borderRadius: 2 }
+          sx: { borderRadius: 2 },
         }}
       >
-        <DialogTitle sx={{ borderBottom: '1px solid rgba(0, 0, 0, 0.12)', pb: 1 }}>
-          Update Payment Status
+        <DialogTitle
+          sx={{ borderBottom: '1px solid rgba(0, 0, 0, 0.12)', pb: 1 }}
+        >
+          {selectedOrder?.isRental
+            ? 'Update Rental Payment Status'
+            : 'Update Purchase Payment Status'}
         </DialogTitle>
         <DialogContent sx={{ pt: 3 }}>
           <DialogContentText sx={{ mb: 2 }}>
-            Update the payment status for order {selectedOrder?.orderNumber}
+            {selectedOrder?.isRental
+              ? `Update rental payment status for order ${selectedOrder?.orderNumber}`
+              : `Update purchase payment status for order ${selectedOrder?.orderNumber}`}
           </DialogContentText>
           <FormControl fullWidth sx={{ mt: 2 }}>
             <InputLabel>Payment Status</InputLabel>
             <Select
               value={newPaymentStatus}
               label="Payment Status"
-              onChange={(e) => setNewPaymentStatus(e.target.value as Order['paymentStatus'])}
+              onChange={(e) =>
+                setNewPaymentStatus(e.target.value as Order['paymentStatus'])
+              }
               disabled={processingAction}
             >
-              {PAYMENT_STATUSES.filter(s => s.value !== 'all').map((status) => (
-                <MenuItem key={status.value} value={status.value}>
-                  {status.label}
-                </MenuItem>
-              ))}
+              {/* Filter payment status options based on rental/purchase */}
+              {PAYMENT_STATUSES.filter((s) => s.value !== 'all')
+                .filter((s) => {
+                  // For rentals, show all payment statuses
+                  if (selectedOrder?.isRental) return true;
+                  // For purchases, hide partially_refunded and processing (typically used for deposits)
+                  return (
+                    s.value !== 'partially_refunded' && s.value !== 'processing'
+                  );
+                })
+                .map((status) => (
+                  <MenuItem key={status.value} value={status.value}>
+                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                      <Box
+                        sx={{
+                          width: 10,
+                          height: 10,
+                          borderRadius: '50%',
+                          backgroundColor:
+                            status.color === 'default'
+                              ? '#9e9e9e'
+                              : status.color === 'warning'
+                                ? '#ff9800'
+                                : status.color === 'error'
+                                  ? '#f44336'
+                                  : status.color === 'success'
+                                    ? '#4caf50'
+                                    : status.color === 'info'
+                                      ? '#2196f3'
+                                      : status.color === 'secondary'
+                                        ? '#9c27b0'
+                                        : '#9e9e9e',
+                          mr: 1,
+                        }}
+                      />
+                      {status.label}
+                      {selectedOrder?.isRental &&
+                        status.value === 'processing' &&
+                        ' (Deposit Paid)'}
+                      {selectedOrder?.isRental &&
+                        status.value === 'partially_refunded' &&
+                        ' (Deposit Refunded)'}
+                    </Box>
+                  </MenuItem>
+                ))}
             </Select>
           </FormControl>
         </DialogContent>
-        <DialogActions sx={{ borderTop: '1px solid rgba(0, 0, 0, 0.12)', px: 3, py: 2 }}>
-          <Button 
-            onClick={() => setUpdatePaymentStatusDialogOpen(false)} 
+        <DialogActions
+          sx={{ borderTop: '1px solid rgba(0, 0, 0, 0.12)', px: 3, py: 2 }}
+        >
+          <Button
+            onClick={() => setUpdatePaymentStatusDialogOpen(false)}
             variant="outlined"
             disabled={processingAction}
           >
             Cancel
           </Button>
-          <Button 
-            onClick={handleUpdatePaymentStatus} 
-            variant="contained" 
+          <Button
+            onClick={handleUpdatePaymentStatus}
+            variant="contained"
             color="primary"
             disabled={processingAction}
           >
-            {processingAction ? <CircularProgress size={24} /> : 'Update Payment Status'}
+            {processingAction ? (
+              <CircularProgress size={24} />
+            ) : (
+              'Update Payment Status'
+            )}
           </Button>
         </DialogActions>
       </Dialog>
-      
+
       {/* Process Return Dialog */}
       <Dialog
         open={returnDialogOpen}
         onClose={() => !processingAction && setReturnDialogOpen(false)}
         PaperProps={{
-          sx: { borderRadius: 2, maxWidth: 550 }
+          sx: { borderRadius: 2, maxWidth: 550 },
         }}
       >
-        <DialogTitle sx={{ borderBottom: '1px solid rgba(0, 0, 0, 0.12)', pb: 1, display: 'flex', alignItems: 'center' }}>
+        <DialogTitle
+          sx={{
+            borderBottom: '1px solid rgba(0, 0, 0, 0.12)',
+            pb: 1,
+            display: 'flex',
+            alignItems: 'center',
+          }}
+        >
           <AssignmentReturn sx={{ mr: 1 }} />
           Process Dress Return
         </DialogTitle>
         <DialogContent sx={{ pt: 3 }}>
           <DialogContentText sx={{ mb: 3 }}>
-            Process the return for order {selectedOrder?.orderNumber}. Assess the condition of the returned dress and collect the remaining payment.
+            Process the return for order {selectedOrder?.orderNumber}. Assess
+            the condition of the returned dress and collect the remaining
+            payment.
           </DialogContentText>
-          
+
           {/* Condition Selection */}
           <FormControl fullWidth sx={{ mb: 3 }}>
             <InputLabel>Dress Condition</InputLabel>
             <Select
               value={returnCondition}
               label="Dress Condition"
-              onChange={(e) => setReturnCondition(e.target.value as 'perfect' | 'good' | 'damaged')}
+              onChange={(e) =>
+                setReturnCondition(
+                  e.target.value as 'perfect' | 'good' | 'damaged',
+                )
+              }
               disabled={processingAction}
             >
               <MenuItem value="perfect">Perfect - Like New</MenuItem>
@@ -1106,7 +1606,7 @@ const Orders = () => {
               <MenuItem value="damaged">Damaged - Requires Repair</MenuItem>
             </Select>
           </FormControl>
-          
+
           {/* Damage Description (only if damaged) */}
           {returnCondition === 'damaged' && (
             <TextField
@@ -1122,7 +1622,7 @@ const Orders = () => {
               placeholder="Describe the damage in detail..."
             />
           )}
-          
+
           {/* Additional Charges */}
           <TextField
             label="Additional Charges (if any)"
@@ -1137,71 +1637,124 @@ const Orders = () => {
             }}
             sx={{ mb: 3 }}
           />
-          
+
           {/* Remaining Payment Section */}
-          <Box sx={{ mb: 3, p: 2, bgcolor: '#f8f3f0', borderRadius: 1, border: '1px solid #c3937c' }}>
-            <Typography variant="subtitle2" sx={{ color: '#c3937c', mb: 1, display: 'flex', alignItems: 'center' }}>
+          <Box
+            sx={{
+              mb: 3,
+              p: 2,
+              bgcolor: '#f8f3f0',
+              borderRadius: 1,
+              border: '1px solid #c3937c',
+            }}
+          >
+            <Typography
+              variant="subtitle2"
+              sx={{
+                color: '#c3937c',
+                mb: 1,
+                display: 'flex',
+                alignItems: 'center',
+              }}
+            >
               <ReceiptLong sx={{ mr: 0.5, fontSize: 20 }} />
               Remaining Payment
             </Typography>
             <Typography variant="body2" sx={{ mb: 1 }}>
-              Customer has paid 50% deposit (${selectedOrder ? (selectedOrder.totalAmount / 2).toFixed(2) : '0.00'}).
-              Remaining payment: ${selectedOrder ? (selectedOrder.totalAmount / 2 + additionalCharges).toFixed(2) : '0.00'}
-              {additionalCharges > 0 && ` (includes $${additionalCharges.toFixed(2)} additional charges)`}
+              Customer has paid 50% deposit ($
+              {selectedOrder
+                ? (selectedOrder.totalAmount / 2).toFixed(2)
+                : '0.00'}
+              ). Remaining payment: $
+              {selectedOrder
+                ? (selectedOrder.totalAmount / 2 + additionalCharges).toFixed(2)
+                : '0.00'}
+              {additionalCharges > 0 &&
+                ` (includes $${additionalCharges.toFixed(2)} additional charges)`}
             </Typography>
-            <FormControl sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center' }}>
-              <Typography variant="body2" sx={{ display: 'flex', alignItems: 'center' }}>
+            <FormControl
+              sx={{
+                display: 'flex',
+                flexDirection: 'row',
+                alignItems: 'center',
+              }}
+            >
+              <Typography
+                variant="body2"
+                sx={{ display: 'flex', alignItems: 'center' }}
+              >
                 <Email sx={{ mr: 0.5, fontSize: 16, color: '#c3937c' }} />
                 Send payment reminder email:
               </Typography>
               <Switch
                 checked={sendPaymentReminder}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSendPaymentReminder(e.target.checked)}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                  setSendPaymentReminder(e.target.checked)
+                }
                 disabled={processingAction}
                 color="secondary"
               />
             </FormControl>
           </Box>
         </DialogContent>
-        <DialogActions sx={{ borderTop: '1px solid rgba(0, 0, 0, 0.12)', px: 3, py: 2 }}>
-          <Button 
-            onClick={() => setReturnDialogOpen(false)} 
+        <DialogActions
+          sx={{ borderTop: '1px solid rgba(0, 0, 0, 0.12)', px: 3, py: 2 }}
+        >
+          <Button
+            onClick={() => setReturnDialogOpen(false)}
             variant="outlined"
             disabled={processingAction}
           >
             Cancel
           </Button>
-          <Button 
-            onClick={handleProcessReturn} 
-            variant="contained" 
+          <Button
+            onClick={handleProcessReturn}
+            variant="contained"
             color="secondary"
-            disabled={processingAction || (returnCondition === 'damaged' && damageDescription.trim() === '')}
-            startIcon={processingAction ? <CircularProgress size={20} /> : <AssignmentReturn />}
+            disabled={
+              processingAction ||
+              (returnCondition === 'damaged' && damageDescription.trim() === '')
+            }
+            startIcon={
+              processingAction ? (
+                <CircularProgress size={20} />
+              ) : (
+                <AssignmentReturn />
+              )
+            }
           >
             Process Return
           </Button>
         </DialogActions>
       </Dialog>
-      
+
       {/* Notifications */}
-      <Snackbar 
-        open={!!error} 
-        autoHideDuration={6000} 
+      <Snackbar
+        open={!!error}
+        autoHideDuration={6000}
         onClose={() => setError(null)}
         anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
       >
-        <Alert onClose={() => setError(null)} severity="error" sx={{ width: '100%' }}>
+        <Alert
+          onClose={() => setError(null)}
+          severity="error"
+          sx={{ width: '100%' }}
+        >
           {error}
         </Alert>
       </Snackbar>
-      
-      <Snackbar 
-        open={!!successMessage} 
-        autoHideDuration={6000} 
+
+      <Snackbar
+        open={!!successMessage}
+        autoHideDuration={6000}
         onClose={() => setSuccessMessage(null)}
         anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
       >
-        <Alert onClose={() => setSuccessMessage(null)} severity="success" sx={{ width: '100%' }}>
+        <Alert
+          onClose={() => setSuccessMessage(null)}
+          severity="success"
+          sx={{ width: '100%' }}
+        >
           {successMessage}
         </Alert>
       </Snackbar>
@@ -1209,4 +1762,4 @@ const Orders = () => {
   );
 };
 
-export default Orders; 
+export default Orders;

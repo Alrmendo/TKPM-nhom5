@@ -10,7 +10,7 @@ export enum OrderStatus {
   DELIVERED = 'delivered',
   CANCELLED = 'cancelled',
   RETURNED = 'returned',
-  UNDER_REVIEW = 'under-review'
+  UNDER_REVIEW = 'under-review',
 }
 
 export enum PaymentStatus {
@@ -19,7 +19,7 @@ export enum PaymentStatus {
   PAID = 'paid',
   FAILED = 'failed',
   REFUNDED = 'refunded',
-  PARTIALLY_REFUNDED = 'partially_refunded'
+  PARTIALLY_REFUNDED = 'partially_refunded',
 }
 
 @Schema()
@@ -44,7 +44,7 @@ export class OrderItem {
 
   @Prop({ required: true })
   pricePerDay: number;
-  
+
   @Prop({ type: String, default: 'rent', enum: ['rent', 'buy'] })
   purchaseType: string;
 }
@@ -114,11 +114,13 @@ export class Order {
   @Prop()
   orderNumber: string;
 
-  @Prop({ 
-    type: [{ 
-      type: OrderItemSchema 
-    }],
-    required: true 
+  @Prop({
+    type: [
+      {
+        type: OrderItemSchema,
+      },
+    ],
+    required: true,
   })
   items: OrderItem[];
 
@@ -142,16 +144,16 @@ export class Order {
 
   @Prop({ required: true })
   totalAmount: number;
-  
+
   @Prop()
   remainingPayment: number;
-  
+
   @Prop({ enum: ['perfect', 'good', 'damaged'] })
   returnCondition: string;
-  
+
   @Prop()
   damageDescription: string;
-  
+
   @Prop()
   additionalCharges: number;
 

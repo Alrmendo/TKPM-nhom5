@@ -1,4 +1,11 @@
-import { CheckCircle, XCircle, Clock, Hourglass, Trash2, Package2 } from 'lucide-react';
+import {
+  CheckCircle,
+  XCircle,
+  Clock,
+  Hourglass,
+  Trash2,
+  Package2,
+} from 'lucide-react';
 import { JSX } from 'react';
 import { Link } from 'react-router-dom';
 
@@ -11,11 +18,24 @@ export interface OrderItem {
   rentalDuration: string;
   arrivalDate: string;
   returnDate: string;
-  status: 'done' | 'pending' | 'under-review' | 'canceled' | 'confirmed' | 'Pending' | 'Confirmed' | 'Cancelled' | 'Completed';
+  status:
+    | 'done'
+    | 'pending'
+    | 'under-review'
+    | 'canceled'
+    | 'confirmed'
+    | 'shipped'
+    | 'delivered'
+    | 'returned'
+    | 'cancelled'
+    | 'Pending'
+    | 'Confirmed'
+    | 'Cancelled'
+    | 'Completed';
   isCartItem?: boolean;
   isPaid?: boolean;
-  purchaseType?: 'rent' | 'buy' | 'service';  // Thêm 'service' cho dịch vụ nhiếp ảnh
-  isPhotographyService?: boolean;  // Flag để nhận biết đây là dịch vụ nhiếp ảnh
+  purchaseType?: 'rent' | 'buy' | 'service'; // Thêm 'service' cho dịch vụ nhiếp ảnh
+  isPhotographyService?: boolean; // Flag để nhận biết đây là dịch vụ nhiếp ảnh
   additionalDetails?: string;
 }
 
@@ -50,18 +70,25 @@ export function OrderCard({ order, onDelete }: OrderCardProps): JSX.Element {
           return null;
       }
     }
-    
+
     // Existing logic for regular orders
     switch (order.status) {
       case 'done':
         return <CheckCircle className="h-5 w-5 text-green-600" />;
       case 'confirmed':
-        return <Package2 className="h-5 w-5 text-green-600" />;
+        return <Package2 className="h-5 w-5 text-blue-500" />;
+      case 'shipped':
+        return <Package2 className="h-5 w-5 text-purple-600" />;
+      case 'delivered':
+        return <CheckCircle className="h-5 w-5 text-green-600" />;
+      case 'returned':
+        return <CheckCircle className="h-5 w-5 text-purple-600" />;
       case 'pending':
         return <Clock className="h-5 w-5 text-amber-500" />;
       case 'under-review':
         return <Hourglass className="h-5 w-5 text-amber-500" />;
       case 'canceled':
+      case 'cancelled':
         return <XCircle className="h-5 w-5 text-red-500" />;
       default:
         return null;
@@ -72,27 +99,29 @@ export function OrderCard({ order, onDelete }: OrderCardProps): JSX.Element {
     if (order.isPaid) {
       return 'Paid';
     }
-    
-    // Check for cart items first
-    if (order.isCartItem) {
-      return 'In Cart';
-    }
-    
+
     // Special handling for photography bookings
     if (order.isPhotographyService) {
       return order.status; // Just return the original status
     }
-    
+
     switch (order.status) {
       case 'done':
         return 'Done';
       case 'confirmed':
         return 'Confirmed';
+      case 'shipped':
+        return 'Shipped';
+      case 'delivered':
+        return 'Delivered';
+      case 'returned':
+        return 'Returned';
       case 'pending':
         return 'Pending';
       case 'under-review':
-        return 'Under review';
+        return 'Under Review';
       case 'canceled':
+      case 'cancelled':
         return 'Canceled';
       default:
         return '';
@@ -116,7 +145,7 @@ export function OrderCard({ order, onDelete }: OrderCardProps): JSX.Element {
           return 'text-amber-500';
       }
     }
-    
+
     // Existing logic for regular orders
     switch (order.status) {
       case 'done':
@@ -132,7 +161,7 @@ export function OrderCard({ order, onDelete }: OrderCardProps): JSX.Element {
   const handleDelete = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    
+
     try {
       if (onDelete) {
         await onDelete(order.id);
@@ -163,7 +192,9 @@ export function OrderCard({ order, onDelete }: OrderCardProps): JSX.Element {
             ) : (
               <>
                 {order.size} / {order.color}
-                {order.purchaseType !== 'buy' && order.purchaseType !== 'service' && ` / ${order.rentalDuration}`}
+                {order.purchaseType !== 'buy' &&
+                  order.purchaseType !== 'service' &&
+                  ` / ${order.rentalDuration}`}
                 {order.purchaseType === 'buy' && ` / Mua sản phẩm`}
               </>
             )}
@@ -185,24 +216,25 @@ export function OrderCard({ order, onDelete }: OrderCardProps): JSX.Element {
         <div className="flex flex-col items-end space-y-3">
           <div className="flex items-center">
             {getStatusIcon()}
-            <span
-              className={`ml-1 ${getStatusColor()}`}
-            >
+            <span className={`ml-1 ${getStatusColor()}`}>
               {getStatusText()}
             </span>
           </div>
 
           <div className="flex space-x-2">
-            {((order.status === 'pending' || order.status === 'under-review' || order.isCartItem) && onDelete) && (
-              <button
-                onClick={handleDelete}
-                className="px-4 py-1 border rounded-full text-sm text-red-600 hover:bg-red-50 border-red-200 flex items-center"
-                type="button"
-              >
-                <Trash2 className="w-3 h-3 mr-1" />
-                Delete
-              </button>
-            )}
+            {(order.status === 'pending' ||
+              order.status === 'under-review' ||
+              order.isCartItem) &&
+              onDelete && (
+                <button
+                  onClick={handleDelete}
+                  className="px-4 py-1 border rounded-full text-sm text-red-600 hover:bg-red-50 border-red-200 flex items-center"
+                  type="button"
+                >
+                  <Trash2 className="w-3 h-3 mr-1" />
+                  Delete
+                </button>
+              )}
 
             {order.isCartItem ? (
               <Link
