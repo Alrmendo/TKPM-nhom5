@@ -26,6 +26,39 @@ const Information: React.FC = () => {
   const [showAddressForm, setShowAddressForm] = useState(true);
   const { toast } = useToast();
   
+  // Hàm để lấy địa chỉ và thông tin profile từ API
+  const fetchAddressAndProfileData = async () => {
+    try {
+      // Lấy danh sách địa chỉ đã lưu từ API
+      const addressesResponse = await axios.get('http://localhost:3000/users/addresses', { withCredentials: true });
+      
+      if (addressesResponse.data.success) {
+        const addresses = addressesResponse.data.data || [];
+        console.log('Saved addresses loaded:', addresses);
+        setSavedAddresses(addresses);
+        
+        // Nếu có địa chỉ mặc định, chọn nó
+        const defaultAddress = addresses.find(addr => addr.isDefault);
+        if (defaultAddress) {
+          setDefaultAddressId(defaultAddress.id);
+          setSelectedAddressId(defaultAddress.id);
+          setShowAddressForm(false); // Hiển thị danh sách địa chỉ đã lưu
+        } else if (addresses.length > 0) {
+          // Nếu không có địa chỉ mặc định nhưng có địa chỉ, chọn địa chỉ đầu tiên
+          setSelectedAddressId(addresses[0].id);
+          setShowAddressForm(false); // Hiển thị danh sách địa chỉ đã lưu
+        } else {
+          // Nếu không có địa chỉ nào, hiển thị form để thêm mới
+          setShowAddressForm(true);
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching addresses:', error);
+      // Nếu không lấy được địa chỉ, mặc định hiển thị form thêm mới
+      setShowAddressForm(true);
+    }
+  };
+  
   useEffect(() => {
     const fetchData = async () => {
       try {

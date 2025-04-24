@@ -305,6 +305,42 @@ const Review: React.FC = () => {
       return;
     }
     
+    // Make sure we preserve the full order with both dress items and photography items
+    // by re-saving currentOrder to localStorage with correct data before navigation
+    try {
+      const orderDataStr = localStorage.getItem('currentOrder');
+      if (orderDataStr) {
+        const orderData = JSON.parse(orderDataStr);
+        
+        // Find photography items from cart items
+        const photographyItems = cartItems.filter(item => item.isPhotographyService);
+        const dressItems = cartItems.filter(item => !item.isPhotographyService);
+        
+        // Format photography items back to the expected structure
+        const processedPhotographyItems = photographyItems.map(item => ({
+          serviceId: item.id,
+          serviceName: item.name,
+          serviceType: item.type || 'Photography',
+          price: item.price || 0,
+          imageUrl: item.image,
+          bookingDate: item.bookingDate,
+          location: item.location || 'Default'
+        }));
+        
+        // Update the order data with the current items
+        const updatedOrderData = {
+          items: dressItems,
+          photographyItems: processedPhotographyItems
+        };
+        
+        // Save the updated order data
+        localStorage.setItem('currentOrder', JSON.stringify(updatedOrderData));
+        console.log('Saved updated order data with photography items:', updatedOrderData);
+      }
+    } catch (e) {
+      console.error('Error updating order data before navigation:', e);
+    }
+    
     navigate('/payment-information');
   };
   
