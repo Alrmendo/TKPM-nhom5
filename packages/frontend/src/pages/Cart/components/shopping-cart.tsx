@@ -110,16 +110,36 @@ export const ShoppingCart: React.FC = () => {
         setLoading(true);
         console.log('Fetching cart data...');
         
-        // Get dress rental items from backend API
+        // Always try to get cart data from API first
+        try {
         const cartData = await getCart();
-        console.log('Cart data received:', cartData);
+          console.log('Cart data received from API:', cartData);
         
-        if (!cartData || !cartData.items) {
-          console.warn('Empty or invalid cart data received:', cartData);
+          // Use API data regardless if it's empty or not
+          setCartItems(cartData?.items || []);
+          
+        } catch (apiError) {
+          console.error('Failed to fetch cart from API:', apiError);
+          // Only use localStorage as fallback if API call fails
+          const orderStr = localStorage.getItem('currentOrder');
+          if (orderStr) {
+            try {
+              const orderData = JSON.parse(orderStr);
+              console.log('Order data from localStorage (fallback):', orderData);
+              
+              if (orderData && orderData.items && orderData.items.length > 0) {
+                console.log('Found dress items in localStorage (fallback):', orderData.items);
+                setCartItems(orderData.items);
+              } else {
+                setCartItems([]);
+              }
+            } catch (e) {
+              console.error('Error parsing order data from localStorage:', e);
           setCartItems([]);
+            }
         } else {
-          setCartItems(cartData.items || []);
-          console.log('Cart items:', cartData.items);
+            setCartItems([]);
+          }
         }
         
         // Get photography services from localStorage
@@ -135,7 +155,7 @@ export const ShoppingCart: React.FC = () => {
         }
         setError('Failed to load cart data. Please try again.');
         
-        // Even if API fails, still try to get photography items
+        // Even if everything fails, still try to get photography items
         const photoItems = getPhotographyCart();
         setPhotographyItems(photoItems);
       } finally {
@@ -149,8 +169,26 @@ export const ShoppingCart: React.FC = () => {
   // Handle removing item from cart
   const handleRemoveItem = async (index: number) => {
     try {
+      // Remove from API
       await removeFromCart(index);
       setCartItems(cartItems.filter((_, idx) => idx !== index));
+
+      // Also remove from localStorage
+      const orderStr = localStorage.getItem('currentOrder');
+      if (orderStr) {
+        try {
+          const orderData = JSON.parse(orderStr);
+          if (orderData && orderData.items) {
+            // Remove the item at the specified index
+            orderData.items = orderData.items.filter((_, idx) => idx !== index);
+            // Update localStorage
+            localStorage.setItem('currentOrder', JSON.stringify(orderData));
+          }
+        } catch (e) {
+          console.error('Error updating localStorage after remove:', e);
+        }
+      }
+
       toast.success('Item removed from cart');
     } catch (err) {
       console.error('Failed to remove item:', err);
@@ -249,7 +287,8 @@ export const ShoppingCart: React.FC = () => {
           quantity: item.quantity,
           pricePerDay: typeof item.dress === 'object' ? item.dress.dailyRentalPrice : item.pricePerDay,
           startDate: item.startDate,
-          endDate: item.endDate
+          endDate: item.endDate,
+          purchaseType: item.purchaseType || 'rent'
         };
       });
       
@@ -260,10 +299,9 @@ export const ShoppingCart: React.FC = () => {
       };
       localStorage.setItem('currentOrder', JSON.stringify(orderData));
       
-      // Create order with backend items first
-      if (cartItems.length > 0) {
-        await createOrder();
-      }
+      // IMPORTANT: Don't call createOrder() here anymore, as it clears the cart
+      // We'll only create the order when the payment is confirmed
+      // This allows users to return to the cart without losing items
       
       // For photography items, don't remove them yet but mark them as being processed
       if (photographyItems.length > 0) {
@@ -272,11 +310,11 @@ export const ShoppingCart: React.FC = () => {
       }
       
       // Show success and navigate
-      toast.success('Order created successfully!');
+      toast.success('Continuing to checkout!');
       navigate('/payment-review');
     } catch (error: any) {
-      console.error('Failed to create order:', error);
-      toast.error(error.message || 'Failed to create order. Please try again.');
+      console.error('Failed to process cart:', error);
+      toast.error(error.message || 'Failed to continue to payment. Please try again.');
     } finally {
       setIsProcessingOrder(false);
     }
