@@ -8,6 +8,7 @@ import {
 } from '../../models/entities/order.entity';
 import { CartService } from '../cart/cart.service';
 import { DressService } from '../dress/dress.service';
+import { EmailService } from '../email/email.service';
 
 @Injectable()
 export class OrderService {
@@ -15,6 +16,7 @@ export class OrderService {
     @InjectModel(Order.name) private orderModel: Model<Order>,
     private cartService: CartService,
     private dressService: DressService,
+    private emailService: EmailService,
   ) {}
 
   async createOrder(userId: string): Promise<Order> {
@@ -83,10 +85,10 @@ export class OrderService {
       status: OrderStatus.PENDING,
       totalAmount,
     });
-    
+
     // Clear the cart after successful order creation
     await this.cartService.clearCart(userId);
-    
+
     return order;
   }
 
@@ -193,7 +195,46 @@ export class OrderService {
 
     // Perform status-specific operations if needed
     if (status === OrderStatus.DELIVERED) {
-      // Handle delivery logic - could update inventory, notify user, etc.
+      // Send a delivery notification email
+      try {
+        const populatedOrder = await this.orderModel
+          .findById(orderId)
+          .populate({
+            path: 'userId',
+            select: 'email firstName lastName name',
+          });
+
+        if (populatedOrder && populatedOrder.userId) {
+          const user = populatedOrder.userId as any; // Type assertion for populated fields
+          if (user && user.email) {
+            // Get user name from the populated userId field
+            const customerName =
+              user.firstName && user.lastName
+                ? `${user.firstName} ${user.lastName}`
+                : user.name || 'Quý khách';
+
+            // Send delivery notification email
+            await this.emailService.sendDeliveryNotificationEmail(
+              user.email,
+              populatedOrder.orderNumber || orderId,
+              customerName,
+              new Date(), // Current date as delivery date
+              populatedOrder.totalAmount,
+            );
+
+            console.log(
+              `Delivery notification email sent to ${user.email} for order ${orderId}`,
+            );
+          }
+        }
+      } catch (error) {
+        console.error(
+          `Error sending delivery notification email for order ${orderId}:`,
+          error,
+        );
+        // Don't throw the error to allow the status update to continue
+      }
+
       console.log(`Order ${orderId} marked as delivered`);
     } else if (status === OrderStatus.RETURNED) {
       // Handle return logic - could update inventory, initiate refund, etc.
@@ -246,23 +287,18 @@ export class OrderService {
     },
   ): Promise<Order> {
     try {
-      console.log(`Processing return for order ${orderId}`, returnData);
-      const order = await this.getOrderById(orderId);
+      // Get the order
+      const order = await this.orderModel.findById(orderId).populate({
+        path: 'userId',
+        select: 'email firstName lastName name',
+      });
 
-      // Kiểm tra các điều kiện hợp lệ
-      if (order.status === OrderStatus.RETURNED) {
-        throw new Error('Order has already been returned');
+      if (!order) {
+        throw new NotFoundException(`Order with ID ${orderId} not found`);
       }
 
-      if (returnData.condition === 'damaged' && !returnData.damageDescription) {
-        throw new Error('Damage description is required for damaged items');
-      }
-
-      // Tính toán phí phụ thu (additional charges) nếu có
-      let remainingPayment = 0;
-      if (returnData.additionalCharges && returnData.additionalCharges > 0) {
-        remainingPayment = returnData.additionalCharges;
-      }
+      // Tính toán tiền còn lại (50% của tổng đơn hàng)
+      const remainingPayment = order.totalAmount * 0.5;
 
       // Cập nhật trạng thái đơn hàng
       const updatedOrder = await this.orderModel.findByIdAndUpdate(
@@ -280,11 +316,32 @@ export class OrderService {
 
       // Gửi email nhắc nhở thanh toán (nếu có)
       if (returnData.sendPaymentReminder && remainingPayment > 0) {
-        // Logic gửi email ở đây
-        console.log(
-          `Sending payment reminder email for order ${orderId} with remaining payment of ${remainingPayment}`,
-        );
-        // TODO: Implement email sending
+        const user = order.userId as any; // Type assertion to access populate fields
+        if (user && user.email) {
+          // Get user name from the populated userId field
+          const customerName =
+            user.firstName && user.lastName
+              ? `${user.firstName} ${user.lastName}`
+              : user.name || 'Quý khách';
+
+          // Send payment reminder email
+          await this.emailService.sendPaymentReminderEmail(
+            user.email,
+            order.orderNumber || orderId,
+            customerName,
+            remainingPayment,
+            returnData.additionalCharges || 0,
+            returnData.condition,
+          );
+
+          console.log(
+            `Payment reminder email sent to ${user.email} for order ${orderId} with remaining payment of ${remainingPayment}`,
+          );
+        } else {
+          console.log(
+            `Could not send payment reminder email - no email address found for order ${orderId}`,
+          );
+        }
       }
 
       // Trả về kết quả
