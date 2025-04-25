@@ -40,6 +40,7 @@ interface CartItem {
   colorName?: string;
   quantity: number;
   pricePerDay?: number;      // Add this field from the backend
+  purchasePrice?: number;    // Add purchase price field
   purchaseType?: 'buy' | 'rent'; // Distinguish between buying and renting
   startDate: string;
   endDate: string;
@@ -102,6 +103,20 @@ export const ShoppingCart: React.FC = () => {
     }
     return item.pricePerDay || 0;
   };
+  
+  // Helper function to get purchase price
+  const getPurchasePrice = (item: CartItem): number => {
+    // Kiểm tra nếu item có trực tiếp purchasePrice
+    if (item.purchasePrice) {
+      return item.purchasePrice;
+    }
+    // Kiểm tra nếu dress là object và có purchasePrice
+    if (typeof item.dress === 'object' && item.dress?.purchasePrice) {
+      return item.dress.purchasePrice;
+    }
+    // Fallback to rental price * 10 if purchase price is not available
+    return getPricePerDay(item) * 10;
+  };
 
   // Fetch cart data on component mount
   useEffect(() => {
@@ -113,6 +128,7 @@ export const ShoppingCart: React.FC = () => {
         // Always try to get cart data from API first
         try {
         const cartData = await getCart();
+        console.log('hahahaahahahahahahahahaha', cartData);
           console.log('Cart data received from API:', cartData);
         
           // Use API data regardless if it's empty or not
@@ -286,6 +302,7 @@ export const ShoppingCart: React.FC = () => {
           color: typeof item.color === 'object' ? item.color.name : item.colorName,
           quantity: item.quantity,
           pricePerDay: typeof item.dress === 'object' ? item.dress.dailyRentalPrice : item.pricePerDay,
+          purchasePrice: item.purchasePrice || (typeof item.dress === 'object' ? item.dress.purchasePrice : undefined),
           startDate: item.startDate,
           endDate: item.endDate,
           purchaseType: item.purchaseType || 'rent'
@@ -351,9 +368,8 @@ export const ShoppingCart: React.FC = () => {
   const calculateItemTotal = (item: CartItem): number => {
     try {
       if (item.purchaseType === 'buy') {
-        // Nếu mua sản phẩm, giá mua = giá thuê hàng ngày * 10 (hoặc lấy giá mua nếu có)
-        const purchasePrice = getPricePerDay(item) * 10; // Giá mặc định nếu không có giá mua
-        return purchasePrice * item.quantity;
+        // Use the helper function to get purchase price
+        return getPurchasePrice(item) * item.quantity;
       } else {
         // Nếu thuê sản phẩm, tính theo số ngày thuê
         const rentalDays = getRentalDays(item);
@@ -427,7 +443,7 @@ export const ShoppingCart: React.FC = () => {
                       {item.purchaseType === 'buy' ? (
                         <>
                           <p>Loại giao dịch: <span className="font-medium text-[#c3937c]">Mua sản phẩm</span></p>
-                          <p>Giá: ${getPricePerDay(item) * 10} (giá mua)</p>
+                          <p>Giá: ${getPurchasePrice(item)} (giá mua)</p>
                           <p>Tổng: ${calculateItemTotal(item)}</p>
                         </>
                       ) : (

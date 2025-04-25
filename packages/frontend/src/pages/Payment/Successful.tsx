@@ -72,14 +72,7 @@ const Successful: React.FC = () => {
           </div>
         </div>
 
-        <div className="flex flex-col md:flex-row justify-center space-y-4 md:space-y-0 md:space-x-4">
-          <Link 
-            to="/profile/current-orders" 
-            className="inline-block rounded-md bg-[#c3937c] px-6 py-3 text-white font-medium shadow-sm hover:bg-[#a67c66] focus:outline-none focus:ring-2 focus:ring-[#c3937c]"
-          >
-            View My Orders
-          </Link>
-          
+        <div className="flex justify-center">
           <Link
             to="/"
             className="inline-block rounded-md border border-gray-300 bg-white px-6 py-3 text-gray-700 font-medium shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-[#c3937c]"

@@ -32,6 +32,9 @@ export class CartItem {
   @Prop({ required: true })
   pricePerDay: number;
   
+  @Prop({ required: false })
+  purchasePrice: number;
+  
   @Prop({ type: String, default: 'rent', enum: ['rent', 'buy'] })
   purchaseType: string;
 
