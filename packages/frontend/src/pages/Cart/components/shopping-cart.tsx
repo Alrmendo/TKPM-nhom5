@@ -367,8 +367,8 @@ export const ShoppingCart: React.FC = () => {
   };
 
   // Calculate cart total
-  const total = [...cartItems.map(item => calculateItemTotal(item)), 
-                ...photographyItems.map(item => item.price)]
+  const total = [...(cartItems || []).map(item => calculateItemTotal(item)), 
+                ...(photographyItems || []).map(item => item.price)]
     .reduce((sum, price) => sum + price, 0);
 
   // Loading state
@@ -396,14 +396,14 @@ export const ShoppingCart: React.FC = () => {
   }
 
   // Empty cart state
-  if (cartItems.length === 0 && photographyItems.length === 0) {
+  if (!cartItems?.length && !photographyItems?.length) {
     return <EmptyCart />;
   }
 
   return (
     <div className="max-w-5xl mx-auto">
       <div className="mt-10 space-y-8">
-        {cartItems.map((item, index) => (
+        {cartItems && cartItems.map((item, index) => (
           <div
             key={item._id}
             className="bg-white rounded-lg overflow-hidden shadow-sm"
@@ -575,7 +575,7 @@ export const ShoppingCart: React.FC = () => {
           </div>
         ))}
         
-        {photographyItems.map((item) => (
+        {photographyItems && photographyItems.map((item) => (
           <div key={item.serviceId} className="bg-white rounded-lg overflow-hidden shadow-sm">
             <div className="flex flex-col md:flex-row">
               {/* Service Image */}
@@ -678,7 +678,7 @@ export const ShoppingCart: React.FC = () => {
         <h2 className="text-xl font-serif mb-4">Summary of orders</h2>
         <div className="space-y-3">
           {/* Dress Rentals summary */}
-          {cartItems.map((item) => (
+          {cartItems && cartItems.map((item) => (
             <div key={item._id} className="flex justify-between">
               <span>
                 {getDressName(item)}
@@ -691,7 +691,7 @@ export const ShoppingCart: React.FC = () => {
           ))}
           
           {/* Photography Services summary */}
-          {photographyItems.map((item) => (
+          {photographyItems && photographyItems.map((item) => (
             <div key={item.serviceId} className="flex justify-between">
               <span>{item.serviceName} (Photography)</span>
               <span>${item.price}</span>
