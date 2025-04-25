@@ -1,4 +1,4 @@
-import React, { useState, useEffect, ComponentType, ReactNode } from 'react';
+import React, { useState, useEffect, ComponentType } from 'react';
 import AdminLayout from './AdminLayout';
 import {
   Paper,
@@ -141,15 +141,10 @@ import {
   People, 
   CalendarToday, 
   AttachMoney,
-  TrendingUp,
-  TrendingDown,
-  CheckCircle,
   ArrowUpward,
   ArrowDownward,
   MoreVert,
   Refresh,
-  Settings,
-  Storefront,
   DateRange,
 } from '@mui/icons-material';
 import { getDashboardStats, getMonthlySales, getTopProducts } from '../../api/admin';
