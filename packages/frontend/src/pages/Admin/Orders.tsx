@@ -433,13 +433,14 @@ const Orders = () => {
         } else if (newStatus === 'under-review' || newStatus === 'confirmed') {
           // If a rental is confirmed, it means at least the deposit is paid
           if (selectedOrder.paymentStatus === 'pending') {
-            updatedPaymentStatus = 'processing'; // Deposit paid
+            updatedPaymentStatus = 'processing'; // Deposit paid (50%)
           }
         } else if (newStatus === 'delivered') {
-          // When delivered, full payment should be complete
-          if (selectedOrder.paymentStatus !== 'paid') {
-            updatedPaymentStatus = 'paid';
+          // When delivered for rentals, payment status should remain as processing (50% deposit)
+          if (selectedOrder.paymentStatus === 'pending') {
+            updatedPaymentStatus = 'processing'; // Set to deposit paid if not already
           }
+          // For rentals, full payment is only marked after return
         } else if (newStatus === 'cancelled') {
           // If cancelled, handle refund based on current payment status
           if (selectedOrder.paymentStatus === 'paid') {
@@ -451,13 +452,14 @@ const Orders = () => {
       }
       // For purchase orders
       else {
-        if (
-          newStatus === 'confirmed' ||
-          newStatus === 'shipped' ||
-          newStatus === 'delivered'
-        ) {
-          // Purchases are typically paid in full when confirmed
+        if (newStatus === 'confirmed' || newStatus === 'shipped') {
+          // Purchases are typically paid in full when confirmed or shipped
           if (selectedOrder.paymentStatus === 'pending') {
+            updatedPaymentStatus = 'processing';
+          }
+        } else if (newStatus === 'delivered') {
+          // For purchases, automatically mark as fully paid when delivered
+          if (selectedOrder.paymentStatus !== 'paid') {
             updatedPaymentStatus = 'paid';
           }
         } else if (newStatus === 'cancelled') {
@@ -585,12 +587,31 @@ const Orders = () => {
       setOrders(
         orders.map((order) => {
           if (order._id === selectedOrder._id) {
+            // For rentals, when returned, update status to returned
+            // If sendPaymentReminder is true, it means remaining payment is still due
+            // If sendPaymentReminder is false, it means remaining payment has been collected
             return {
               ...order,
               status: 'returned',
               paymentStatus: sendPaymentReminder
-                ? 'processing'
-                : order.paymentStatus,
+                ? 'processing' // Still in processing if payment reminder sent (50% paid)
+                : 'paid', // Mark as fully paid if payment collected
+            };
+          }
+          return order;
+        }),
+      );
+
+      // Update filtered orders as well
+      setFilteredOrders(
+        filteredOrders.map((order) => {
+          if (order._id === selectedOrder._id) {
+            return {
+              ...order,
+              status: 'returned',
+              paymentStatus: sendPaymentReminder
+                ? 'processing' // Still in processing if payment reminder sent (50% paid)
+                : 'paid', // Mark as fully paid if payment collected
             };
           }
           return order;
@@ -598,9 +619,12 @@ const Orders = () => {
       );
 
       setReturnDialogOpen(false);
-      setSuccessMessage(
-        `Return processed for order ${selectedOrder.orderNumber}. ${sendPaymentReminder ? 'Payment reminder sent to customer.' : ''}`,
-      );
+
+      const successMsg = sendPaymentReminder
+        ? `Return processed for order ${selectedOrder.orderNumber}. Payment reminder sent to customer for remaining 50%.`
+        : `Return processed and full payment collected for order ${selectedOrder.orderNumber}.`;
+
+      setSuccessMessage(successMsg);
     } catch (err: any) {
       setError(err.message || 'Failed to process return');
     } finally {
@@ -871,25 +895,25 @@ const Orders = () => {
                           />
                           {order.isRental && order.paymentStatus === 'paid' && (
                             <Chip
-                              label="Rental - Full Payment"
+                              label="100% Paid"
                               size="small"
                               variant="outlined"
                               sx={{ fontSize: '0.65rem' }}
                             />
                           )}
-                          {!order.isRental &&
-                            order.paymentStatus === 'paid' && (
+                          {order.isRental &&
+                            order.paymentStatus === 'processing' && (
                               <Chip
-                                label="Purchase - Paid"
+                                label="50% Paid"
                                 size="small"
                                 variant="outlined"
                                 sx={{ fontSize: '0.65rem' }}
                               />
                             )}
-                          {order.isRental &&
-                            order.paymentStatus === 'processing' && (
+                          {!order.isRental &&
+                            order.paymentStatus === 'paid' && (
                               <Chip
-                                label="Rental - Deposit Paid"
+                                label="Paid"
                                 size="small"
                                 variant="outlined"
                                 sx={{ fontSize: '0.65rem' }}
@@ -1041,6 +1065,17 @@ const Orders = () => {
         ? selectedOrder.customer.name
         : customerIdDisplay;
 
+    // Calculate payment information based on order type
+    const isRental = selectedOrder.isRental;
+    const isPaid = selectedOrder.paymentStatus === 'paid';
+    const isProcessing = selectedOrder.paymentStatus === 'processing';
+    const isReturned = selectedOrder.status === 'returned';
+
+    // For rentals: display deposit and remaining amount
+    const depositAmount = isRental ? selectedOrder.totalAmount / 2 : 0;
+    const remainingAmount = isRental ? selectedOrder.totalAmount / 2 : 0;
+    const showRemainingPayment = isRental && isProcessing;
+
     return (
       <Dialog
         open={orderDetailOpen}
@@ -1061,14 +1096,22 @@ const Orders = () => {
                 <Typography variant="h5">
                   Order #{selectedOrder.orderNumber}
                 </Typography>
-                <Chip
-                  label={
-                    selectedOrder.status.charAt(0).toUpperCase() +
-                    selectedOrder.status.slice(1)
-                  }
-                  color={getStatusColor(selectedOrder.status) as any}
-                  size="small"
-                />
+                <Box display="flex" alignItems="center" gap={1}>
+                  {isRental && (
+                    <Chip label="Rental" color="primary" size="small" />
+                  )}
+                  {!isRental && (
+                    <Chip label="Purchase" color="default" size="small" />
+                  )}
+                  <Chip
+                    label={
+                      selectedOrder.status.charAt(0).toUpperCase() +
+                      selectedOrder.status.slice(1)
+                    }
+                    color={getStatusColor(selectedOrder.status) as any}
+                    size="small"
+                  />
+                </Box>
               </Stack>
             </DialogTitle>
             <DialogContent sx={{ pt: 3 }}>
@@ -1115,34 +1158,81 @@ const Orders = () => {
                             }
                             size="small"
                           />
-                          {selectedOrder.isRental && (
+                          {isRental && (
                             <Typography variant="body2" color="text.secondary">
                               {selectedOrder.paymentStatus === 'pending' &&
                                 'No payment received'}
                               {selectedOrder.paymentStatus === 'processing' &&
-                                'Deposit payment received'}
+                                '50% deposit paid'}
                               {selectedOrder.paymentStatus === 'paid' &&
-                                'Full payment received'}
+                                '100% payment complete'}
                               {selectedOrder.paymentStatus === 'refunded' &&
                                 'Payment refunded'}
                               {selectedOrder.paymentStatus ===
                                 'partially_refunded' && 'Deposit refunded'}
                             </Typography>
                           )}
-                          {!selectedOrder.isRental && (
+                          {!isRental && (
                             <Typography variant="body2" color="text.secondary">
                               {selectedOrder.paymentStatus === 'pending' &&
                                 'Awaiting payment'}
                               {selectedOrder.paymentStatus === 'processing' &&
                                 'Payment processing'}
                               {selectedOrder.paymentStatus === 'paid' &&
-                                'Purchase paid in full'}
+                                'Paid in full'}
                               {selectedOrder.paymentStatus === 'refunded' &&
                                 'Purchase refunded'}
                             </Typography>
                           )}
                         </Stack>
                       </Box>
+
+                      {/* Display payment breakdown for rentals */}
+                      {isRental && (
+                        <Box sx={{ mt: 2 }}>
+                          <Typography
+                            variant="subtitle2"
+                            color="text.secondary"
+                          >
+                            Payment Breakdown
+                          </Typography>
+                          <Box
+                            sx={{
+                              border: '1px solid rgba(0, 0, 0, 0.12)',
+                              p: 1.5,
+                              borderRadius: 1,
+                              mt: 1,
+                              backgroundColor: '#f9f9f9',
+                            }}
+                          >
+                            <Typography variant="body2">
+                              Total: ${selectedOrder.totalAmount.toFixed(2)}
+                            </Typography>
+                            <Typography variant="body2">
+                              Deposit (50%): ${depositAmount.toFixed(2)}
+                              {isProcessing && ' - Paid'}
+                              {isPaid && ' - Paid'}
+                            </Typography>
+                            <Typography
+                              variant="body2"
+                              sx={{
+                                fontWeight: showRemainingPayment
+                                  ? 'bold'
+                                  : 'normal',
+                                color: showRemainingPayment
+                                  ? 'primary.main'
+                                  : 'text.primary',
+                              }}
+                            >
+                              Remaining (50%): ${remainingAmount.toFixed(2)}
+                              {isProcessing &&
+                                !isReturned &&
+                                ' - Due after return'}
+                              {isPaid && ' - Paid'}
+                            </Typography>
+                          </Box>
+                        </Box>
+                      )}
                     </Stack>
                   </Paper>
                 </Grid>
