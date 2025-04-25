@@ -34,7 +34,6 @@ export default function Footer() {
                     <li className='cursor-pointer hover:text-[#6164bc]'>Privacy policy</li>
                     <li className='cursor-pointer hover:text-[#6164bc]'>Personal information</li>
                     <li className='cursor-pointer hover:text-[#6164bc]'>Terms of service</li>
-                    <li className='cursor-pointer hover:text-[#6164bc]'>Contact us</li>
                     <li className='cursor-pointer hover:text-[#6164bc]'>Community</li>
                   </ul>
                 </div>
