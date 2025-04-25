@@ -576,40 +576,52 @@ export const ShoppingCart: React.FC = () => {
         ))}
         
         {photographyItems.map((item) => (
-          <div key={item.serviceId} className="border-b border-gray-200 pb-6 mb-6">
-            <div className="flex flex-col md:flex-row gap-6">
+          <div key={item.serviceId} className="bg-white rounded-lg overflow-hidden shadow-sm">
+            <div className="flex flex-col md:flex-row">
               {/* Service Image */}
-              <div className="w-full md:w-1/4">
+              <div className="w-full md:w-1/4 bg-[#f8f3ee] p-4 flex items-center justify-center">
                 <img 
                   src={item.imageUrl || '/assets/placeholder-image.jpg'} 
                   alt={item.serviceName} 
-                  className="rounded-md w-full h-40 object-cover"
+                  className="h-full max-h-[200px] object-cover"
                 />
               </div>
               
               {/* Service Details */}
-              <div className="w-full md:w-3/4">
-                <div className="flex justify-between">
-                  <h3 className="font-medium text-lg">{item.serviceName}</h3>
-                  <div className="cursor-pointer" onClick={() => handleRemovePhotoItem(item.serviceId)}>
-                    ✕
+              <div className="w-full md:w-3/4 p-6">
+                <div className="flex flex-col md:flex-row justify-between">
+                  <div>
+                    <h3 className="text-2xl font-serif">{item.serviceName}</h3>
+                    <div className="mt-4 space-y-1 text-[#404040]">
+                      <p>Type: {item.serviceType}</p>
+                      <p>Location: {item.location || 'Studio'}</p>
+                      <p>Price: ${item.price}</p>
+                    </div>
+                  </div>
+
+                  <div className="mt-4 md:mt-0">
+                    <button
+                      className="text-[#c3937c] hover:text-[#a67563] font-medium"
+                      onClick={() => handleRemovePhotoItem(item.serviceId)}
+                    >
+                      Remove
+                    </button>
                   </div>
                 </div>
-                
-                <div className="text-gray-500 mt-1">Type: {item.serviceType}</div>
-                <div className="text-gray-500 mt-1">Location: {item.location || 'Studio'}</div>
-                
-                <div className="bg-[#f8f3ee] p-3 rounded-md mt-3 inline-block">
-                  <div className="flex items-center text-[#c3937c]">
-                    <span className="mr-2">
-                      <i className="fas fa-calendar text-sm"></i>
+
+                <div className="mt-6">
+                  <div className="flex items-center gap-2 bg-[#f8f3ee] rounded-full px-4 py-2 inline-flex">
+                    <span className="text-[#c3937c]">
+                      Booking Date:
                     </span>
-                    <span>Booking Date: {format(new Date(item.bookingDate), 'dd MMM yyyy')}</span>
+                    <span>
+                      {format(new Date(item.bookingDate), 'dd/MM/yyyy')}
+                    </span>
+                    <span className="mx-1">|</span>
+                    <span>
+                      Thời gian: 8 - 10 giờ sáng
+                    </span>
                   </div>
-                </div>
-                
-                <div className="text-xl font-semibold mt-3">
-                  ${item.price}
                 </div>
                 
                 {/* Date editing */}
@@ -627,7 +639,7 @@ export const ShoppingCart: React.FC = () => {
                     </div>
                     <div className="flex gap-2 justify-end">
                       <button
-                        className="border border-gray-300 px-4 py-2 rounded-md"
+                        className="px-4 py-2 border border-gray-300 rounded-md text-gray-600"
                         onClick={() => {
                           setEditingPhotoItem(null);
                           setNewPhotoDate(null);
@@ -636,7 +648,7 @@ export const ShoppingCart: React.FC = () => {
                         Hủy
                       </button>
                       <button
-                        className="bg-[#c3937c] hover:bg-[#a67563] text-white px-4 py-2 rounded-md"
+                        className="px-4 py-2 bg-[#c3937c] text-white rounded-md"
                         onClick={() => handleUpdatePhotoDate(item.serviceId)}
                       >
                         Cập nhật ngày
@@ -645,14 +657,14 @@ export const ShoppingCart: React.FC = () => {
                   </div>
                 ) : (
                   <div className="mt-4">
-                    <button 
-                      className="text-[#c3937c] hover:text-[#a67563] font-medium"
+                    <button
+                      className="text-[#c3937c] font-medium underline"
                       onClick={() => {
                         setEditingPhotoItem(item.serviceId);
                         setNewPhotoDate(new Date(item.bookingDate));
                       }}
                     >
-                      Change Date
+                      Thay đổi ngày đặt lịch
                     </button>
                   </div>
                 )}
