@@ -116,60 +116,16 @@ const Header: React.FC<NavigationProps> = ({ isSticky = false }) => {
                 Home
               </li>
               <li
-                className="flex items-center text-[#C3937C] hover:text-[#6164bc] cursor-pointer text-sm lg:text-base relative"
-                onClick={() => toggleDropdown('category')}
+                className="text-[#C3937C] hover:text-[#6164bc] cursor-pointer text-sm lg:text-base"
+                onClick={() => navigate('/pcp')}
               >
-                <span>Category</span>
-                {activeDropdown === 'category' ? (
-                  <ChevronUp className="ml-1 w-4 h-4" />
-                ) : (
-                  <ChevronDown className="ml-1 w-4 h-4" />
-                )}
-
-                {/* Category dropdown panel for desktop */}
-                {activeDropdown === 'category' && (
-                  <div className="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 z-50">
-                    <DropdownPanel
-                      items={categoryItems}
-                      imageUrl="./pic16.jpg"
-                      altText="Category image"
-                      onItemClick={(item) => {
-                        if (item === 'Wedding dress') {
-                          navigate('/pcp');
-                        }
-                        setActiveDropdown(null);
-                      }}
-                    />
-                  </div>
-                )}
+                Wedding Dress
               </li>
               <li
-                className="flex items-center text-[#C3937C] hover:text-[#6164bc] cursor-pointer text-sm lg:text-base relative"
-                onClick={() => toggleDropdown('services')}
+                className="text-[#C3937C] hover:text-[#6164bc] cursor-pointer text-sm lg:text-base"
+                onClick={() => navigate('/photography')}
               >
-                <span>Services</span>
-                {activeDropdown === 'services' ? (
-                  <ChevronUp className="ml-1 w-4 h-4" />
-                ) : (
-                  <ChevronDown className="ml-1 w-4 h-4" />
-                )}
-
-                {/* Services dropdown panel for desktop */}
-                {activeDropdown === 'services' && (
-                  <div className="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 z-50">
-                    <DropdownPanel
-                      items={servicesItems}
-                      imageUrl="./pic16.jpg"
-                      altText="Services image"
-                      onItemClick={(item) => {
-                        if (item === 'Photography') {
-                          navigate('/photography');
-                        }
-                        setActiveDropdown(null);
-                      }}
-                    />
-                  </div>
-                )}
+                Photography
               </li>
               <li
                 className="text-[#C3937C] hover:text-[#6164bc] cursor-pointer text-sm lg:text-base"
@@ -280,11 +236,23 @@ const Header: React.FC<NavigationProps> = ({ isSticky = false }) => {
             >
               Home
             </li>
-            <li className="text-[#C3937C] hover:text-[#6164bc] cursor-pointer">
-              Category
+            <li 
+              className="text-[#C3937C] hover:text-[#6164bc] cursor-pointer"
+              onClick={() => {
+                navigate('/pcp');
+                setIsMenuOpen(false);
+              }}
+            >
+              Wedding Dress
             </li>
-            <li className="text-[#C3937C] hover:text-[#6164bc] cursor-pointer">
-              Services
+            <li 
+              className="text-[#C3937C] hover:text-[#6164bc] cursor-pointer"
+              onClick={() => {
+                navigate('/photography');
+                setIsMenuOpen(false);
+              }}
+            >
+              Photography
             </li>
             <li
               className="text-[#C3937C] hover:text-[#6164bc] cursor-pointer"
@@ -316,15 +284,6 @@ const Header: React.FC<NavigationProps> = ({ isSticky = false }) => {
             >
               Contact
             </li>
-            <li
-              className="text-[#C3937C] hover:text-[#6164bc] cursor-pointer"
-              onClick={() => {
-                navigate('/photography');
-                setIsMenuOpen(false);
-              }}
-            >
-              Photography
-            </li>
           </ul>
         </div>
       </nav>
@@ -333,3 +292,4 @@ const Header: React.FC<NavigationProps> = ({ isSticky = false }) => {
 };
 
 export default Header;
+

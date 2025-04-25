@@ -29,7 +29,7 @@ const CategorySection: React.FC = () => {
             }
             title="Dress for Moms"
             description="What to wear & other tips"
-            buttonText="See 283 models"
+            buttonText="See our models"
           />
 
           <CategoryCard
@@ -42,7 +42,7 @@ const CategorySection: React.FC = () => {
             }
             title="Wedding Guest"
             description="Forever look good on these category"
-            buttonText="See 356 models"
+            buttonText="See our models"
           />
 
           <CategoryCard
@@ -55,7 +55,7 @@ const CategorySection: React.FC = () => {
             }
             title="Short Tie"
             description="Unique & unusual dress"
-            buttonText="See 221 models"
+            buttonText="See our models"
           />
           <CategoryCard
             icon={
@@ -67,7 +67,7 @@ const CategorySection: React.FC = () => {
             }
             title="Short Tie"
             description="Style is a good way to say who you are"
-            buttonText="See 221 models"
+            buttonText="See our models"
           />
           <CategoryCard
             icon={
@@ -79,7 +79,7 @@ const CategorySection: React.FC = () => {
             }
             title="Short Tie"
             description="A classy dress is never get old"
-            buttonText="See 221 model"
+            buttonText="See our model"
           />
           <CategoryCard
             icon={
@@ -91,7 +91,7 @@ const CategorySection: React.FC = () => {
             }
             title="Short Tie"
             description="Dress how you want to be addressed"
-            buttonText="See 221 models"
+            buttonText="See our models"
           />
         </div>
       </div>

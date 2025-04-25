@@ -1,8 +1,15 @@
 import React from 'react';
 import { ArrowRightIcon } from '@heroicons/react/24/solid';
+import { useNavigate } from 'react-router-dom';
 
 // Component với kiểu React.FC
 const RentDressSection: React.FC = () => {
+  const navigate = useNavigate();
+
+  const handleGetStarted = () => {
+    navigate('/pcp');
+  };
+
   return (
     <section className="py-16 px-4 bg-cover bg-center">
       <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-8 items-stretch">
@@ -22,7 +29,10 @@ const RentDressSection: React.FC = () => {
               to modern silhouettes. Follow these steps to easily rent your 
               perfect dress for any occasion.
             </p>
-            <button className="bg-[#C3937C] border border-[#000000] text-white py-2 px-4 rounded-[100px] w-fit flex items-center gap-2 hover:bg-[#a97c64] transition-colors cursor-pointer">
+            <button 
+              className="bg-[#C3937C] border border-[#000000] text-white py-2 px-4 rounded-[100px] w-fit flex items-center gap-2 hover:bg-[#a97c64] transition-colors cursor-pointer"
+              onClick={handleGetStarted}
+            >
               <span>Get Started</span>
               <ArrowRightIcon className="w-5 h-5 inline-block align-middle" />
             </button>
@@ -65,7 +75,7 @@ const RentDressSection: React.FC = () => {
             />
             <h3 className="text-lg font-semibold mb-1">Complete Information</h3>
             <p className="text-gray-600 text-sm">
-              You’ll want to gather details on various aspects to ensure the 
+              You'll want to gather details on various aspects to ensure the 
               item meets your needs (both fit and style).
             </p>
           </div>

@@ -3,22 +3,12 @@ import { Swiper, SwiperSlide } from 'swiper/react';
 import 'swiper/css';
 import DressCard from '../components/DressCard';
 
-// Định nghĩa interface cho dữ liệu card
-interface CardData {
-  imageUrl: string;
-  alt: string;
-  rating: number;
-  status: string;
-  statusColor: string;
-  title: string;
-  subtitle: string;
-  price: number;
-}
-
 // Component với kiểu React.FC
 const LastChanceSection: React.FC = () => {
-  const cardsLastChance: CardData[] = [
+  // Hardcoded data for last chance section
+  const cards = [
     {
+      _id: "1",
       imageUrl: "pic14.jpg",
       alt: "Wedding Dress",
       rating: 4.8,
@@ -29,6 +19,7 @@ const LastChanceSection: React.FC = () => {
       price: 300,
     },
     {
+      _id: "2",
       imageUrl: "pic15.jpg",
       alt: "Wedding Dress",
       rating: 4.6,
@@ -39,6 +30,7 @@ const LastChanceSection: React.FC = () => {
       price: 550,
     },
     {
+      _id: "3",
       imageUrl: "pic16.jpg",
       alt: "Wedding Dress",
       rating: 4.7,
@@ -49,6 +41,7 @@ const LastChanceSection: React.FC = () => {
       price: 400,
     },
     {
+      _id: "4",
       imageUrl: "pic4.jpg",
       alt: "Wedding Dress",
       rating: 4.9,
@@ -59,6 +52,7 @@ const LastChanceSection: React.FC = () => {
       price: 600,
     },
     {
+      _id: "5",
       imageUrl: "pic3.jpg",
       alt: "Wedding Dress",
       rating: 4.8,
@@ -76,10 +70,21 @@ const LastChanceSection: React.FC = () => {
         <h1 className="text-center text-[32px] font-[600] text-[#C3937C] mb-8">
           Last Chance
         </h1>
+
         <Swiper spaceBetween={20} slidesPerView={'auto'} grabCursor={true}>
-          {cardsLastChance.map((card, index) => (
-            <SwiperSlide key={index} style={{ width: '300px' }}>
-              <DressCard {...card} />
+          {cards.map((card, index) => (
+            <SwiperSlide key={card._id || index} style={{ width: '300px' }}>
+              <DressCard 
+                id={card._id}
+                imageUrl={card.imageUrl}
+                alt={card.alt}
+                rating={card.rating}
+                status={card.status}
+                statusColor={card.statusColor}
+                title={card.title}
+                subtitle={card.subtitle}
+                price={card.price}
+              />
             </SwiperSlide>
           ))}
         </Swiper>
