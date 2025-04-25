@@ -1,7 +1,14 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 
 // Định nghĩa component ServicesSection với kiểu React.FC
 const ServicesSection: React.FC = () => {
+  const navigate = useNavigate();
+
+  const handleLearnMore = () => {
+    navigate('/pcp');
+  };
+
   return (
     <section className="py-16 px-8 bg-cover bg-center">
       <div className="max-w-6xl mx-auto">
@@ -34,7 +41,10 @@ const ServicesSection: React.FC = () => {
               <p className="text-[#0C0C0C] text-sm text-center overflow-auto">
                 Đây là đoạn text dài. We offer a large assortment of clothing for you, with which you can create whatever you desire on your mind. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.
               </p>
-              <button className="border border-[#C3937C] bg-white text-[#C3937C] flex items-center justify-center gap-2 mt-2 px-4 py-2 rounded-lg hover:bg-[#C3937C] hover:text-white transition cursor-pointer">
+              <button 
+                className="border border-[#C3937C] bg-white text-[#C3937C] flex items-center justify-center gap-2 mt-2 px-4 py-2 rounded-lg hover:bg-[#C3937C] hover:text-white transition cursor-pointer"
+                onClick={handleLearnMore}
+              >
                 <img src="/icon3.png" alt="icon" className="w-4 h-4" />
                 Learn more &gt;
               </button>
@@ -51,7 +61,10 @@ const ServicesSection: React.FC = () => {
               <p className="text-[#0C0C0C] text-sm text-center">
                 All sewing patterns are made to measure for your size measurements by our expert designers according to the unique technologies. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.
               </p>
-              <button className="border border-[#C3937C] bg-white text-[#C3937C] flex items-center justify-center gap-2 mt-2 px-4 py-2 rounded-lg hover:bg-[#C3937C] hover:text-white transition cursor-pointer">
+              <button 
+                className="border border-[#C3937C] bg-white text-[#C3937C] flex items-center justify-center gap-2 mt-2 px-4 py-2 rounded-lg hover:bg-[#C3937C] hover:text-white transition cursor-pointer"
+                onClick={handleLearnMore}
+              >
                 <img src="/icon3.png" alt="icon" className="w-4 h-4" />
                 Learn more &gt;
               </button>
@@ -86,7 +99,10 @@ const ServicesSection: React.FC = () => {
               <p className="text-[#0C0C0C] text-sm text-center overflow-auto">
                 Instantly see how clothes look on you without the need for physical fitting. Our AI models adapt to various body types and sizes to provide a realistic fitting experience.
               </p>
-              <button className="border border-[#C3937C] bg-white text-[#C3937C] flex items-center justify-center gap-2 mt-2 px-4 py-2 rounded-lg hover:bg-[#C3937C] hover:text-white transition cursor-pointer">
+              <button 
+                className="border border-[#C3937C] bg-white text-[#C3937C] flex items-center justify-center gap-2 mt-2 px-4 py-2 rounded-lg hover:bg-[#C3937C] hover:text-white transition cursor-pointer"
+                onClick={handleLearnMore}
+              >
                 <img src="/icon3.png" alt="icon" className="w-4 h-4" />
                 Learn more &gt;
               </button>
@@ -103,7 +119,10 @@ const ServicesSection: React.FC = () => {
               <p className="text-[#0C0C0C] text-sm text-center">
                 Your dress consultation give you a chance to try on all different dress styles with the help of a professional consultant. Your dress consultation give you a chance to try on all different dress styles with the help of a professional consultant.
               </p>
-              <button className="border border-[#C3937C] bg-white text-[#C3937C] flex items-center justify-center gap-2 mt-2 px-4 py-2 rounded-lg hover:bg-[#C3937C] hover:text-white transition cursor-pointer">
+              <button 
+                className="border border-[#C3937C] bg-white text-[#C3937C] flex items-center justify-center gap-2 mt-2 px-4 py-2 rounded-lg hover:bg-[#C3937C] hover:text-white transition cursor-pointer"
+                onClick={handleLearnMore}
+              >
                 <img src="/icon3.png" alt="icon" className="w-4 h-4" />
                 Learn more &gt;
               </button>

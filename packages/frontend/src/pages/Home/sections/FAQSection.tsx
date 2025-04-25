@@ -105,7 +105,7 @@ const FAQSection: React.FC = () => {
         </div>
 
         {/* Phần "Still Have Question?" bên dưới */}
-        <div className="text-center mt-12">
+        {/* <div className="text-center mt-12">
           <h3 className="text-[24px] text-[#000000] font-semibold mb-2">Still Have Question?</h3>
           <p className="text-[#505050] text-[18px] mb-4">
             Contact us using the information below. We'll respond promptly
@@ -116,7 +116,7 @@ const FAQSection: React.FC = () => {
             Shoot a Direct Message
             <img src="icon8.png" alt="Direct Message Icon" className="w-5 h-5" />
           </button>
-        </div>
+        </div> */}
       </div>
     </section>
   );

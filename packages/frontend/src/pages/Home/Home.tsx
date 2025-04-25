@@ -6,7 +6,6 @@ import CategorySection from './sections/CategorySection';
 import ServicesSection from './sections/ServicesSection';
 import MostPopularSection from './sections/MostPopularSection';
 import RentDressSection from './sections/RentDressSection';
-import LastChanceSection from './sections/LastChanceSection';
 import TestimonialsSection from './sections/TestimonialsSection';
 import FAQSection from './sections/FAQSection';
 import Footer from '../../components/footer';
@@ -27,9 +26,7 @@ const Home: React.FC = () => {
 
       <MostPopularSection />
 
-       <RentDressSection />
-
-      <LastChanceSection />
+      <RentDressSection />
 
       <TestimonialsSection /> 
 
