@@ -2,6 +2,7 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { lazy, Suspense } from 'react';
 import { LoadingOverlay } from '../components/ui/LoadingOverlay';
+import UserLayout from '../components/layouts/UserLayout';
 
 // Lazy load pages
 const Home = lazy(() => import('../pages/Home/Home'));
@@ -36,6 +37,7 @@ const AdminCustomerFitting = lazy(() => import('../pages/Admin/CustomerFitting')
 const AdminPhotography = lazy(() => import('../pages/Admin/Photography'));
 const AdminPhotographyStatistics = lazy(() => import('../pages/Admin/PhotographyStatistics'));
 const AdminSettings = lazy(() => import('../pages/Admin/Settings'));
+const AdminChat = lazy(() => import('../pages/Admin/Chat'));
 
 const SignIn = lazy(() => import('../pages/Auth/SignIn'));
 const SignUp = lazy(() => import('../pages/Auth/SignUp'));
@@ -193,6 +195,14 @@ const AppRoutes = () => {
         </ProtectedRoute>
       ),
     },
+    {
+      path: '/admin/chat',
+      element: (
+        <ProtectedRoute requiredRole="admin">
+          <AdminChat />
+        </ProtectedRoute>
+      ),
+    },
     
     // Redirect old admin routes to new admin dashboard
     {
@@ -240,11 +250,13 @@ const AppRoutes = () => {
     <Suspense
       fallback={<LoadingOverlay message="Loading page..." fullScreen />}
     >
-      <Routes>
-        {routes.map(({ path, element }) => (
-          <Route key={path} path={path} element={element} />
-        ))}
-      </Routes>
+      <UserLayout>
+        <Routes>
+          {routes.map(({ path, element }) => (
+            <Route key={path} path={path} element={element} />
+          ))}
+        </Routes>
+      </UserLayout>
     </Suspense>
   );
 };
