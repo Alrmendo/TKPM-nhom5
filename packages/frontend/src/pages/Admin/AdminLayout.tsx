@@ -76,11 +76,10 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
     { text: 'Orders', path: '/admin/orders', icon: <LocalShipping /> },
     { text: 'Appointments', path: '/admin/appointments', icon: <CalendarMonth /> },
     { text: 'Contacts', path: '/admin/contacts', icon: <ContactMail /> },
-    { text: 'Chat', path: '/admin/chat', icon: <ChatIcon /> },
     { text: 'Photography', path: '/admin/photography', icon: <Photo /> },
     { text: 'Photography Stats', path: '/admin/photography-statistics', icon: <BarChart /> },
     { text: 'Customer Fitting', path: '/admin/customer-fitting', icon: <FeaturedPlayList /> },
-    { text: 'Statistics', path: '/admin/statistics', icon: <BarChart /> },
+    { text: 'Chat', path: '/admin/chat', icon: <ChatIcon /> },
     { text: 'Settings', path: '/admin/settings', icon: <Settings /> },
   ];
 
@@ -117,6 +116,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
         sx={{
           width: { sm: `calc(100% - ${drawerWidth}px)` },
           ml: { sm: `${drawerWidth}px` },
+          backgroundColor: 'rgb(195 147 124 / 1)',
         }}
       >
         <Toolbar>
@@ -141,7 +141,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
             onClick={handleUserMenuOpen}
             color="inherit"
           >
-            <Avatar sx={{ bgcolor: 'secondary.main' }}>
+            <Avatar sx={{ bgcolor: 'white', color: 'rgb(195 147 124 / 1)' }}>
               {username?.charAt(0) || 'A'}
             </Avatar>
           </IconButton>
