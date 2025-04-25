@@ -6,7 +6,6 @@ import {
   User,
   ClipboardList,
   Package,
-  Truck,
   MapPin,
   Settings,
   HelpCircle,
@@ -59,11 +58,6 @@ export default function ProfileSidebar({
       id: 'current-orders',
       label: 'Current orders',
       icon: <Package className="h-5 w-5" />,
-    },
-    {
-      id: 'track-order',
-      label: 'Track Order',
-      icon: <Truck className="h-5 w-5" />,
     },
     {
       id: 'address',

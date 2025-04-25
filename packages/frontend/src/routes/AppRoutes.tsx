@@ -12,7 +12,6 @@ const PCP = lazy(() => import('../pages/PCP/PCP'));
 const ProfilePage = lazy(() => import('../pages/Profile/ProfilePage'));
 const OrderHistory = lazy(() => import('../pages/Profile/OrderHistory'));
 const CurrentOrders = lazy(() => import('../pages/Profile/CurrentOrders'));
-const TrackOrder = lazy(() => import('../pages/Profile/TrackOrder'));
 const Address = lazy(() => import('../pages/Profile/Address'));
 const Settings = lazy(() => import('../pages/Profile/Settings'));
 const OrderDetails = lazy(() => import('../pages/Profile/OrderDetails'));
@@ -94,7 +93,6 @@ const AppRoutes = () => {
     },
     { path: '/order-history', element: <OrderHistory /> },
     { path: '/current-orders', element: <CurrentOrders /> },
-    { path: '/track-order', element: <TrackOrder /> },
     { path: '/address', element: <Address /> },
     { 
       path: '/settings', 
