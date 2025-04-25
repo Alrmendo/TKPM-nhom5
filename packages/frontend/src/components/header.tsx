@@ -142,12 +142,7 @@ const Header: React.FC<NavigationProps> = ({ isSticky = false }) => {
               {/* <li className="text-[#C3937C] hover:text-[#6164bc] cursor-pointer text-sm lg:text-base">
                 Blog
               </li> */}
-              <li
-                className="text-[#C3937C] hover:text-[#6164bc] cursor-pointer text-sm lg:text-base"
-                onClick={() => navigate('/contact')}
-              >
-                Contact
-              </li>
+              {/* Contact link removed */}
             </ul>
 
             <div className="flex items-center gap-2 lg:gap-4">
@@ -275,15 +270,7 @@ const Header: React.FC<NavigationProps> = ({ isSticky = false }) => {
             {/* <li className="text-[#C3937C] hover:text-[#6164bc] cursor-pointer">
               Blog
             </li> */}
-            <li
-              className="text-[#C3937C] hover:text-[#6164bc] cursor-pointer"
-              onClick={() => {
-                navigate('/contact');
-                setIsMenuOpen(false);
-              }}
-            >
-              Contact
-            </li>
+            {/* Contact link removed */}
           </ul>
         </div>
       </nav>

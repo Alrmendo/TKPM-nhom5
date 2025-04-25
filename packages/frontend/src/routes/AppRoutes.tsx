@@ -6,7 +6,6 @@ import UserLayout from '../components/layouts/UserLayout';
 
 // Lazy load pages
 const Home = lazy(() => import('../pages/Home/Home'));
-const Contact = lazy(() => import('../pages/Contact/contact_us'));
 const NotFoundPage = lazy(() => import('../pages/404/404'));
 const PDP = lazy(() => import('../pages/PDP/PDP'));
 const PCP = lazy(() => import('../pages/PCP/PCP'));
@@ -77,7 +76,6 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
 const AppRoutes = () => {
   const routes = [
     { path: '/', element: <Home /> },
-    { path: '/contact', element: <Contact /> },
     { path: '/pdp', element: <PDP /> },
     { path: '/pdp/:id', element: <PDP /> },
     { path: '/product/:id', element: <PDP /> },

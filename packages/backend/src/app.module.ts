@@ -11,7 +11,6 @@ import { CartModule } from './modules/cart/cart.module';
 import { OrderModule } from './modules/order/order.module';
 import { ReviewModule } from './modules/review/review.module';
 import { AppointmentModule } from './modules/appointment/appointment.module';
-import { ContactModule } from './modules/contact/contact.module';
 import { PhotographyModule } from './modules/photography/photography.module';
 import { ChatModule } from './modules/chat/chat.module';
 
@@ -38,7 +37,6 @@ import { MongooseModule } from '@nestjs/mongoose';
     OrderModule,
     ReviewModule,
     AppointmentModule,
-    ContactModule,
     PhotographyModule,
     ChatModule,
 
