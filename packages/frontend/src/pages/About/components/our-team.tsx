@@ -8,28 +8,28 @@ interface TeamMember {
 export function OurTeam() {
   const teamMembers: TeamMember[] = [
     {
-      name: "Minh Tâm",
+      name: "Nguyễn Minh Triết",
       role: "Founder & CEO",
-      image: "/placeholder.svg?height=400&width=400",
-      bio: "Với hơn 15 năm kinh nghiệm trong ngành thời trang cưới, Minh Tâm đã xây dựng Enchanted Weddings từ một ý tưởng nhỏ thành công ty hàng đầu trong lĩnh vực cho thuê váy cưới cao cấp.",
+      image: "/triet.jpg",
+      bio: "Với hơn 15 năm kinh nghiệm trong ngành thời trang cưới, Nguyễn Minh Triết đã xây dựng Enchanted Weddings từ một ý tưởng nhỏ thành công ty hàng đầu trong lĩnh vực cho thuê váy cưới cao cấp.",
     },
     {
-      name: "Thanh Hà",
+      name: "Đỗ Hải Yến",
       role: "Creative Director",
-      image: "/placeholder.svg?height=400&width=400",
-      bio: "Thanh Hà mang đến tầm nhìn sáng tạo và đam mê với thời trang cưới. Cô chịu trách nhiệm lựa chọn và phát triển bộ sưu tập váy cưới đa dạng của chúng tôi.",
+      image: "/yen.jpg",
+      bio: "Đỗ Hải Yến mang đến tầm nhìn sáng tạo và đam mê với thời trang cưới. Cô chịu trách nhiệm lựa chọn và phát triển bộ sưu tập váy cưới đa dạng của chúng tôi.",
     },
     {
-      name: "Quang Minh",
+      name: "Trần Tiến Lợi",
       role: "Head of Operations",
-      image: "/placeholder.svg?height=400&width=400",
-      bio: "Quang Minh đảm bảo mọi quy trình từ đặt lịch hẹn đến giao nhận váy cưới đều diễn ra suôn sẻ, mang đến trải nghiệm hoàn hảo cho khách hàng.",
+      image: "/loi.jpg",
+      bio: "Trần Tiến Lợi đảm bảo mọi quy trình từ đặt lịch hẹn đến giao nhận váy cưới đều diễn ra suôn sẻ, mang đến trải nghiệm hoàn hảo cho khách hàng.",
     },
     {
-      name: "Ngọc Anh",
+      name: "Trần Đức Tùng",
       role: "Lead Bridal Consultant",
-      image: "/placeholder.svg?height=400&width=400",
-      bio: "Với con mắt thẩm mỹ tinh tế và sự thấu hiểu sâu sắc, Ngọc Anh đã giúp hàng nghìn cô dâu tìm được chiếc váy cưới hoàn hảo cho ngày trọng đại của họ.",
+      image: "/tung.jpg",
+      bio: "Với con mắt thẩm mỹ tinh tế và sự thấu hiểu sâu sắc, Trần Đức Tùng đã giúp hàng nghìn cô dâu tìm được chiếc váy cưới hoàn hảo cho ngày trọng đại của họ.",
     },
   ]
 
@@ -37,7 +37,7 @@ export function OurTeam() {
     <section className="py-20">
       <div className="container mx-auto px-4">
         <div className="max-w-3xl mx-auto text-center mb-16">
-          <h2 className="text-3xl md:text-4xl font-serif mb-6">Đội ngũ của chúng tôi</h2>
+          <h2 className="text-3xl md:text-4xl  mb-6">Đội ngũ của chúng tôi</h2>
           <div className="w-20 h-1 bg-[#c3937c] mx-auto mb-8"></div>
           <p className="text-lg text-[#404040]">
             Gặp gỡ những con người tài năng và đam mê đứng sau Enchanted Weddings. Chúng tôi là một đội ngũ chuyên
@@ -57,7 +57,7 @@ export function OurTeam() {
                 className="w-full h-80 object-cover object-center"
               />
               <div className="p-6">
-                <h3 className="text-xl font-serif mb-1">{member.name}</h3>
+                <h3 className="text-xl  mb-1">{member.name}</h3>
                 <p className="text-[#c3937c] font-medium mb-4">{member.role}</p>
                 <p className="text-[#404040]">{member.bio}</p>
               </div>

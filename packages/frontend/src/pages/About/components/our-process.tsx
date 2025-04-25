@@ -38,7 +38,7 @@ export function OurProcess() {
     <section className="py-20 bg-[#f8f3ee]">
       <div className="container mx-auto px-4">
         <div className="max-w-3xl mx-auto text-center mb-16">
-          <h2 className="text-3xl md:text-4xl font-serif mb-6">Quy trình của chúng tôi</h2>
+          <h2 className="text-3xl md:text-4xl  mb-6">Quy trình của chúng tôi</h2>
           <div className="w-20 h-1 bg-[#c3937c] mx-auto mb-8"></div>
           <p className="text-lg text-[#404040]">
             Chúng tôi đã tạo ra một quy trình đơn giản và hiệu quả để giúp bạn tìm được chiếc váy cưới trong mơ một cách
@@ -52,7 +52,7 @@ export function OurProcess() {
               <div className="w-16 h-16 bg-[#c3937c]/10 rounded-full flex items-center justify-center mx-auto mb-6">
                 <step.icon className="h-8 w-8 text-[#c3937c]" />
               </div>
-              <h3 className="text-xl font-serif mb-4">{step.title}</h3>
+              <h3 className="text-xl  mb-4">{step.title}</h3>
               <p className="text-[#404040]">{step.description}</p>
 
               {index < steps.length - 1 && (
@@ -64,14 +64,14 @@ export function OurProcess() {
           ))}
         </div>
 
-        <div className="mt-16 text-center">
+        {/* <div className="mt-16 text-center">
           <a
             href="/booking"
             className="inline-flex items-center bg-[#c3937c] hover:bg-[#a67563] text-white rounded-full px-8 py-3 font-medium transition-colors"
           >
             Đặt lịch hẹn ngay
           </a>
-        </div>
+        </div> */}
       </div>
     </section>
   )

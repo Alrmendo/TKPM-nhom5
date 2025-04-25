@@ -162,7 +162,7 @@ const Appointment: React.FC = () => {
           {/* Left Column - Image with Info */}
           <div className="relative rounded-lg overflow-hidden h-full">
             <img
-              src="/placeholder.svg?height=800&width=600"
+              src="https://i.pinimg.com/736x/96/bd/5e/96bd5ea5e7af665c65e75404be4d8b86.jpg"
               alt="Wedding consultation"
               className="w-full h-full object-cover brightness-75"
             />
