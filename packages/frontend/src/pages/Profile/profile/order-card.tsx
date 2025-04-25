@@ -242,27 +242,40 @@ export function OrderCard({ order, onDelete }: OrderCardProps): JSX.Element {
 
           <div className="flex space-x-2">
             {(order.status === 'pending' ||
-              order.status === 'under-review' ||
-              order.isCartItem) &&
-              onDelete && (
+              order.status === 'under-review') &&
+              onDelete && !order.isCartItem && !order.isPhotographyService && (
                 <button
                   onClick={handleDelete}
                   className="px-4 py-1 border rounded-full text-sm text-red-600 hover:bg-red-50 border-red-200 flex items-center"
-                  type="button"
                 >
-                  <Trash2 className="w-3 h-3 mr-1" />
-                  Delete
+                  <Trash2 className="h-4 w-4 mr-1" /> Delete
                 </button>
               )}
 
-            {order.isCartItem ? (
-              <Link
-                to="/cart"
-                className="px-4 py-1 border rounded-full text-sm text-blue-600 hover:bg-blue-50 border-blue-200"
+            {(order.isCartItem || order.status === 'In Cart') && (
+              <Link 
+                to="/cart" 
+                className="px-4 py-1 border rounded-full text-sm text-blue-600 hover:bg-blue-50 border-blue-200 flex items-center"
               >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className="h-4 w-4 mr-1"
+                >
+                  <circle cx="8" cy="21" r="1"></circle>
+                  <circle cx="19" cy="21" r="1"></circle>
+                  <path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"></path>
+                </svg>
                 Go to Cart
               </Link>
-            ) : null}
+            )}
           </div>
         </div>
       </div>
