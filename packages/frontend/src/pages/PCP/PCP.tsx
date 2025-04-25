@@ -9,6 +9,7 @@ import { getAllDresses, searchDresses, Dress } from '../../api/dress';
 export default function WeddingDressPage(): JSX.Element {
   const [searchQuery, setSearchQuery] = useState('');
   const [dresses, setDresses] = useState<Dress[]>([]);
+  const [searchResults, setSearchResults] = useState<Dress[]>([]);
   const [filteredDresses, setFilteredDresses] = useState<Dress[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -31,6 +32,7 @@ export default function WeddingDressPage(): JSX.Element {
         setLoading(true);
         const dressesData = await getAllDresses();
         setDresses(dressesData);
+        setSearchResults(dressesData);
         setFilteredDresses(dressesData);
         setError(null);
       } catch (error) {
@@ -46,14 +48,9 @@ export default function WeddingDressPage(): JSX.Element {
 
   // Apply filters and sorting when filter options or search results change
   useEffect(() => {
-    let result = [...dresses];
-
-    // First apply search if there's a query
-    if (searchQuery.trim()) {
-      // Search logic is handled by the API, so we don't modify result here
-      // as searchResults are already set in the handleSearch function
-      return;
-    }
+    // Start with either search results (if a search was performed) or all dresses
+    const dataToFilter = searchQuery.trim() ? searchResults : dresses;
+    let result = [...dataToFilter];
 
     // Apply style filter
     if (styleFilter !== 'all') {
@@ -100,26 +97,33 @@ export default function WeddingDressPage(): JSX.Element {
     }
 
     setFilteredDresses(result);
-  }, [styleFilter, priceFilter, sortOption, dresses, searchQuery]);
+  }, [
+    styleFilter,
+    priceFilter,
+    sortOption,
+    searchResults,
+    dresses,
+    searchQuery,
+  ]);
 
   const handleSearch = async (query: string) => {
     setSearchQuery(query);
 
     if (!query.trim()) {
-      // If search query is empty, show all dresses
-      setFilteredDresses(dresses);
+      // If search query is empty, reset search results to all dresses
+      setSearchResults(dresses);
       return;
     }
 
     try {
       setIsSearching(true);
-      const searchResults = await searchDresses(query);
-      setFilteredDresses(searchResults);
+      const results = await searchDresses(query);
+      setSearchResults(results);
       setError(null);
     } catch (error) {
       console.error('Error searching dresses:', error);
       setError('Failed to search dresses');
-      setFilteredDresses([]);
+      setSearchResults([]);
     } finally {
       setIsSearching(false);
     }
@@ -134,9 +138,6 @@ export default function WeddingDressPage(): JSX.Element {
     setPriceFilter('all');
     setStyleFilter('all');
     setSortOption('default');
-    if (!searchQuery.trim()) {
-      setFilteredDresses(dresses);
-    }
   };
 
   // Map API data to the format expected by ProductCard
