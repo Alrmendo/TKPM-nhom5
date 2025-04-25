@@ -37,6 +37,37 @@ export class DressController {
   }
 
   /**
+   * Search dresses by name
+   */
+  @Get('search')
+  async search(
+    @Query('q') query: string
+  ): Promise<{ success: boolean; data: Dress[] }> {
+    try {
+      if (!query || query.trim() === '') {
+        return {
+          success: true,
+          data: await this.dressService.findAll(),
+        };
+      }
+      
+      const dresses = await this.dressService.search(query);
+      return {
+        success: true,
+        data: dresses,
+      };
+    } catch (error) {
+      throw new HttpException(
+        {
+          success: false,
+          message: error.message || 'Failed to search dresses',
+        },
+        HttpStatus.INTERNAL_SERVER_ERROR
+      );
+    }
+  }
+
+  /**
    * Get most popular dresses
    */
   @Get('popular')

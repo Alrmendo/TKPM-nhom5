@@ -21,6 +21,23 @@ export class DressService {
   }
 
   /**
+   * Search dresses by query
+   */
+  async search(query: string): Promise<Dress[]> {
+    try {
+      // Create a case-insensitive regex for searching
+      const searchRegex = new RegExp(query, 'i');
+      
+      // Search only in the name field
+      return await this.dressModel.find({
+        name: searchRegex
+      }).exec();
+    } catch (error) {
+      throw new Error(`Error searching dresses: ${error.message}`);
+    }
+  }
+
+  /**
    * Get most popular dresses based on ratings and reviews
    */
   async findMostPopular(limit: number = 5): Promise<Dress[]> {
