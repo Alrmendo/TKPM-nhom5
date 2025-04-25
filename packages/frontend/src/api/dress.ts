@@ -106,6 +106,24 @@ export const getAllDresses = async (): Promise<Dress[]> => {
   }
 };
 
+// Search dresses by query
+export const searchDresses = async (query: string): Promise<Dress[]> => {
+  try {
+    const response = await API.get('/dress/search', {
+      params: { q: query }
+    });
+    
+    if (response.data && response.data.success) {
+      return response.data.data;
+    }
+    
+    throw new Error(response.data.message || 'Failed to search dresses');
+  } catch (error) {
+    console.error('Error searching dresses:', error);
+    throw error;
+  }
+};
+
 // Get most popular dresses
 export const getMostPopularDresses = async (limit: number = 5): Promise<Dress[]> => {
   try {

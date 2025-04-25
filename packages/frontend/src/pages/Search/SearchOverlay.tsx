@@ -1,31 +1,30 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { X, Search as SearchIcon } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { searchDresses, Dress as ApiDress } from '../../api/dress';
 
-// Định nghĩa kiểu dữ liệu cho dress
+// Định nghĩa kiểu dữ liệu cho dress trong component
 interface Dress {
-  id: number;
-  imageUrl: string;
-  rating: number;
-  status: string;
-  statusColor: string;
-  title: string;
-  subtitle: string;
-  price: number;
-  priceUnit: string;
+  _id: string;
+  name: string;
+  dailyRentalPrice: number;
+  purchasePrice: number;
+  images: string[];
+  avgRating?: number;
 }
 
 // Định nghĩa kiểu dữ liệu cho props của DressCard
 interface DressCardProps {
+  _id: string;
   imageUrl: string;
-  alt?: string;
+  title: string;
+  subtitle?: string;
   rating?: number;
+  price: number;
+  priceUnit?: string;
   status?: string;
   statusColor?: string;
-  title?: string;
-  subtitle?: string;
-  price?: number;
-  priceUnit?: string;
+  onClick?: () => void;
 }
 
 // Định nghĩa kiểu dữ liệu cho props của SearchOverlay
@@ -33,90 +32,21 @@ interface SearchOverlayProps {
   onClose?: () => void;
 }
 
-// Dummy data for demonstration
-const dummyDresses: Dress[] = [
-  {
-    id: 1,
-    imageUrl: "./pic14.jpg",
-    rating: 4.8,
-    status: "Available",
-    statusColor: "#6DE588",
-    title: "Floral Lace",
-    subtitle: "Diana",
-    price: 450,
-    priceUnit: "Per Day"
-  },
-  {
-    id: 2,
-    imageUrl: "./pic16.jpg",
-    rating: 4.6,
-    status: "Popular",
-    statusColor: "#F5A623",
-    title: "Elegant Silk",
-    subtitle: "Victoria",
-    price: 580,
-    priceUnit: "Per Day"
-  },
-  {
-    id: 3,
-    imageUrl: "./pic14.jpg",
-    rating: 4.7,
-    status: "Limited",
-    statusColor: "#FF6B6B",
-    title: "Classic White",
-    subtitle: "Elizabeth",
-    price: 520,
-    priceUnit: "Per Day"
-  },
-  {
-    id: 4,
-    imageUrl: "./pic16.jpg",
-    rating: 4.9,
-    status: "Available",
-    statusColor: "#6DE588",
-    title: "Modern Minimalist",
-    subtitle: "Sophia",
-    price: 490,
-    priceUnit: "Per Day"
-  },
-  {
-    id: 5,
-    imageUrl: "./pic14.jpg",
-    rating: 4.5,
-    status: "Available",
-    statusColor: "#6DE588",
-    title: "Vintage Lace",
-    subtitle: "Charlotte",
-    price: 420,
-    priceUnit: "Per Day"
-  },
-  {
-    id: 6,
-    imageUrl: "./pic16.jpg",
-    rating: 4.7,
-    status: "Popular",
-    statusColor: "#F5A623",
-    title: "Pearl Embellished",
-    subtitle: "Rose",
-    price: 550,
-    priceUnit: "Per Day"
-  }
-];
-
 // DressCard component reused from the provided code
 const DressCard: React.FC<DressCardProps> = ({
+  _id,
   imageUrl, 
-  alt = "Wedding Dress", 
+  title, 
+  subtitle = "", 
   rating = 4.8, 
   status = "Available", 
   statusColor = "#6DE588",
-  title = "Floral Lace", 
-  subtitle = "Diana", 
   price = 450, 
-  priceUnit = "Per Day"
+  priceUnit = "Per Day",
+  onClick
 }) => {
   return (
-    <div className="relative rounded-lg w-full">
+    <div className="relative rounded-lg w-full cursor-pointer" onClick={onClick}>
       {/* Badge container - góc trên trái */}
       <div className="absolute top-8 left-10 flex space-x-2">
         <div className="flex items-center bg-white rounded-full px-3 py-1 shadow text-sm font-medium">
@@ -134,7 +64,7 @@ const DressCard: React.FC<DressCardProps> = ({
       <div className="w-full h-[500px] overflow-hidden">
         <img
           src={imageUrl}
-          alt={alt}
+          alt={title}
           className="w-full h-full object-cover rounded-tl-[80px] rounded-tr-[80px]"
         />
       </div>
@@ -182,21 +112,40 @@ const SearchOverlay: React.FC<SearchOverlayProps> = ({ onClose }) => {
   }
 
   // Handle search submission
-  const handleSearch = (e: React.FormEvent): void => {
+  const handleSearch = async (e: React.FormEvent): Promise<void> => {
     e.preventDefault();
     if (!searchTerm.trim()) return;
     
     setIsSearching(true);
     setHasSearched(true);
     
-    // Simulate search delay
-    setTimeout(() => {
-      const filteredResults = dummyDresses.filter(dress => 
-        dress.title.toLowerCase().includes(searchTerm.toLowerCase())
-      );
-      setSearchResults(filteredResults);
+    try {
+      // Use the searchDresses API to get real data
+      const dresses = await searchDresses(searchTerm);
+      
+      // Map API data to component format
+      setSearchResults(dresses.map(dress => ({
+        _id: dress._id,
+        name: dress.name,
+        dailyRentalPrice: dress.dailyRentalPrice,
+        purchasePrice: dress.purchasePrice,
+        images: dress.images,
+        avgRating: dress.avgRating
+      })));
+    } catch (error) {
+      console.error('Error searching dresses:', error);
+      setSearchResults([]);
+    } finally {
       setIsSearching(false);
-    }, 1500); // Simulate 1.5s loading time
+    }
+  };
+
+  // Handle clicking on a dress card
+  const handleDressClick = (id: string): void => {
+    navigate(`/dress/${id}`);
+    if (onClose) {
+      onClose();
+    }
   };
 
   // Focus the search input when the overlay opens
@@ -240,7 +189,7 @@ const SearchOverlay: React.FC<SearchOverlayProps> = ({ onClose }) => {
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="block w-full pl-10 pr-3 py-3 border-b-2 border-white bg-transparent text-white placeholder-gray-300 focus:outline-none focus:border-[#C3937C] text-lg"
-              placeholder="Press enter to search"
+              placeholder="Enter dress name to search"
             />
           </div>
         </form>
@@ -261,7 +210,15 @@ const SearchOverlay: React.FC<SearchOverlayProps> = ({ onClose }) => {
               <h2 className="text-white text-2xl mb-8">Search Results ({searchResults.length})</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                 {searchResults.map(dress => (
-                  <DressCard key={dress.id} {...dress} />
+                  <DressCard 
+                    key={dress._id} 
+                    _id={dress._id}
+                    imageUrl={dress.images && dress.images.length > 0 ? dress.images[0] : 'https://via.placeholder.com/500'}
+                    title={dress.name}
+                    price={dress.dailyRentalPrice}
+                    rating={dress.avgRating}
+                    onClick={() => handleDressClick(dress._id)}
+                  />
                 ))}
               </div>
             </>

@@ -6,7 +6,7 @@ import FilterSection from './pcp/filter-section';
 import SortDropdown from './pcp/sort-dropdown';
 import { Link } from 'react-router-dom';
 import SearchBar from './pcp/search-bar';
-import { getAllDresses, Dress } from '../../api/dress';
+import { getAllDresses, searchDresses, Dress } from '../../api/dress';
 
 // Style filter options
 const styleOptions = [
@@ -51,10 +51,12 @@ const sortOptions = [
 export default function WeddingDressPage(): JSX.Element {
   const [sortBy, setSortBy] = useState('default');
   const [searchQuery, setSearchQuery] = useState('');
-  const [dresses, setDresses] = useState<any[]>([]);
+  const [dresses, setDresses] = useState<Dress[]>([]);
+  const [filteredDresses, setFilteredDresses] = useState<Dress[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [visibleDresses, setVisibleDresses] = useState<number>(6); // Number of dresses to show initially
+  const [isSearching, setIsSearching] = useState(false);
   
   useEffect(() => {
     const fetchDresses = async () => {
@@ -62,6 +64,7 @@ export default function WeddingDressPage(): JSX.Element {
         setLoading(true);
         const dressesData = await getAllDresses();
         setDresses(dressesData);
+        setFilteredDresses(dressesData);
         setError(null);
       } catch (error) {
         console.error('Error fetching dresses:', error);
@@ -79,9 +82,27 @@ export default function WeddingDressPage(): JSX.Element {
     // Thực hiện logic sắp xếp tại đây
   };
 
-  const handleSearch = (query: string) => {
+  const handleSearch = async (query: string) => {
     setSearchQuery(query);
-    // Thực hiện logic tìm kiếm tại đây
+    
+    if (!query.trim()) {
+      // If search query is empty, show all dresses
+      setFilteredDresses(dresses);
+      return;
+    }
+    
+    try {
+      setIsSearching(true);
+      const searchResults = await searchDresses(query);
+      setFilteredDresses(searchResults);
+      setError(null);
+    } catch (error) {
+      console.error('Error searching dresses:', error);
+      setError('Failed to search dresses');
+      setFilteredDresses([]);
+    } finally {
+      setIsSearching(false);
+    }
   };
   
   const handleLoadMore = () => {
@@ -111,8 +132,8 @@ export default function WeddingDressPage(): JSX.Element {
   };
   
   // Get limited number of dresses to display
-  const displayDresses = mapDressesToCardFormat(dresses).slice(0, visibleDresses);
-  const hasMoreDresses = dresses.length > visibleDresses;
+  const displayDresses = mapDressesToCardFormat(filteredDresses).slice(0, visibleDresses);
+  const hasMoreDresses = filteredDresses.length > visibleDresses;
 
   return (
     <div>
@@ -144,13 +165,17 @@ export default function WeddingDressPage(): JSX.Element {
               <SortDropdown options={sortOptions} onSort={handleSort} />
             </div>
 
-            {loading ? (
+            {loading || isSearching ? (
               <div className="flex justify-center items-center h-40">
                 <p>Loading dresses...</p>
               </div>
             ) : error ? (
               <div className="flex justify-center items-center h-40">
                 <p className="text-red-500">{error}</p>
+              </div>
+            ) : displayDresses.length === 0 ? (
+              <div className="flex justify-center items-center h-40">
+                <p>No dresses found matching "{searchQuery}"</p>
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
