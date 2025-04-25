@@ -1,7 +1,14 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 
 // Định nghĩa component BridalDressSection với kiểu React.FC
 const BridalDressSection: React.FC = () => {
+  const navigate = useNavigate();
+
+  const handleExploreMore = () => {
+    navigate('/pcp');
+  };
+
   return (
     <section className="flex flex-col md:flex-row justify-between bg-[#FBF8F1] py-16 px-4 md:px-8">
       {/* Dress Card 1 */}
@@ -48,7 +55,10 @@ const BridalDressSection: React.FC = () => {
           </p>
         </div>
 
-        <button className="border border-[#C3937C] bg-white text-[#C3937C] px-4 py-2 rounded-lg hover:bg-[#C3937C] hover:text-white transition cursor-pointer">
+        <button 
+          className="border border-[#C3937C] bg-white text-[#C3937C] px-4 py-2 rounded-lg hover:bg-[#C3937C] hover:text-white transition cursor-pointer"
+          onClick={handleExploreMore}
+        >
           Explore more &gt;
         </button>
       </div>  

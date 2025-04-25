@@ -1,7 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, ComponentType } from 'react';
 import AdminLayout from './AdminLayout';
 import {
-  Grid,
   Paper,
   Typography,
   Card,
@@ -9,11 +8,9 @@ import {
   CircularProgress,
   Box,
   Stack,
-  Divider,
   Avatar,
   useTheme,
   alpha,
-  Grow,
   Fade,
   Button,
   IconButton,
@@ -23,37 +20,131 @@ import {
   Alert,
   Snackbar,
 } from '@mui/material';
+import Grid from '@mui/material/Grid';
 import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
+  XAxis as XAxisOriginal,
+  YAxis as YAxisOriginal,
   CartesianGrid,
-  Tooltip,
-  Legend,
-  ResponsiveContainer,
-  LineChart,
-  Line,
-  PieChart,
-  Pie,
-  Cell,
-  AreaChart,
-  Area,
+  Legend as LegendOriginal,
+  PieChart as PieChartBase,
+  Pie as PieOriginal,
+  Cell as CellOriginal,
+  AreaChart as AreaChartBase,
+  Area as AreaOriginal,
+  ResponsiveContainer as ResponsiveContainerBase,
+  Tooltip as TooltipOriginal,
 } from 'recharts';
+
+// Type assertion to fix the TypeScript error
+const XAxis = XAxisOriginal as unknown as React.FC<any>;
+const YAxis = YAxisOriginal as unknown as React.FC<any>;
+
+// Fix for ResponsiveContainer type error
+type ResponsiveContainerProps = {
+  width?: string | number;
+  height?: string | number;
+  aspect?: number;
+  minWidth?: string | number;
+  minHeight?: string | number;
+  maxHeight?: number;
+  debounce?: number;
+  children?: React.ReactNode;
+};
+
+// Fix for AreaChart type error
+type AreaChartProps = {
+  data?: any[];
+  margin?: { top?: number; right?: number; bottom?: number; left?: number };
+  children?: React.ReactNode;
+  [key: string]: any;
+};
+
+// Fix for PieChart type error
+type PieChartProps = {
+  width?: number;
+  height?: number;
+  margin?: { top?: number; right?: number; bottom?: number; left?: number };
+  children?: React.ReactNode;
+  [key: string]: any;
+};
+
+// Fix for recharts component type errors
+type TooltipProps = {
+  separator?: string;
+  label?: string;
+  labelFormatter?: (label: string) => string;
+  labelStyle?: object;
+  labelType?: string;
+  formatter?: (value: number, name: string) => string;
+  itemStyle?: object;
+  itemSorter?: (item: any) => number;
+  itemFormatter?: (item: any) => string;
+  cursor?: boolean;
+  wrapperStyle?: object;
+  offset?: number;
+  children?: React.ReactNode;
+  [key: string]: any;
+};
+
+type LegendProps = {
+  verticalAlign?: 'top' | 'middle' | 'bottom';
+  align?: 'left' | 'center' | 'right';
+  height?: number;
+  width?: number;
+  layout?: 'horizontal' | 'vertical';
+  iconType?: string;
+  iconSize?: number;
+  children?: React.ReactNode;
+  [key: string]: any;
+};
+
+type AreaProps = {
+  type?: string;
+  dataKey: string;
+  stroke?: string;
+  fill?: string;
+  fillOpacity?: number;
+  strokeWidth?: number;
+  activeDot?: object;
+  children?: React.ReactNode;
+  [key: string]: any;
+};
+
+type PieProps = {
+  data: any[];
+  dataKey: string;
+  nameKey?: string;
+  cx?: string | number;
+  cy?: string | number;
+  innerRadius?: number | string;
+  outerRadius?: number | string;
+  children?: React.ReactNode;
+  [key: string]: any;
+};
+
+type CellProps = {
+  fill?: string;
+  [key: string]: any;
+};
+
+const AreaChart = (AreaChartBase as unknown) as React.FC<AreaChartProps>;
+const ResponsiveContainer = ResponsiveContainerBase as unknown as ComponentType<ResponsiveContainerProps>;
+const PieChart = (PieChartBase as unknown) as React.FC<PieChartProps>;
+const Tooltip = TooltipOriginal as unknown as React.FC<TooltipProps>;
+const Legend = LegendOriginal as unknown as React.FC<LegendProps>;
+const Area = AreaOriginal as unknown as React.FC<AreaProps>;
+const Pie = PieOriginal as unknown as React.FC<PieProps>;
+const Cell = CellOriginal as unknown as React.FC<CellProps>;
+
 import { 
   ShoppingBag, 
   People, 
   CalendarToday, 
   AttachMoney,
-  TrendingUp,
-  TrendingDown,
-  CheckCircle,
   ArrowUpward,
   ArrowDownward,
   MoreVert,
   Refresh,
-  Settings,
-  Storefront,
   DateRange,
 } from '@mui/icons-material';
 import { getDashboardStats, getMonthlySales, getTopProducts } from '../../api/admin';
@@ -300,8 +391,8 @@ const Dashboard = () => {
             </Box>
           )}
 
-          <Grid container spacing={3} mb={4}>
-            <Grid item xs={12} sm={6} lg={3}>
+          <Grid container spacing={3} sx={{ mb: 4 }}>
+            <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
               <StatCard
                 title="Total Orders"
                 value={dashboardStats.totalOrders.toString()}
@@ -311,7 +402,7 @@ const Dashboard = () => {
                 percentChange={dashboardStats.percentChange.orders}
               />
             </Grid>
-            <Grid item xs={12} sm={6} lg={3}>
+            <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
               <StatCard
                 title="Total Customers"
                 value={dashboardStats.totalCustomers.toString()}
@@ -321,7 +412,7 @@ const Dashboard = () => {
                 percentChange={dashboardStats.percentChange.customers}
               />
             </Grid>
-            <Grid item xs={12} sm={6} lg={3}>
+            <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
               <StatCard
                 title="Upcoming Appointments"
                 value={dashboardStats.upcomingAppointments.toString()}
@@ -331,7 +422,7 @@ const Dashboard = () => {
                 percentChange={dashboardStats.percentChange.appointments}
               />
             </Grid>
-            <Grid item xs={12} sm={6} lg={3}>
+            <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
               <StatCard
                 title="Total Revenue"
                 value={`$${dashboardStats.totalRevenue.toLocaleString()}`}
@@ -367,8 +458,8 @@ const Dashboard = () => {
           </Box>
 
           <Box sx={{ display: tabValue === 0 ? 'block' : 'none' }}>
-            <Grid container spacing={3} mb={4}>
-              <Grid item xs={12} lg={8}>
+            <Grid container spacing={3} sx={{ mb: 4 }}>
+              <Grid size={{ xs: 12, lg: 8 }}>
                 <Paper 
                   sx={{ 
                     p: 3, 
@@ -419,7 +510,7 @@ const Dashboard = () => {
                           boxShadow: theme.shadows[3],
                           border: 'none'
                         }}
-                        formatter={(value) => [`$${value}`, '']}
+                        formatter={(value: number, name: string) => `$${value}`}
                       />
                       <Legend 
                         verticalAlign="top"
@@ -451,7 +542,7 @@ const Dashboard = () => {
                   </ResponsiveContainer>
                 </Paper>
               </Grid>
-              <Grid item xs={12} lg={4}>
+              <Grid size={{ xs: 12, lg: 4 }}>
                 <Paper 
                   sx={{ 
                     p: 3, 
@@ -485,7 +576,7 @@ const Dashboard = () => {
                             boxShadow: theme.shadows[3],
                             border: 'none' 
                           }}
-                          formatter={(value, name) => [`${name}: ${value}%`, '']}
+                          formatter={(value: number, name: string) => `${name}: ${value}%`}
                         />
                         <Pie
                           data={topProducts}
@@ -517,7 +608,7 @@ const Dashboard = () => {
             </Grid>
 
             <Grid container spacing={3}>
-              <Grid item xs={12} lg={6}>
+              <Grid size={{ xs: 12, lg: 6 }}>
                 <Paper sx={{ 
                   p: 3, 
                   boxShadow: 2, 
@@ -548,7 +639,7 @@ const Dashboard = () => {
                   </Stack>
                 </Paper>
               </Grid>
-              <Grid item xs={12} lg={6}>
+              <Grid size={{ xs: 12, lg: 6 }}>
                 <Paper sx={{ 
                   p: 3, 
                   boxShadow: 2, 

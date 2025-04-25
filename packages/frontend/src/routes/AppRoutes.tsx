@@ -2,6 +2,7 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { lazy, Suspense } from 'react';
 import { LoadingOverlay } from '../components/ui/LoadingOverlay';
+import UserLayout from '../components/layouts/UserLayout';
 
 // Lazy load pages
 const Home = lazy(() => import('../pages/Home/Home'));
@@ -12,7 +13,6 @@ const PCP = lazy(() => import('../pages/PCP/PCP'));
 const ProfilePage = lazy(() => import('../pages/Profile/ProfilePage'));
 const OrderHistory = lazy(() => import('../pages/Profile/OrderHistory'));
 const CurrentOrders = lazy(() => import('../pages/Profile/CurrentOrders'));
-const TrackOrder = lazy(() => import('../pages/Profile/TrackOrder'));
 const Address = lazy(() => import('../pages/Profile/Address'));
 const Settings = lazy(() => import('../pages/Profile/Settings'));
 const OrderDetails = lazy(() => import('../pages/Profile/OrderDetails'));
@@ -37,6 +37,7 @@ const AdminCustomerFitting = lazy(() => import('../pages/Admin/CustomerFitting')
 const AdminPhotography = lazy(() => import('../pages/Admin/Photography'));
 const AdminPhotographyStatistics = lazy(() => import('../pages/Admin/PhotographyStatistics'));
 const AdminSettings = lazy(() => import('../pages/Admin/Settings'));
+const AdminChat = lazy(() => import('../pages/Admin/Chat'));
 
 const SignIn = lazy(() => import('../pages/Auth/SignIn'));
 const SignUp = lazy(() => import('../pages/Auth/SignUp'));
@@ -94,7 +95,6 @@ const AppRoutes = () => {
     },
     { path: '/order-history', element: <OrderHistory /> },
     { path: '/current-orders', element: <CurrentOrders /> },
-    { path: '/track-order', element: <TrackOrder /> },
     { path: '/address', element: <Address /> },
     { 
       path: '/settings', 
@@ -195,6 +195,14 @@ const AppRoutes = () => {
         </ProtectedRoute>
       ),
     },
+    {
+      path: '/admin/chat',
+      element: (
+        <ProtectedRoute requiredRole="admin">
+          <AdminChat />
+        </ProtectedRoute>
+      ),
+    },
     
     // Redirect old admin routes to new admin dashboard
     {
@@ -242,11 +250,13 @@ const AppRoutes = () => {
     <Suspense
       fallback={<LoadingOverlay message="Loading page..." fullScreen />}
     >
-      <Routes>
-        {routes.map(({ path, element }) => (
-          <Route key={path} path={path} element={element} />
-        ))}
-      </Routes>
+      <UserLayout>
+        <Routes>
+          {routes.map(({ path, element }) => (
+            <Route key={path} path={path} element={element} />
+          ))}
+        </Routes>
+      </UserLayout>
     </Suspense>
   );
 };

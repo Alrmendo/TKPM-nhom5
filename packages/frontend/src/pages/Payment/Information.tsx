@@ -26,86 +26,112 @@ const Information: React.FC = () => {
   const [showAddressForm, setShowAddressForm] = useState(true);
   const { toast } = useToast();
   
+  // Hàm để lấy địa chỉ và thông tin profile từ API
+  const fetchAddressAndProfileData = async () => {
+    try {
+      // Lấy danh sách địa chỉ đã lưu từ API
+      const addressesResponse = await axios.get('http://localhost:3000/users/addresses', { withCredentials: true });
+      
+      if (addressesResponse.data.success) {
+        const addressesData = addressesResponse.data.data || {};
+        console.log('Saved addresses loaded:', addressesData);
+        
+        // Kiểm tra định dạng dữ liệu trả về
+        let addressesList = [];
+        
+        // Kiểm tra nếu API trả về dạng { addresses: [...], defaultAddressId: '...' }
+        if (addressesData.addresses && Array.isArray(addressesData.addresses)) {
+          addressesList = addressesData.addresses;
+          if (addressesData.defaultAddressId) {
+            setDefaultAddressId(addressesData.defaultAddressId);
+          }
+        } 
+        // Nếu API trả về trực tiếp mảng địa chỉ
+        else if (Array.isArray(addressesData)) {
+          addressesList = addressesData;
+        }
+        
+        setSavedAddresses(addressesList);
+        
+        // Xử lý địa chỉ mặc định hoặc địa chỉ đầu tiên
+        if (addressesList.length > 0) {
+          if (addressesData.defaultAddressId) {
+            // Tìm địa chỉ mặc định dựa vào ID
+            const defaultAddress = addressesList.find(addr => addr.id === addressesData.defaultAddressId);
+            if (defaultAddress) {
+              setSelectedAddressId(defaultAddress.id);
+              setShowAddressForm(false);
+            } else {
+              // Nếu không tìm thấy địa chỉ mặc định, chọn địa chỉ đầu tiên
+              setSelectedAddressId(addressesList[0].id);
+              setShowAddressForm(false);
+            }
+          } else {
+            // Nếu không có defaultAddressId, kiểm tra xem các địa chỉ có trường isDefault không
+            const defaultAddress = addressesList.find(addr => addr.isDefault === true);
+            if (defaultAddress) {
+              setDefaultAddressId(defaultAddress.id);
+              setSelectedAddressId(defaultAddress.id);
+              setShowAddressForm(false);
+            } else {
+              // Nếu không có địa chỉ mặc định, chọn địa chỉ đầu tiên
+              setSelectedAddressId(addressesList[0].id);
+              setShowAddressForm(false);
+            }
+          }
+        } else {
+          // Nếu không có địa chỉ nào, hiển thị form thêm mới
+          setShowAddressForm(true);
+        }
+      } else {
+        // Nếu API không trả về success, hiển thị form
+        setShowAddressForm(true);
+      }
+    } catch (error) {
+      console.error('Error fetching addresses:', error);
+      // Nếu không lấy được địa chỉ, mặc định hiển thị form thêm mới
+      setShowAddressForm(true);
+    }
+  };
+  
   useEffect(() => {
     const fetchData = async () => {
       try {
         setIsLoading(true);
-        
-        // Tách phần lấy địa chỉ và thông tin profile thành function riêng
-        const fetchAddressAndProfileData = async () => {
-          // Fetch user addresses
+        // Using flag to track if we loaded items
+        let hasItems = false;
+
+        // Check for order data in localStorage
+        const orderStr = localStorage.getItem('currentOrder');
+        if (orderStr) {
           try {
-            const addressesResponse = await axios.get('http://localhost:3000/users/addresses', { withCredentials: true });
+            const orderData = JSON.parse(orderStr);
+            console.log('Order data from localStorage:', orderData);
+            let allCartItems = [];
             
-            if (addressesResponse.data.success && addressesResponse.data.data) {
-              const addressData = addressesResponse.data.data;
-              setSavedAddresses(addressData.addresses || []);
-              setDefaultAddressId(addressData.defaultAddressId || null);
-              
-              // Show address form if no saved addresses
-              if (!addressData.addresses || addressData.addresses.length === 0) {
-                setShowAddressForm(true);
-              } else {
-                // Just show the saved addresses without selecting any by default
-                setSelectedAddressId(null);
-                setShowAddressForm(false);
-              }
-            }
-          } catch (error) {
-            console.error('Error fetching user addresses:', error);
-            // Non-critical, continue without saved addresses
-          }
-          
-          // Fetch user profile
-          try {
-            const profileResponse = await axios.get('http://localhost:3000/users/profile', { withCredentials: true });
-            
-            if (profileResponse.data.success && profileResponse.data.data) {
-              // Store profile data for pre-filling forms if needed
-              const userData = profileResponse.data.data;
-              
-              // If we have profile data but no addresses, pre-set the form with name and contact info
-              if (savedAddresses.length === 0 && userData) {
-                setShowAddressForm(true);
-              }
-            }
-          } catch (error) {
-            console.error('Error fetching user profile:', error);
-            // Non-critical, continue without profile data
-          }
-        };
-        
-        // Kiểm tra dữ liệu đơn hàng trong localStorage trước
-        const orderDataStr = localStorage.getItem('currentOrder');
-        if (orderDataStr) {
-          try {
-            const orderData = JSON.parse(orderDataStr);
-            console.log('Order data from localStorage in Information page:', orderData);
-            
-            let hasItems = false;
-            
-            // Check for regular dress items
+            // Process dress items
             if (orderData && orderData.items && orderData.items.length > 0) {
-              setCartItems(orderData.items);
-              hasItems = true;
+              console.log('Dress items found in order:', orderData.items);
+              allCartItems = [...orderData.items];
               
+              // Calculate summary for dress items
               const firstItem = orderData.items[0];
-              let itemStartDate = firstItem.startDate ? new Date(firstItem.startDate) : new Date();
-              let itemEndDate = firstItem.endDate ? new Date(firstItem.endDate) : new Date();
+              const startDate = new Date(firstItem.startDate);
+              const endDate = new Date(firstItem.endDate);
               
-              // Đảm bảo ngày hợp lệ
-              if (isNaN(itemStartDate.getTime())) itemStartDate = new Date();
-              if (isNaN(itemEndDate.getTime())) itemEndDate = new Date();
+              if (!isNaN(startDate.getTime()) && !isNaN(endDate.getTime())) {
+                const dressItemsSummary = calculateOrderSummary(
+                  orderData.items,
+                  startDate,
+                  endDate
+                );
+                setSummary(dressItemsSummary);
+              }
               
-              const calculatedSummary = calculateOrderSummary(
-                orderData.items,
-                itemStartDate,
-                itemEndDate
-              );
-              setSummary(calculatedSummary);
+              hasItems = true;
             }
             
-            // Check for photography items
+            // Process photography items
             if (orderData && orderData.photographyItems && orderData.photographyItems.length > 0) {
               console.log('Photography items found in order:', orderData.photographyItems);
               
@@ -122,16 +148,10 @@ const Information: React.FC = () => {
                 isPhotographyService: true
               }));
               
-              // If we already have dress items, merge the arrays; otherwise, set cartItems directly
-              if (hasItems) {
-                setCartItems(prev => [...prev, ...processedPhotographyItems]);
-              } else {
-                setCartItems(processedPhotographyItems);
-              }
+              // Combine with any existing dress items
+              allCartItems = [...allCartItems, ...processedPhotographyItems];
               
-              hasItems = true;
-              
-              // Calculate summary for photography services
+              // Calculate summary for photography services and combine with dress summary if available
               const totalAmount = processedPhotographyItems.reduce(
                 (sum, item) => sum + (item.price || 0), 0
               );
@@ -144,10 +164,12 @@ const Information: React.FC = () => {
                 updatedSummary.total += totalAmount + (totalAmount * 0.1);
                 return updatedSummary;
               });
+              
+              hasItems = true;
             }
             
-            // If we have any items (dress or photography), fetch address data and exit early
             if (hasItems) {
+              setCartItems(allCartItems);
               await fetchAddressAndProfileData();
               setIsLoading(false);
               return; // Exit if we have any items
@@ -156,7 +178,7 @@ const Information: React.FC = () => {
             console.error('Error parsing order data from localStorage:', e);
           }
         }
-        
+
         // If no order data found in localStorage, check for separate photography cart (fallback)
         const photographyCartStr = localStorage.getItem('photography_cart_items');
         if (photographyCartStr) {

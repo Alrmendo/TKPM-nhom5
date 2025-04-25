@@ -13,48 +13,11 @@ export const PaymentApi = {
   // Create a new order from cart items
   createOrder: async (): Promise<Order> => {
     try {
-      // Kiểm tra dữ liệu trong localStorage
-      const orderDataStr = localStorage.getItem('currentOrder');
-      if (orderDataStr) {
-        const orderData = JSON.parse(orderDataStr);
-        
-        // Nếu có dữ liệu trong localStorage, sử dụng để tạo đơn hàng
-        if (orderData && orderData.items && orderData.items.length > 0) {
-          try {
-            // Thử tạo đơn hàng từ giỏ hàng trên server
-            const response = await api.post('/orders/create');
-            return response.data.data;
-          } catch (error: any) {
-            console.error('Error creating order from server cart:', error);
-            
-            // Nếu server báo giỏ hàng trống, thử tạo đơn hàng từ dữ liệu localStorage
-            if (error.response && error.response.data && 
-                (error.response.data.message === 'Cart is empty' || 
-                 error.response.status === 400)) {
-              
-              console.log('Creating order from localStorage data instead...');
-              
-              // Gửi trực tiếp dữ liệu đến endpoint chung '/orders/create'
-              // Thêm các tham số để backend hiểu đang tạo đơn hàng từ dữ liệu trực tiếp
-              const createResponse = await api.post('/orders/create', {
-                useLocalData: true, // Flag để backend biết đây là dữ liệu gửi trực tiếp
-                items: orderData.items,
-                startDate: orderData.items[0].startDate,
-                endDate: orderData.items[0].endDate
-              });
-              
-              return createResponse.data.data;
-            }
-            
-            // Nếu không phải lỗi giỏ hàng trống, ném lỗi
-            throw error;
-          }
-        }
-      }
+      // Import the createOrder function from the main API
+      const { createOrder } = await import('../../../api/order');
       
-      // Nếu không có dữ liệu trong localStorage, gọi API thông thường
-      const response = await api.post('/orders/create');
-      return response.data.data;
+      // Use the main API's createOrder function which now handles localStorage fallback
+      return await createOrder();
     } catch (error: any) {
       console.error('Error creating order:', error);
       if (error.response) {

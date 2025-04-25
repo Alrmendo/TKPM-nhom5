@@ -35,6 +35,7 @@ import {
   Logout,
   AccountCircle,
   FeaturedPlayList,
+  Chat as ChatIcon,
 } from '@mui/icons-material';
 
 const drawerWidth = 240;
@@ -75,6 +76,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
     { text: 'Orders', path: '/admin/orders', icon: <LocalShipping /> },
     { text: 'Appointments', path: '/admin/appointments', icon: <CalendarMonth /> },
     { text: 'Contacts', path: '/admin/contacts', icon: <ContactMail /> },
+    { text: 'Chat', path: '/admin/chat', icon: <ChatIcon /> },
     { text: 'Photography', path: '/admin/photography', icon: <Photo /> },
     { text: 'Photography Stats', path: '/admin/photography-statistics', icon: <BarChart /> },
     { text: 'Customer Fitting', path: '/admin/customer-fitting', icon: <FeaturedPlayList /> },

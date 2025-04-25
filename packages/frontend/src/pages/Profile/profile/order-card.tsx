@@ -1,4 +1,11 @@
-import { CheckCircle, XCircle, Clock, Hourglass, Trash2, Package2 } from 'lucide-react';
+import {
+  CheckCircle,
+  XCircle,
+  Clock,
+  Hourglass,
+  Trash2,
+  Package2,
+} from 'lucide-react';
 import { JSX } from 'react';
 import { Link } from 'react-router-dom';
 
@@ -11,11 +18,26 @@ export interface OrderItem {
   rentalDuration: string;
   arrivalDate: string;
   returnDate: string;
-  status: 'done' | 'pending' | 'under-review' | 'canceled' | 'confirmed';
+  status:
+    | 'done'
+    | 'pending'
+    | 'under-review'
+    | 'canceled'
+    | 'confirmed'
+    | 'shipped'
+    | 'delivered'
+    | 'returned'
+    | 'cancelled'
+    | 'Pending'
+    | 'Confirmed'
+    | 'Cancelled'
+    | 'Completed'
+    | 'In Cart';
   isCartItem?: boolean;
   isPaid?: boolean;
-  purchaseType?: 'rent' | 'buy' | 'service';  // Thêm 'service' cho dịch vụ nhiếp ảnh
-  isPhotographyService?: boolean;  // Flag để nhận biết đây là dịch vụ nhiếp ảnh
+  purchaseType?: 'rent' | 'buy' | 'service'; // Thêm 'service' cho dịch vụ nhiếp ảnh
+  isPhotographyService?: boolean; // Flag để nhận biết đây là dịch vụ nhiếp ảnh
+  additionalDetails?: string;
 }
 
 interface OrderCardProps {
@@ -25,16 +47,62 @@ interface OrderCardProps {
 
 export function OrderCard({ order, onDelete }: OrderCardProps): JSX.Element {
   const getStatusIcon = () => {
+    // For cart items, use a shopping cart icon
+    if (order.isCartItem) {
+      return (
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="20"
+          height="20"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          className="h-5 w-5 text-blue-500"
+        >
+          <circle cx="8" cy="21" r="1"></circle>
+          <circle cx="19" cy="21" r="1"></circle>
+          <path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"></path>
+        </svg>
+      );
+    }
+
+    // Special handling for photography bookings with original backend status names
+    if (order.isPhotographyService) {
+      switch (order.status) {
+        case 'Completed':
+          return <CheckCircle className="h-5 w-5 text-green-600" />;
+        case 'Confirmed':
+          return <Hourglass className="h-5 w-5 text-amber-500" />;
+        case 'Pending':
+          return <Clock className="h-5 w-5 text-amber-500" />;
+        case 'Cancelled':
+          return <XCircle className="h-5 w-5 text-red-500" />;
+        default:
+          return null;
+      }
+    }
+
+    // Existing logic for regular orders
     switch (order.status) {
       case 'done':
         return <CheckCircle className="h-5 w-5 text-green-600" />;
       case 'confirmed':
-        return <Package2 className="h-5 w-5 text-green-600" />;
+        return <Package2 className="h-5 w-5 text-blue-500" />;
+      case 'shipped':
+        return <Package2 className="h-5 w-5 text-purple-600" />;
+      case 'delivered':
+        return <CheckCircle className="h-5 w-5 text-green-600" />;
+      case 'returned':
+        return <CheckCircle className="h-5 w-5 text-purple-600" />;
       case 'pending':
         return <Clock className="h-5 w-5 text-amber-500" />;
       case 'under-review':
         return <Hourglass className="h-5 w-5 text-amber-500" />;
       case 'canceled':
+      case 'cancelled':
         return <XCircle className="h-5 w-5 text-red-500" />;
       default:
         return null;
@@ -45,27 +113,74 @@ export function OrderCard({ order, onDelete }: OrderCardProps): JSX.Element {
     if (order.isPaid) {
       return 'Paid';
     }
-    
+
+    // Check for cart items first
+    if (order.isCartItem || order.status === 'In Cart') {
+      return 'In Cart';
+    }
+
+    // Special handling for photography bookings
+    if (order.isPhotographyService) {
+      return order.status; // Just return the original status
+    }
+
     switch (order.status) {
       case 'done':
         return 'Done';
       case 'confirmed':
         return 'Confirmed';
+      case 'shipped':
+        return 'Shipped';
+      case 'delivered':
+        return 'Delivered';
+      case 'returned':
+        return 'Returned';
       case 'pending':
-        return order.isCartItem ? 'In Cart' : 'Pending';
+        return 'Pending';
       case 'under-review':
-        return 'Under review';
+        return 'Under Review';
       case 'canceled':
+      case 'cancelled':
         return 'Canceled';
       default:
         return '';
     }
   };
 
+  const getStatusColor = () => {
+    // For cart items, use a distinctive color
+    if (order.isCartItem) {
+      return 'text-blue-500';
+    }
+
+    // Special handling for photography bookings
+    if (order.isPhotographyService) {
+      switch (order.status) {
+        case 'Completed':
+          return 'text-green-600';
+        case 'Cancelled':
+          return 'text-red-500';
+        default:
+          return 'text-amber-500';
+      }
+    }
+
+    // Existing logic for regular orders
+    switch (order.status) {
+      case 'done':
+      case 'confirmed':
+        return 'text-green-600';
+      case 'canceled':
+        return 'text-red-500';
+      default:
+        return 'text-amber-500';
+    }
+  };
+
   const handleDelete = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    
+
     try {
       if (onDelete) {
         await onDelete(order.id);
@@ -96,7 +211,9 @@ export function OrderCard({ order, onDelete }: OrderCardProps): JSX.Element {
             ) : (
               <>
                 {order.size} / {order.color}
-                {order.purchaseType !== 'buy' && order.purchaseType !== 'service' && ` / ${order.rentalDuration}`}
+                {order.purchaseType !== 'buy' &&
+                  order.purchaseType !== 'service' &&
+                  ` / ${order.rentalDuration}`}
                 {order.purchaseType === 'buy' && ` / Mua sản phẩm`}
               </>
             )}
@@ -118,45 +235,46 @@ export function OrderCard({ order, onDelete }: OrderCardProps): JSX.Element {
         <div className="flex flex-col items-end space-y-3">
           <div className="flex items-center">
             {getStatusIcon()}
-            <span
-              className={`ml-1 ${
-                order.status === 'done' || order.status === 'confirmed'
-                  ? 'text-green-600'
-                  : order.status === 'canceled'
-                  ? 'text-red-500'
-                  : 'text-amber-500'
-              }`}
-            >
+            <span className={`ml-1 ${getStatusColor()}`}>
               {getStatusText()}
             </span>
           </div>
 
           <div className="flex space-x-2">
-            {(order.status === 'pending' || order.status === 'under-review' || order.isCartItem) && onDelete && (
-              <button
-                onClick={handleDelete}
-                className="px-4 py-1 border rounded-full text-sm text-red-600 hover:bg-red-50 border-red-200 flex items-center"
-                type="button"
-              >
-                <Trash2 className="w-3 h-3 mr-1" />
-                Delete
-              </button>
-            )}
+            {(order.status === 'pending' ||
+              order.status === 'under-review') &&
+              onDelete && !order.isCartItem && !order.isPhotographyService && (
+                <button
+                  onClick={handleDelete}
+                  className="px-4 py-1 border rounded-full text-sm text-red-600 hover:bg-red-50 border-red-200 flex items-center"
+                >
+                  <Trash2 className="h-4 w-4 mr-1" /> Delete
+                </button>
+              )}
 
-            {order.isCartItem ? (
-              <Link
-                to="/cart"
-                className="px-4 py-1 border rounded-full text-sm text-amber-600 hover:bg-amber-50 border-amber-200"
+            {(order.isCartItem || order.status === 'In Cart') && (
+              <Link 
+                to="/cart" 
+                className="px-4 py-1 border rounded-full text-sm text-blue-600 hover:bg-blue-50 border-blue-200 flex items-center"
               >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className="h-4 w-4 mr-1"
+                >
+                  <circle cx="8" cy="21" r="1"></circle>
+                  <circle cx="19" cy="21" r="1"></circle>
+                  <path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"></path>
+                </svg>
                 Go to Cart
               </Link>
-            ) : (
-              <a
-                href={`/order-details/${order.id}`}
-                className="px-4 py-1 border rounded-full text-sm text-gray-600 hover:bg-gray-50"
-              >
-                More details
-              </a>
             )}
           </div>
         </div>
