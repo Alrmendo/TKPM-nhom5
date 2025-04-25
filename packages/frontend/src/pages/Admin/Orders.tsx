@@ -193,6 +193,58 @@ const Orders = () => {
       // Map backend response to our frontend interface
       const mappedOrders: Order[] = Array.isArray(ordersData)
         ? ordersData.map((order) => {
+            // Calculate rental days based on start and end dates if available
+            let rentalDays = 3; // Default value
+            if (order.startDate && order.endDate) {
+              rentalDays = calculateRentalDays(order.startDate, order.endDate);
+            }
+
+            // Map items with correct rental days
+            const items = Array.isArray(order.items)
+              ? order.items.map((item: any) => ({
+                  dress: {
+                    _id: item.dressId || '',
+                    name: item.name || 'Unknown Dress',
+                  },
+                  quantity: item.quantity || 1,
+                  price: item.pricePerDay || 0,
+                  // Use calculated rental days if not specified directly
+                  rentalDays: item.rentalDays || rentalDays,
+                }))
+              : [];
+
+            // Calculate correct total from items
+            const calculatedTotal = items.reduce(
+              (total: number, item: OrderItem) =>
+                total + item.price * item.quantity * (item.rentalDays || 1),
+              0,
+            );
+
+            // Check if we should use the calculated total instead of the one from backend
+            const finalTotal = order.totalAmount
+              ? Math.abs(calculatedTotal - order.totalAmount) > 0.01
+                ? calculatedTotal
+                : order.totalAmount
+              : calculatedTotal;
+
+            // Properly handle customer information
+            const customerName =
+              order.userId?.name ||
+              (order.userId?.firstName && order.userId?.lastName
+                ? `${order.userId.firstName} ${order.userId.lastName}`
+                : order.userId?.username ||
+                  order.customer?.name ||
+                  (order.customer?.firstName && order.customer?.lastName
+                    ? `${order.customer.firstName} ${order.customer.lastName}`
+                    : null));
+
+            // Handle shipping address - don't include N/A placeholders if real data is missing
+            const hasShippingAddress =
+              order.shippingAddress &&
+              (order.shippingAddress.street ||
+                order.shippingAddress.city ||
+                order.shippingAddress.state);
+
             // Provide default values for potentially missing fields
             return {
               _id: order._id || '',
@@ -204,43 +256,33 @@ const Orders = () => {
                   order.userId?._id ||
                   order.customer?._id ||
                   (typeof order.userId === 'string' ? order.userId : ''),
-                name:
-                  order.userId?.name ||
-                  (order.userId?.firstName && order.userId?.lastName
-                    ? `${order.userId.firstName} ${order.userId.lastName}`
-                    : order.userId?.username ||
-                      order.customer?.name ||
-                      (order.customer?.firstName && order.customer?.lastName
-                        ? `${order.customer.firstName} ${order.customer.lastName}`
-                        : 'Unknown Customer')),
+                name: customerName || 'Unknown Customer',
                 email:
                   order.userId?.email ||
                   order.customer?.email ||
                   'unknown@example.com',
               },
-              items: Array.isArray(order.items)
-                ? order.items.map((item: any) => ({
-                    dress: {
-                      _id: item.dressId || '',
-                      name: item.name || 'Unknown Dress',
-                    },
-                    quantity: item.quantity || 1,
-                    price: item.pricePerDay || 0,
-                    rentalDays: 3, // Default rental days if not specified
-                  }))
-                : [],
-              totalAmount: order.totalAmount || 0,
+              items,
+              totalAmount: finalTotal,
               status: (order.status || 'pending') as Order['status'],
               paymentStatus: (order.paymentStatus ||
                 'pending') as Order['paymentStatus'],
               createdAt: order.createdAt || new Date().toISOString(),
-              shippingAddress: order.shippingAddress || {
-                street: 'N/A',
-                city: 'N/A',
-                state: 'N/A',
-                zipCode: 'N/A',
-                country: 'N/A',
-              },
+              shippingAddress: hasShippingAddress
+                ? {
+                    street: order.shippingAddress.street || '',
+                    city: order.shippingAddress.city || '',
+                    state: order.shippingAddress.state || '',
+                    zipCode: order.shippingAddress.zipCode || '',
+                    country: order.shippingAddress.country || '',
+                  }
+                : {
+                    street: 'N/A',
+                    city: 'N/A',
+                    state: 'N/A',
+                    zipCode: 'N/A',
+                    country: 'N/A',
+                  },
               trackingNumber: order.trackingNumber,
               isRental: true, // Default to rental for wedding dress shop
               rentalPeriod:
@@ -584,6 +626,13 @@ const Orders = () => {
     return paymentStatus?.color || 'default';
   };
 
+  const calculateRentalDays = (startDate: string, endDate: string) => {
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    const differenceInTime = end.getTime() - start.getTime();
+    return Math.ceil(differenceInTime / (1000 * 3600 * 24)) + 1; // Include both start and end days
+  };
+
   const renderGridComponent = () => {
     return (
       <Box sx={{ flexGrow: 1 }}>
@@ -765,7 +814,11 @@ const Orders = () => {
                         {order.orderNumber}
                       </TableCell>
                       <TableCell>{formatDate(order.createdAt)}</TableCell>
-                      <TableCell>{order.customer.name}</TableCell>
+                      <TableCell>
+                        {order.customer.name !== 'Unknown Customer'
+                          ? order.customer.name
+                          : order.customer.email}
+                      </TableCell>
                       <TableCell>${order.totalAmount.toFixed(2)}</TableCell>
                       <TableCell>
                         <Chip
@@ -946,6 +999,48 @@ const Orders = () => {
   const renderOrderDetailDialog = () => {
     if (!selectedOrder) return null;
 
+    // Calculate the correct total based on items and rental days
+    // Get rental days from rental period if available
+    let effectiveRentalDays = 3; // Default
+    if (selectedOrder.rentalPeriod) {
+      effectiveRentalDays = calculateRentalDays(
+        selectedOrder.rentalPeriod.startDate,
+        selectedOrder.rentalPeriod.endDate,
+      );
+    }
+
+    // Recalculate item totals with corrected rental days
+    const updatedItems = selectedOrder.items.map((item) => ({
+      ...item,
+      rentalDays: item.rentalDays || effectiveRentalDays,
+    }));
+
+    // Calculate correct total
+    const calculatedTotal = updatedItems.reduce(
+      (total, item) =>
+        total +
+        (item.price || 0) * (item.quantity || 1) * (item.rentalDays || 1),
+      0,
+    );
+
+    // Check if there's a discrepancy in the total
+    const hasDiscrepancy =
+      Math.abs(calculatedTotal - selectedOrder.totalAmount) > 0.01;
+
+    // Determine if shipping section should be shown
+    const hasShippingInfo =
+      selectedOrder.shippingAddress &&
+      (selectedOrder.shippingAddress.street !== 'N/A' ||
+        selectedOrder.shippingAddress.city !== 'N/A' ||
+        selectedOrder.shippingAddress.state !== 'N/A');
+
+    // Extract customer ID or name for better display
+    const customerIdDisplay = `Customer #${selectedOrder.customer._id.substring(0, 6)}`;
+    const customerNameDisplay =
+      selectedOrder.customer.name !== 'Unknown Customer'
+        ? selectedOrder.customer.name
+        : customerIdDisplay;
+
     return (
       <Dialog
         open={orderDetailOpen}
@@ -986,7 +1081,7 @@ const Orders = () => {
                           Customer Information
                         </Typography>
                         <Typography variant="body1" fontWeight="medium">
-                          {selectedOrder.customer.name}
+                          {customerNameDisplay}
                         </Typography>
                         <Typography variant="body2">
                           {selectedOrder.customer.email}
@@ -1054,18 +1149,32 @@ const Orders = () => {
                 <Grid item xs={12} md={6}>
                   <Paper sx={{ p: 2, height: '100%', borderRadius: 2 }}>
                     <Stack spacing={2}>
-                      <Box>
-                        <Typography variant="subtitle2" color="text.secondary">
-                          Shipping Address
-                        </Typography>
-                        <Typography>
-                          {selectedOrder.shippingAddress.street},{' '}
-                          {selectedOrder.shippingAddress.city},{' '}
-                          {selectedOrder.shippingAddress.state}{' '}
-                          {selectedOrder.shippingAddress.zipCode},{' '}
-                          {selectedOrder.shippingAddress.country}
-                        </Typography>
-                      </Box>
+                      {/* Only show shipping section if relevant */}
+                      {(hasShippingInfo ||
+                        selectedOrder.status === 'shipped' ||
+                        selectedOrder.status === 'delivered') && (
+                        <Box>
+                          <Typography
+                            variant="subtitle2"
+                            color="text.secondary"
+                          >
+                            Shipping Address
+                          </Typography>
+                          {hasShippingInfo ? (
+                            <Typography>
+                              {selectedOrder.shippingAddress.street},{' '}
+                              {selectedOrder.shippingAddress.city},{' '}
+                              {selectedOrder.shippingAddress.state}{' '}
+                              {selectedOrder.shippingAddress.zipCode},{' '}
+                              {selectedOrder.shippingAddress.country}
+                            </Typography>
+                          ) : (
+                            <Typography color="text.secondary">
+                              No shipping address provided
+                            </Typography>
+                          )}
+                        </Box>
+                      )}
 
                       {selectedOrder.trackingNumber && (
                         <Box>
@@ -1080,17 +1189,20 @@ const Orders = () => {
                           </Typography>
                         </Box>
                       )}
-                      <Box>
-                        <Typography variant="subtitle2" color="text.secondary">
-                          Shipping Duration
-                        </Typography>
-                        <Typography>
-                          {selectedOrder.status === 'shipped' ||
-                          selectedOrder.status === 'delivered'
-                            ? '3 days'
-                            : 'N/A'}
-                        </Typography>
-                      </Box>
+
+                      {/* Only show shipping duration when order is shipped or delivered */}
+                      {(selectedOrder.status === 'shipped' ||
+                        selectedOrder.status === 'delivered') && (
+                        <Box>
+                          <Typography
+                            variant="subtitle2"
+                            color="text.secondary"
+                          >
+                            Shipping Duration
+                          </Typography>
+                          <Typography>3 days</Typography>
+                        </Box>
+                      )}
 
                       {selectedOrder.isRental && selectedOrder.rentalPeriod && (
                         <Box>
@@ -1100,10 +1212,18 @@ const Orders = () => {
                           >
                             Rental Period
                           </Typography>
-                          <Typography>
-                            {formatDate(selectedOrder.rentalPeriod.startDate)} -{' '}
-                            {formatDate(selectedOrder.rentalPeriod.endDate)}
-                          </Typography>
+                          <Stack direction="column" spacing={0.5}>
+                            <Typography>
+                              {formatDate(selectedOrder.rentalPeriod.startDate)}{' '}
+                              - {formatDate(selectedOrder.rentalPeriod.endDate)}
+                            </Typography>
+                            <Typography
+                              variant="caption"
+                              color="text.secondary"
+                            >
+                              {effectiveRentalDays} days total
+                            </Typography>
+                          </Stack>
                         </Box>
                       )}
                     </Stack>
@@ -1125,7 +1245,7 @@ const Orders = () => {
                           </TableRow>
                         </TableHead>
                         <TableBody>
-                          {selectedOrder.items.map(
+                          {updatedItems.map(
                             (item: OrderItem, index: number) => (
                               <TableRow
                                 key={index}
@@ -1159,12 +1279,14 @@ const Orders = () => {
                                   ${(item.price || 0).toFixed(2)}
                                 </TableCell>
                                 <TableCell align="right">
-                                  {item.rentalDays || 'N/A'}
+                                  {item.rentalDays || effectiveRentalDays}
                                 </TableCell>
                                 <TableCell align="right">
                                   $
                                   {(
-                                    (item.price || 0) * (item.quantity || 1)
+                                    (item.price || 0) *
+                                    (item.quantity || 1) *
+                                    (item.rentalDays || effectiveRentalDays)
                                   ).toFixed(2)}
                                 </TableCell>
                               </TableRow>
@@ -1182,7 +1304,17 @@ const Orders = () => {
                               align="right"
                               sx={{ fontWeight: 'bold' }}
                             >
-                              ${selectedOrder.totalAmount.toFixed(2)}
+                              ${calculatedTotal.toFixed(2)}
+                              {hasDiscrepancy && (
+                                <Typography
+                                  variant="caption"
+                                  color="error"
+                                  display="block"
+                                >
+                                  Corrected from $
+                                  {selectedOrder.totalAmount.toFixed(2)}
+                                </Typography>
+                              )}
                             </TableCell>
                           </TableRow>
                         </TableBody>
