@@ -210,6 +210,36 @@ const CurrentOrdersPage: React.FC = () => {
           } catch (photoCartErr) {
             console.error('Error fetching photography cart items:', photoCartErr);
           }
+          
+          // Add dress items from cart
+          try {
+            console.log('Fetching dress cart items...');
+            const dressCartItems = await getCart();
+            console.log('Dress cart items:', dressCartItems);
+            
+            if (dressCartItems && dressCartItems.items && dressCartItems.items.length > 0) {
+              // Add dress items as cart items with "In Cart" status
+              dressCartItems.items.forEach((item) => {
+                formattedOrders.push({
+                  id: `dress-cart-item-${item._id || Math.random().toString(36).substring(7)}`,
+                  name: item.name,
+                  image: item.image,
+                  size: item.size,
+                  color: item.color,
+                  rentalDuration: item.startDate && item.endDate
+                    ? `${Math.ceil((new Date(item.endDate).getTime() - new Date(item.startDate).getTime()) / (1000 * 60 * 60 * 24))} Nights`
+                    : 'N/A',
+                  arrivalDate: item.startDate ? new Date(item.startDate).toLocaleDateString() : 'N/A',
+                  returnDate: item.endDate ? new Date(item.endDate).toLocaleDateString() : 'N/A',
+                  status: 'In Cart',
+                  isCartItem: true,
+                  purchaseType: item.purchaseType || 'rent'
+                });
+              });
+            }
+          } catch (cartErr) {
+            console.error('Error fetching dress cart items:', cartErr);
+          }
         }
 
         // Fetch photography bookings
@@ -339,6 +369,7 @@ const CurrentOrdersPage: React.FC = () => {
         order.status === 'under-review' ||
         order.status === 'confirmed' ||
         order.status === 'shipped' ||
+        order.status === 'In Cart' ||
         order.isCartItem === true
       );
     }
@@ -380,6 +411,20 @@ const CurrentOrdersPage: React.FC = () => {
         await removePhotographyFromCart(serviceId);
         
         toast.success('Photography service removed from cart successfully');
+      } else if (orderId.startsWith('dress-cart-item-')) {
+        // Extract the item index from the ID
+        const idParts = orderId.split('-');
+        const itemIndex = parseInt(idParts[idParts.length - 1]);
+        
+        if (!isNaN(itemIndex)) {
+          // For dress cart items, use removeFromCart
+          await removeFromCart(itemIndex);
+          
+          // Show success message
+          toast.success('Dress removed from cart successfully');
+        } else {
+          toast.error('Invalid item index');
+        }
       } else {
         // For actual orders, use cancelOrder
         await cancelOrder(orderId);
@@ -433,9 +478,7 @@ const CurrentOrdersPage: React.FC = () => {
                   <OrderCard
                     key={order.id}
                     order={order}
-                    onDelete={
-                      activeTab === 'current' ? handleDeleteOrder : undefined
-                    }
+                    onDelete={undefined}
                   />
                 ))
               ) : (
