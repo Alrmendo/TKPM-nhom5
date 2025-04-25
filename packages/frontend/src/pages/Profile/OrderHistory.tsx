@@ -63,7 +63,7 @@ const mapPhotographyStatus = (status: string): string => {
 };
 
 export default function OrderHistory(): JSX.Element {
-  const [activeTab, setActiveTab] = useState<OrderFilterTab>('current');
+  const [activeTab, setActiveTab] = useState<OrderFilterTab>('previous');
   const [userData, setUserData] = useState<UserProfile | null>(null);
   const [orders, setOrders] = useState<OrderItem[]>([]);
   const [loading, setLoading] = useState(false);
@@ -463,7 +463,7 @@ export default function OrderHistory(): JSX.Element {
 
           <div className="md:col-span-2">
             <OrderFilterTabs
-              defaultTab="current"
+              defaultTab={activeTab}
               onTabChange={setActiveTab}
             />
 
