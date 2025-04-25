@@ -2,54 +2,11 @@ import { useState, useEffect } from 'react';
 import Header from '../../components/header';
 import Footer from '../../components/footer';
 import ProductCard from './pcp/product-card';
-import FilterSection from './pcp/filter-section';
-import SortDropdown from './pcp/sort-dropdown';
 import { Link } from 'react-router-dom';
 import SearchBar from './pcp/search-bar';
 import { getAllDresses, searchDresses, Dress } from '../../api/dress';
 
-// Style filter options
-const styleOptions = [
-  { id: 'dress-for-moms', label: 'Dress for Moms' },
-  { id: 'wedding-guest', label: 'Wedding Guest' },
-  { id: 'short-tie', label: 'Short Tie' },
-  { id: 'cocktail', label: 'Cocktail' },
-  { id: 'prom', label: 'Prom' },
-  { id: 'formal-evening', label: 'Formal & Evening' },
-];
-
-// Color filter options
-const colorOptions = [
-  { id: 'white', label: 'White', color: '#ffffff' },
-  { id: 'gray', label: 'Gray', color: '#808080' },
-  { id: 'beige', label: 'Beige', color: '#f5f5dc' },
-  { id: 'cream', label: 'Cream', color: '#fffdd0' },
-  { id: 'pink', label: 'Pink', color: '#ffc0cb' },
-];
-
-// Size filter options
-const sizeOptions = [
-  { id: 'xs', label: 'XS' },
-  { id: 's', label: 'S' },
-  { id: 'm', label: 'M' },
-  { id: 'l', label: 'L' },
-  { id: 'xl', label: 'XL' },
-  { id: 'xxl', label: 'XXL' },
-];
-
-// Sort options
-const sortOptions = [
-  { id: 'default', label: 'Default sorting' },
-  { id: 'best-selling', label: 'Best selling' },
-  { id: 'price-low-high', label: 'Price low to high' },
-  { id: 'price-high-low', label: 'Price high to low' },
-  { id: 'latest', label: 'Latest model' },
-  { id: 'last-chance', label: 'Last chance' },
-  { id: 'clearance', label: 'Clearance' },
-];
-
 export default function WeddingDressPage(): JSX.Element {
-  const [sortBy, setSortBy] = useState('default');
   const [searchQuery, setSearchQuery] = useState('');
   const [dresses, setDresses] = useState<Dress[]>([]);
   const [filteredDresses, setFilteredDresses] = useState<Dress[]>([]);
@@ -57,7 +14,17 @@ export default function WeddingDressPage(): JSX.Element {
   const [error, setError] = useState<string | null>(null);
   const [visibleDresses, setVisibleDresses] = useState<number>(6); // Number of dresses to show initially
   const [isSearching, setIsSearching] = useState(false);
-  
+
+  // Filter and sort states
+  const [priceFilter, setPriceFilter] = useState<string>('all');
+  const [styleFilter, setStyleFilter] = useState<string>('all');
+  const [sortOption, setSortOption] = useState<string>('default');
+
+  // Get unique styles for filter options
+  const uniqueStyles = [
+    ...new Set(dresses.map((dress) => dress.style).filter(Boolean)),
+  ];
+
   useEffect(() => {
     const fetchDresses = async () => {
       try {
@@ -77,20 +44,73 @@ export default function WeddingDressPage(): JSX.Element {
     fetchDresses();
   }, []);
 
-  const handleSort = (optionId: string) => {
-    setSortBy(optionId);
-    // Thực hiện logic sắp xếp tại đây
-  };
+  // Apply filters and sorting when filter options or search results change
+  useEffect(() => {
+    let result = [...dresses];
+
+    // First apply search if there's a query
+    if (searchQuery.trim()) {
+      // Search logic is handled by the API, so we don't modify result here
+      // as searchResults are already set in the handleSearch function
+      return;
+    }
+
+    // Apply style filter
+    if (styleFilter !== 'all') {
+      result = result.filter((dress) => dress.style === styleFilter);
+    }
+
+    // Apply price filter
+    if (priceFilter !== 'all') {
+      switch (priceFilter) {
+        case 'under50':
+          result = result.filter((dress) => dress.dailyRentalPrice < 50);
+          break;
+        case '50to100':
+          result = result.filter(
+            (dress) =>
+              dress.dailyRentalPrice >= 50 && dress.dailyRentalPrice <= 100,
+          );
+          break;
+        case '100to200':
+          result = result.filter(
+            (dress) =>
+              dress.dailyRentalPrice > 100 && dress.dailyRentalPrice <= 200,
+          );
+          break;
+        case 'above200':
+          result = result.filter((dress) => dress.dailyRentalPrice > 200);
+          break;
+      }
+    }
+
+    // Apply sorting
+    if (sortOption !== 'default') {
+      switch (sortOption) {
+        case 'price-asc':
+          result.sort((a, b) => a.dailyRentalPrice - b.dailyRentalPrice);
+          break;
+        case 'price-desc':
+          result.sort((a, b) => b.dailyRentalPrice - a.dailyRentalPrice);
+          break;
+        case 'rating-desc':
+          result.sort((a, b) => (b.avgRating || 0) - (a.avgRating || 0));
+          break;
+      }
+    }
+
+    setFilteredDresses(result);
+  }, [styleFilter, priceFilter, sortOption, dresses, searchQuery]);
 
   const handleSearch = async (query: string) => {
     setSearchQuery(query);
-    
+
     if (!query.trim()) {
       // If search query is empty, show all dresses
       setFilteredDresses(dresses);
       return;
     }
-    
+
     try {
       setIsSearching(true);
       const searchResults = await searchDresses(query);
@@ -104,35 +124,50 @@ export default function WeddingDressPage(): JSX.Element {
       setIsSearching(false);
     }
   };
-  
+
   const handleLoadMore = () => {
-    setVisibleDresses(prev => prev + 6); // Load 6 more dresses
+    setVisibleDresses((prev) => prev + 6); // Load 6 more dresses
+  };
+
+  // Reset filters
+  const handleResetFilters = () => {
+    setPriceFilter('all');
+    setStyleFilter('all');
+    setSortOption('default');
+    if (!searchQuery.trim()) {
+      setFilteredDresses(dresses);
+    }
   };
 
   // Map API data to the format expected by ProductCard
   const mapDressesToCardFormat = (apiDresses: Dress[]) => {
-    return apiDresses.map(dress => ({
+    return apiDresses.map((dress) => ({
       id: dress._id,
       name: dress.name,
       designer: dress.style || 'Designer',
       price: dress.dailyRentalPrice,
       rating: dress.avgRating || 4.5,
       status: 'Available' as const,
-      mainImage: dress.images && dress.images.length > 0 
-        ? dress.images[0] 
-        : '/placeholder.svg?height=500&width=400',
-      thumbnails: dress.images && dress.images.length > 0 
-        ? dress.images.slice(0, 3).map(img => img) 
-        : [
-            '/placeholder.svg?height=40&width=40',
-            '/placeholder.svg?height=40&width=40',
-            '/placeholder.svg?height=40&width=40',
-          ],
+      mainImage:
+        dress.images && dress.images.length > 0
+          ? dress.images[0]
+          : '/placeholder.svg?height=500&width=400',
+      thumbnails:
+        dress.images && dress.images.length > 0
+          ? dress.images.slice(0, 3).map((img) => img)
+          : [
+              '/placeholder.svg?height=40&width=40',
+              '/placeholder.svg?height=40&width=40',
+              '/placeholder.svg?height=40&width=40',
+            ],
     }));
   };
-  
+
   // Get limited number of dresses to display
-  const displayDresses = mapDressesToCardFormat(filteredDresses).slice(0, visibleDresses);
+  const displayDresses = mapDressesToCardFormat(filteredDresses).slice(
+    0,
+    visibleDresses,
+  );
   const hasMoreDresses = filteredDresses.length > visibleDresses;
 
   return (
@@ -150,21 +185,123 @@ export default function WeddingDressPage(): JSX.Element {
 
         <h1 className="text-2xl font-medium mb-8">Wedding Dress</h1>
 
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-          <div className="lg:col-span-1">
-            <div className="bg-white rounded-lg p-4">
-              <FilterSection title="Style" type="checkbox" options={styleOptions} />
-              <FilterSection title="Rental Price" type="range" minPrice={250} maxPrice={650} />
-              <FilterSection title="Colors" type="color" options={colorOptions} />
-              <FilterSection title="Size" type="checkbox" options={sizeOptions} />
+        {/* Filter and Sort UI */}
+        <div className="flex flex-wrap gap-4 mb-8 items-center">
+          <div className="flex items-center space-x-2">
+            <label htmlFor="style-filter" className="text-sm font-medium">
+              Style:
+            </label>
+            <div className="relative">
+              <select
+                id="style-filter"
+                value={styleFilter}
+                onChange={(e) => setStyleFilter(e.target.value)}
+                className="appearance-none bg-white border border-gray-300 rounded-md py-2 pl-3 pr-8 text-sm leading-tight focus:outline-none focus:ring-2 focus:ring-primary/50"
+              >
+                <option value="all">All Styles</option>
+                {uniqueStyles.map((style) => (
+                  <option key={style} value={style}>
+                    {style}
+                  </option>
+                ))}
+              </select>
+              <div className="absolute right-2 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="m6 9 6 6 6-6" />
+                </svg>
+              </div>
             </div>
           </div>
 
-          <div className="lg:col-span-3">
-            <div className="flex justify-end mb-6">
-              <SortDropdown options={sortOptions} onSort={handleSort} />
+          <div className="flex items-center space-x-2">
+            <label htmlFor="price-filter" className="text-sm font-medium">
+              Price:
+            </label>
+            <div className="relative">
+              <select
+                id="price-filter"
+                value={priceFilter}
+                onChange={(e) => setPriceFilter(e.target.value)}
+                className="appearance-none bg-white border border-gray-300 rounded-md py-2 pl-3 pr-8 text-sm leading-tight focus:outline-none focus:ring-2 focus:ring-primary/50"
+              >
+                <option value="all">All Prices</option>
+                <option value="under50">Under $50</option>
+                <option value="50to100">$50 - $100</option>
+                <option value="100to200">$100 - $200</option>
+                <option value="above200">Above $200</option>
+              </select>
+              <div className="absolute right-2 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="m6 9 6 6 6-6" />
+                </svg>
+              </div>
             </div>
+          </div>
 
+          <div className="flex items-center space-x-2 ml-auto">
+            <label htmlFor="sort-option" className="text-sm font-medium">
+              Sort by:
+            </label>
+            <div className="relative">
+              <select
+                id="sort-option"
+                value={sortOption}
+                onChange={(e) => setSortOption(e.target.value)}
+                className="appearance-none bg-white border border-gray-300 rounded-md py-2 pl-3 pr-8 text-sm leading-tight focus:outline-none focus:ring-2 focus:ring-primary/50"
+              >
+                <option value="default">Default</option>
+                <option value="price-asc">Price: Low to High</option>
+                <option value="price-desc">Price: High to Low</option>
+                <option value="rating-desc">Rating: High to Low</option>
+              </select>
+              <div className="absolute right-2 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="m6 9 6 6 6-6" />
+                </svg>
+              </div>
+            </div>
+          </div>
+
+          <button
+            onClick={handleResetFilters}
+            className="text-sm text-primary hover:text-primary-dark"
+          >
+            Reset Filters
+          </button>
+        </div>
+
+        <div className="grid grid-cols-1 gap-8">
+          <div>
             {loading || isSearching ? (
               <div className="flex justify-center items-center h-40">
                 <p>Loading dresses...</p>
@@ -175,11 +312,11 @@ export default function WeddingDressPage(): JSX.Element {
               </div>
             ) : displayDresses.length === 0 ? (
               <div className="flex justify-center items-center h-40">
-                <p>No dresses found matching "{searchQuery}"</p>
+                <p>No dresses found matching your criteria</p>
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {displayDresses.map(dress => (
+                {displayDresses.map((dress) => (
                   <ProductCard key={dress.id} {...dress} />
                 ))}
               </div>
@@ -187,7 +324,7 @@ export default function WeddingDressPage(): JSX.Element {
 
             {hasMoreDresses && (
               <div className="flex justify-center mt-12">
-                <button 
+                <button
                   className="border border-gray-300 rounded-md px-6 py-2 text-sm hover:bg-gray-50"
                   onClick={handleLoadMore}
                 >
