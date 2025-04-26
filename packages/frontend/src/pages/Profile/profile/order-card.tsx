@@ -11,6 +11,9 @@ import { Link } from 'react-router-dom';
 
 export interface OrderItem {
   id: string;
+  orderId?: string; // Reference to parent order
+  orderIndex?: number; // Item index within the order
+  itemCount?: number; // Total number of items in this order
   name: string;
   image: string;
   size: string;
