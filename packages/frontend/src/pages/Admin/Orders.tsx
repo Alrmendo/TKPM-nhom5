@@ -108,6 +108,7 @@ interface OrderItem {
   quantity: number;
   price: number;
   rentalDays?: number;
+  purchaseType?: string;
 }
 
 // Order statuses for filter and display
@@ -137,6 +138,13 @@ const PAYMENT_STATUSES = [
   },
 ];
 
+// Order types for filter and display
+const ORDER_TYPES = [
+  { value: 'all', label: 'All Types' },
+  { value: 'rental', label: 'Rentals' },
+  { value: 'buy', label: 'Purchases' },
+];
+
 // Custom Grid component to fix compatibility issues with MUI v5
 const Grid = (props: any) => {
   return <MuiGrid {...props} />;
@@ -149,6 +157,7 @@ const Orders = () => {
   const [loading, setLoading] = useState(true);
   const [filterStatus, setFilterStatus] = useState('all');
   const [filterPaymentStatus, setFilterPaymentStatus] = useState('all');
+  const [filterType, setFilterType] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
 
   // Pagination
@@ -210,6 +219,7 @@ const Orders = () => {
                   price: item.pricePerDay || 0,
                   // Use calculated rental days if not specified directly
                   rentalDays: item.rentalDays || rentalDays,
+                  purchaseType: item.purchaseType || 'rental',
                 }))
               : [];
 
@@ -244,6 +254,10 @@ const Orders = () => {
               (order.shippingAddress.street ||
                 order.shippingAddress.city ||
                 order.shippingAddress.state);
+
+            // Check the purchase type from the items - if any item has purchaseType 'buy', consider the order as a purchase
+            const isPurchase = Array.isArray(order.items) && order.items.some(item => item.purchaseType === 'buy');
+            const isRental = !isPurchase; // If not a purchase, assume it's a rental
 
             // Provide default values for potentially missing fields
             return {
@@ -284,7 +298,7 @@ const Orders = () => {
                     country: 'N/A',
                   },
               trackingNumber: order.trackingNumber,
-              isRental: true, // Default to rental for wedding dress shop
+              isRental, // Set based on the purchase type check
               rentalPeriod:
                 order.startDate && order.endDate
                   ? {
@@ -343,9 +357,18 @@ const Orders = () => {
       );
     }
 
+    // Apply type filter
+    if (filterType !== 'all' && result.length > 0) {
+      if (filterType === 'rental') {
+        result = result.filter((order) => order.isRental === true);
+      } else if (filterType === 'buy') {
+        result = result.filter((order) => order.isRental === false);
+      }
+    }
+
     // Update filtered orders
     setFilteredOrders(result);
-  }, [orders, searchTerm, filterStatus, filterPaymentStatus]);
+  }, [orders, searchTerm, filterStatus, filterPaymentStatus, filterType]);
 
   const handleChangePage = (
     _event: React.MouseEvent<HTMLButtonElement> | null,
@@ -793,10 +816,16 @@ const Orders = () => {
             <Grid item xs={12} sm={4} md={2}>
               <FormControl fullWidth size="small">
                 <InputLabel>Type</InputLabel>
-                <Select value="all" label="Type" onChange={() => {}}>
-                  <MenuItem value="all">All Types</MenuItem>
-                  <MenuItem value="rental">Rentals</MenuItem>
-                  <MenuItem value="purchase">Purchases</MenuItem>
+                <Select
+                  value={filterType}
+                  label="Type"
+                  onChange={(e) => setFilterType(e.target.value)}
+                >
+                  {ORDER_TYPES.map((type) => (
+                    <MenuItem key={type.value} value={type.value}>
+                      {type.label}
+                    </MenuItem>
+                  ))}
                 </Select>
               </FormControl>
             </Grid>
@@ -846,7 +875,7 @@ const Orders = () => {
                       <TableCell>${order.totalAmount.toFixed(2)}</TableCell>
                       <TableCell>
                         <Chip
-                          label={order.isRental ? 'Rental' : 'Purchase'}
+                          label={order.isRental ? 'Rental' : 'Buy'}
                           size="small"
                           color={order.isRental ? 'primary' : 'default'}
                           sx={{
@@ -1101,7 +1130,7 @@ const Orders = () => {
                     <Chip label="Rental" color="primary" size="small" />
                   )}
                   {!isRental && (
-                    <Chip label="Purchase" color="default" size="small" />
+                    <Chip label="Buy" color="default" size="small" />
                   )}
                   <Chip
                     label={
@@ -1172,18 +1201,13 @@ const Orders = () => {
                                 'partially_refunded' && 'Deposit refunded'}
                             </Typography>
                           )}
-                          {!isRental && (
+                          {!isRental &&
                             <Typography variant="body2" color="text.secondary">
                               {selectedOrder.paymentStatus === 'pending' &&
-                                'Awaiting payment'}
-                              {selectedOrder.paymentStatus === 'processing' &&
-                                'Payment processing'}
-                              {selectedOrder.paymentStatus === 'paid' &&
-                                'Paid in full'}
-                              {selectedOrder.paymentStatus === 'refunded' &&
-                                'Purchase refunded'}
+                                'Payment pending'}
+                              {selectedOrder.paymentStatus === 'paid' && 'Fully paid'}
                             </Typography>
-                          )}
+                          }
                         </Stack>
                       </Box>
 
