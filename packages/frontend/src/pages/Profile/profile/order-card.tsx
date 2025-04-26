@@ -11,6 +11,9 @@ import { Link } from 'react-router-dom';
 
 export interface OrderItem {
   id: string;
+  orderId?: string; // Reference to parent order
+  orderIndex?: number; // Item index within the order
+  itemCount?: number; // Total number of items in this order
   name: string;
   image: string;
   size: string;
@@ -205,6 +208,11 @@ export function OrderCard({ order, onDelete }: OrderCardProps): JSX.Element {
 
         <div className="flex-grow">
           <h3 className="font-medium text-lg">{order.name}</h3>
+          {order.itemCount && order.itemCount > 1 && (
+            <div className="text-xs text-blue-600 font-medium mb-1">
+              {order.orderIndex === 0 ? `Order contains ${order.itemCount} items` : `Item ${order.orderIndex + 1} of ${order.itemCount}`}
+            </div>
+          )}
           <p className="text-gray-600 text-sm">
             {order.isPhotographyService ? (
               <>Dịch vụ nhiếp ảnh / {order.size}</>

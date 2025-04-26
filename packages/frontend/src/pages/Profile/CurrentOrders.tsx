@@ -21,6 +21,9 @@ type OrderFilterTab = 'current' | 'previous' | 'canceled' | 'all';
 
 export interface OrderItem {
   id: string;
+  orderId?: string; // Reference to parent order
+  orderIndex?: number; // Item index within the order
+  itemCount?: number; // Total number of items in this order
   name: string;
   image: string;
   size: string;
@@ -53,15 +56,7 @@ export interface OrderItem {
 // Map backend status to frontend status
 const mapOrderStatus = (
   backendStatus: string,
-):
-  | 'done'
-  | 'pending'
-  | 'under-review'
-  | 'canceled'
-  | 'confirmed'
-  | 'shipped'
-  | 'delivered'
-  | 'returned' => {
+): 'done' | 'pending' | 'under-review' | 'canceled' | 'confirmed' | 'shipped' | 'delivered' | 'returned' => {
   const statusMap: Record<
     string,
     | 'done'
@@ -146,9 +141,6 @@ const CurrentOrdersPage: React.FC = () => {
               return;
             }
 
-            const firstItem = order.items[0];
-            console.log('First item in order:', firstItem);
-
             // Map backend status to frontend status
             const mappedStatus = mapOrderStatus(order.status);
             console.log(
@@ -157,21 +149,27 @@ const CurrentOrdersPage: React.FC = () => {
 
             // Only add non-paid orders to current orders
             if (order.status.toLowerCase() !== 'paid') {
-              formattedOrders.push({
-                id: order._id,
-                name: firstItem.name, // Assuming the first item's name as the main order name
-                image: firstItem.image,
-                size: firstItem.size,
-                color: firstItem.color,
-                rentalDuration: `${Math.ceil((new Date(order.endDate).getTime() - new Date(order.startDate).getTime()) / (1000 * 60 * 60 * 24))} Nights`,
-                arrivalDate: new Date(
-                  order.arrivalDate || order.startDate,
-                ).toLocaleDateString(),
-                returnDate: new Date(
-                  order.returnDate || order.endDate,
-                ).toLocaleDateString(),
-                status: mappedStatus,
-                purchaseType: firstItem.purchaseType || 'rent', // Lấy thông tin loại giao dịch từ đơn hàng
+              // Process all items in the order, not just the first one
+              order.items.forEach((item, itemIndex) => {
+                formattedOrders.push({
+                  id: `${order._id}-item-${itemIndex}`, // Unique ID for each item
+                  orderId: order._id, // Reference to parent order
+                  orderIndex: itemIndex, // Index within the order
+                  itemCount: order.items.length, // Total items in this order
+                  name: item.name,
+                  image: item.image,
+                  size: item.size,
+                  color: item.color,
+                  purchaseType: item.purchaseType || 'rent',
+                  rentalDuration: `${Math.ceil((new Date(order.endDate).getTime() - new Date(order.startDate).getTime()) / (1000 * 60 * 60 * 24))} Nights`,
+                  arrivalDate: new Date(
+                    order.arrivalDate || order.startDate,
+                  ).toLocaleDateString(),
+                  returnDate: new Date(
+                    order.returnDate || order.endDate,
+                  ).toLocaleDateString(),
+                  status: mappedStatus
+                });
               });
             }
           });
@@ -301,16 +299,20 @@ const CurrentOrdersPage: React.FC = () => {
           if (order.isPhotographyService) {
             const key = order.id;
             uniqueOrderMap.set(key, order);
-          } else {
-            // For wedding dresses, use name+size+color as key to prevent duplicates
+          } else if (order.isCartItem) {
+            // For cart items, use the existing deduplication logic
             const key = `${order.name}-${order.size}-${order.color}`;
-            // If we already have this item, only replace if it's not a cart item
             if (
               !uniqueOrderMap.has(key) ||
               (uniqueOrderMap.get(key)?.isCartItem && !order.isCartItem)
             ) {
               uniqueOrderMap.set(key, order);
             }
+          } else {
+            // For regular orders, each item needs to be preserved
+            // Use the unique ID we created earlier
+            const key = order.id;
+            uniqueOrderMap.set(key, order);
           }
         });
 

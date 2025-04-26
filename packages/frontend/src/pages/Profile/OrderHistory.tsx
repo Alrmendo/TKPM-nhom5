@@ -108,33 +108,38 @@ export default function OrderHistory(): JSX.Element {
               return;
             }
 
-            const firstItem = order.items[0];
-
             // Map backend status to frontend status
             const mappedStatus = mapOrderStatus(order.status);
-
-            formattedOrders.push({
-              id: order._id,
-              name: firstItem.name,
-              image: firstItem.image,
-              size: firstItem.size,
-              color: firstItem.color,
-              rentalDuration:
-                order.startDate && order.endDate
-                  ? `${Math.ceil((new Date(order.endDate).getTime() - new Date(order.startDate).getTime()) / (1000 * 60 * 60 * 24))} Nights`
-                  : 'N/A',
-              arrivalDate: order.arrivalDate
-                ? new Date(order.arrivalDate).toLocaleDateString()
-                : order.startDate
-                  ? new Date(order.startDate).toLocaleDateString()
-                  : 'N/A',
-              returnDate: order.returnDate
-                ? new Date(order.returnDate).toLocaleDateString()
-                : order.endDate
+            
+            // Process all items in the order, not just the first one
+            order.items.forEach((item, itemIndex) => {
+              formattedOrders.push({
+                id: `${order._id}-item-${itemIndex}`, // Unique ID for each item
+                orderId: order._id, // Reference to parent order
+                orderIndex: itemIndex, // Index within the order
+                itemCount: order.items.length, // Total items in this order
+                name: item.name,
+                image: item.image,
+                size: item.size,
+                color: item.color,
+                purchaseType: item.purchaseType || 'rent',
+                rentalDuration:
+                  order.startDate && order.endDate
+                    ? `${Math.ceil((new Date(order.endDate).getTime() - new Date(order.startDate).getTime()) / (1000 * 60 * 60 * 24))} Nights`
+                    : 'N/A',
+                arrivalDate: order.arrivalDate
+                  ? new Date(order.arrivalDate).toLocaleDateString()
+                  : order.startDate
+                    ? new Date(order.startDate).toLocaleDateString()
+                    : 'N/A',
+                returnDate: order.returnDate
+                  ? new Date(order.returnDate).toLocaleDateString()
+                  : order.endDate
                   ? new Date(order.endDate).toLocaleDateString()
                   : 'N/A',
-              status: mappedStatus,
-              isPaid: order.status.toLowerCase() === 'paid',
+                status: mappedStatus,
+                isPaid: order.status.toLowerCase() === 'paid',
+              });
             });
           });
         }
@@ -287,16 +292,20 @@ export default function OrderHistory(): JSX.Element {
           if (order.isPhotographyService) {
             const key = order.id;
             uniqueOrderMap.set(key, order);
-          } else {
-            // For wedding dresses, use name+size+color as key to prevent duplicates
+          } else if (order.isCartItem) {
+            // For cart items, use the existing deduplication logic
             const key = `${order.name}-${order.size}-${order.color}`;
-            // If we already have this item, only replace if it's not a cart item
             if (
               !uniqueOrderMap.has(key) ||
               (uniqueOrderMap.get(key).isCartItem && !order.isCartItem)
             ) {
               uniqueOrderMap.set(key, order);
             }
+          } else {
+            // For regular orders, each item needs to be preserved
+            // Use the unique ID we created earlier
+            const key = order.id;
+            uniqueOrderMap.set(key, order);
           }
         });
 
