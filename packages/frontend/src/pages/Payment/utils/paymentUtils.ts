@@ -17,6 +17,11 @@ export const calculateSubtotal = (items: OrderItem[], startDate: Date, endDate: 
   const days = calculateDurationInDays(startDate, endDate);
   
   return items.reduce((subtotal, item) => {
+    // Nếu là mua sản phẩm (purchaseType === 'buy'), sử dụng purchasePrice
+    if (item.purchaseType === 'buy' && item.purchasePrice) {
+      return subtotal + (item.purchasePrice * item.quantity);
+    }
+    // Mặc định là thuê, tính theo ngày
     return subtotal + (item.pricePerDay * days * item.quantity);
   }, 0);
 };

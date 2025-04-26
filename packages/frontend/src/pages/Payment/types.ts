@@ -27,6 +27,8 @@ export interface OrderItem {
   color: string;
   quantity: number;
   pricePerDay: number;
+  purchasePrice?: number;
+  purchaseType?: 'buy' | 'rent';
 }
 
 export interface OrderSummary {

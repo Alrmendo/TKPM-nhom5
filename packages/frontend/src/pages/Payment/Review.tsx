@@ -441,7 +441,21 @@ const Review: React.FC = () => {
                   const endDate = item.endDate ? new Date(item.endDate) : new Date();
                   const days = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)) + 1;
                   const pricePerDay = item.pricePerDay || 0;
-                  const itemTotal = pricePerDay * days * item.quantity;
+                  const purchasePrice = item.purchasePrice || (pricePerDay * 10);
+                  
+                  // Xác định tổng tiền dựa trên loại giao dịch
+                  let itemTotal = 0;
+                  let priceDisplay = '';
+                  
+                  if (item.purchaseType === 'buy') {
+                    // Nếu là mua sản phẩm, sử dụng purchasePrice
+                    itemTotal = purchasePrice * item.quantity;
+                    priceDisplay = `${formatCurrency(purchasePrice)} (purchase price)`;
+                  } else {
+                    // Nếu là thuê, tính theo ngày
+                    itemTotal = pricePerDay * days * item.quantity;
+                    priceDisplay = `${formatCurrency(pricePerDay)} per day × ${days} days`;
+                  }
                   
                   return (
                     <div key={index} className="flex border-b border-gray-200 pb-6">
@@ -468,10 +482,12 @@ const Review: React.FC = () => {
                           <div>
                             <p className="text-gray-500">Qty {item.quantity}</p>
                             <p className="text-gray-500 mt-1">
-                              {formatCurrency(pricePerDay)} per day × {days} days
+                              {item.purchaseType === 'buy' ? 'Purchase' : 'Rental'}: {priceDisplay}
                             </p>
                             <p className="text-gray-500 mt-1">
-                              {startDate ? formatDate(startDate) : '-'} - {endDate ? formatDate(endDate) : '-'}
+                              {item.purchaseType === 'buy' 
+                                ? `Delivery date: ${startDate ? formatDate(startDate) : '-'}`
+                                : `${startDate ? formatDate(startDate) : '-'} - ${endDate ? formatDate(endDate) : '-'}`}
                             </p>
                           </div>
                         </div>

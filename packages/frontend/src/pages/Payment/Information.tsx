@@ -592,10 +592,25 @@ const Information: React.FC = () => {
             
             <div className="divide-y divide-gray-200">
               {cartItems.map((item, index) => {
-                // Calculate days
+                // Calculate days for rental
                 const startDate = new Date(item.startDate);
                 const endDate = new Date(item.endDate);
                 const days = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+                
+                // Determine total price based on purchase type
+                let itemTotal = 0;
+                let typeDisplay = '';
+                
+                if (item.purchaseType === 'buy') {
+                  // Use purchase price if buying
+                  const purchasePrice = item.purchasePrice || (item.pricePerDay * 10);
+                  itemTotal = purchasePrice * item.quantity;
+                  typeDisplay = 'Purchase';
+                } else {
+                  // Calculate rental price based on days
+                  itemTotal = item.pricePerDay * days * item.quantity;
+                  typeDisplay = `${days} days rental`;
+                }
                 
                 return (
                   <div key={index} className="py-4 flex items-center">
@@ -613,12 +628,12 @@ const Information: React.FC = () => {
                     <div className="ml-4 flex-1">
                       <h3 className="text-sm font-medium text-gray-900">{item.name}</h3>
                       <p className="text-xs text-gray-500">{item.sizeName} · {item.colorName}</p>
-                      <p className="text-xs text-gray-500">{days} days rental</p>
+                      <p className="text-xs text-gray-500">{typeDisplay}</p>
                     </div>
                     
                     <div className="text-right">
                       <p className="text-sm font-medium text-gray-900">
-                        {formatCurrency(item.pricePerDay * days * item.quantity)}
+                        {formatCurrency(itemTotal)}
                       </p>
                     </div>
                   </div>

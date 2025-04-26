@@ -93,6 +93,7 @@ export class CartService {
       colorName,
       quantity: itemData.quantity,
       pricePerDay: dress.dailyRentalPrice,
+      purchasePrice: dress.purchasePrice,
       purchaseType: itemData.purchaseType || 'rent', // Mặc định là thuê nếu không xác định
       startDate: new Date(itemData.startDate),
       endDate: new Date(itemData.endDate),
