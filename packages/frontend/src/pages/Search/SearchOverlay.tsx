@@ -46,7 +46,10 @@ const DressCard: React.FC<DressCardProps> = ({
   onClick
 }) => {
   return (
-    <div className="relative rounded-lg w-full cursor-pointer" onClick={onClick}>
+    <div 
+      className="relative rounded-lg w-full cursor-pointer transition duration-200 transform hover:scale-[1.02] hover:shadow-xl" 
+      onClick={onClick}
+    >
       {/* Badge container - góc trên trái */}
       <div className="absolute top-8 left-10 flex space-x-2">
         <div className="flex items-center bg-white rounded-full px-3 py-1 shadow text-sm font-medium">
@@ -79,6 +82,13 @@ const DressCard: React.FC<DressCardProps> = ({
           Price: <span className="text-[#C3937C]">${price}</span>/{priceUnit}
         </p>
       </div>
+      
+      {/* View Details Overlay on Hover */}
+      <div className="absolute inset-0 bg-black bg-opacity-50 opacity-0 hover:opacity-100 flex items-center justify-center transition-opacity duration-300 rounded-tl-[80px] rounded-tr-[80px] rounded-bl-[30px] rounded-br-[30px]">
+        <div className="bg-white py-2 px-6 rounded-full font-medium text-[#C3937C] transform translate-y-2 hover:translate-y-0 transition-transform duration-300">
+          View Details
+        </div>
+      </div>
     </div>
   );
 };
@@ -98,7 +108,9 @@ const SearchOverlay: React.FC<SearchOverlayProps> = ({ onClose }) => {
   const [isSearching, setIsSearching] = useState<boolean>(false);
   const [searchResults, setSearchResults] = useState<Dress[]>([]);
   const [hasSearched, setHasSearched] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
+  const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const navigate = useNavigate();
   
@@ -112,12 +124,13 @@ const SearchOverlay: React.FC<SearchOverlayProps> = ({ onClose }) => {
   }
 
   // Handle search submission
-  const handleSearch = async (e: React.FormEvent): Promise<void> => {
-    e.preventDefault();
+  const handleSearch = async (e?: React.FormEvent): Promise<void> => {
+    if (e) e.preventDefault();
     if (!searchTerm.trim()) return;
     
     setIsSearching(true);
     setHasSearched(true);
+    setError(null);
     
     try {
       // Use the searchDresses API to get real data
@@ -135,18 +148,53 @@ const SearchOverlay: React.FC<SearchOverlayProps> = ({ onClose }) => {
     } catch (error) {
       console.error('Error searching dresses:', error);
       setSearchResults([]);
+      setError('An error occurred while searching. Please try again.');
     } finally {
       setIsSearching(false);
     }
   };
 
+  // Auto-search on typing with debounce
+  useEffect(() => {
+    if (searchTerm.trim().length >= 2) {
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current);
+      }
+      
+      searchTimeoutRef.current = setTimeout(() => {
+        handleSearch();
+      }, 500);
+    }
+    
+    return () => {
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current);
+      }
+    };
+  }, [searchTerm]);
+
   // Handle clicking on a dress card
   const handleDressClick = (id: string): void => {
-    navigate(`/dress/${id}`);
+    navigate(`/product/${id}`);
     if (onClose) {
       onClose();
     }
   };
+
+  // Handle keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Close on Escape
+      if (e.key === 'Escape') {
+        handleClose();
+      }
+    };
+    
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, []);
 
   // Focus the search input when the overlay opens
   useEffect(() => {
@@ -202,6 +250,21 @@ const SearchOverlay: React.FC<SearchOverlayProps> = ({ onClose }) => {
         </div>
       )}
       
+      {/* Error message */}
+      {error && !isSearching && (
+        <div className="w-full max-w-2xl px-4 text-center my-8">
+          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+            <p>{error}</p>
+            <button 
+              onClick={() => handleSearch()} 
+              className="mt-2 px-4 py-2 bg-white rounded-full shadow-sm hover:shadow-md transition-shadow text-red-600 font-medium"
+            >
+              Try Again
+            </button>
+          </div>
+        </div>
+      )}
+      
       {/* Search results */}
       {!isSearching && hasSearched && (
         <div className="w-full px-6 md:px-12 max-w-7xl pb-20">
@@ -215,8 +278,12 @@ const SearchOverlay: React.FC<SearchOverlayProps> = ({ onClose }) => {
                     _id={dress._id}
                     imageUrl={dress.images && dress.images.length > 0 ? dress.images[0] : 'https://via.placeholder.com/500'}
                     title={dress.name}
+                    subtitle={dress.purchasePrice > 0 ? "Available for Rent or Purchase" : "Rental Only"}
                     price={dress.dailyRentalPrice}
-                    rating={dress.avgRating}
+                    priceUnit={dress.purchasePrice > 0 ? "Day / Buy $" + dress.purchasePrice : "Day"}
+                    rating={dress.avgRating || 4.5}
+                    status={dress.purchasePrice > 0 ? "Rent/Buy" : "Rental"}
+                    statusColor={dress.purchasePrice > 0 ? "#F3B664" : "#6DE588"}
                     onClick={() => handleDressClick(dress._id)}
                   />
                 ))}
